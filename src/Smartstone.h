@@ -1,5 +1,5 @@
 #ifndef DEF_SMARTSTONE_H
-#define DEF_SMARTSONE_H
+#define DEF_SMARTSTONE_H
 
 #include "Player.h"
 #include "Config.h"
