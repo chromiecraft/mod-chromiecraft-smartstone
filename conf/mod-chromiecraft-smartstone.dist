@@ -8,10 +8,18 @@
 # My module configuration
 ########################################
 #
-#    MyModule.Enable
-#        Description: Enable my module and print "Hello World" message at server start
+#    ModChromiecraftSmartstone.Enable
+#        Description: Enable my module.
 #        Default:     0 - Disabled
 #                     1 - Enabled
 #
 
-MyModule.Enable = 1
+ModChromiecraftSmartstone.Enable = 1
+
+#
+#    ModChromiecraftSmartstone.Features.BarberDuration
+#        Description: Sets the duration for the Barbershop Chair feature (in seconds).
+#        Default:     300 Seconds (5 minutes)
+#
+
+ModChromiecraftSmartstone.Features.BarberDuration = 300
