@@ -34,6 +34,11 @@ enum Texts
     SAY_BARBER_DESPAWN         = 1
 };
 
+enum Settings
+{
+    SETTING_MEMBERSHIP_LEVEL
+};
+
 struct SmartstoneServices
 {
     uint8 Id;
@@ -51,6 +56,8 @@ Smartstone* Smartstone::instance()
     static Smartstone instance;
     return &instance;
 }
+
+const std::string SubsModName = "acore_cms_subscriptions";
 
 class item_chromiecraft_smartstone : public ItemScript
 {
@@ -98,7 +105,10 @@ public:
         player->PlayerTalkClass->ClearMenus();
 
         for (auto const& service : StoneServices)
-            player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, 1, "", 0);
+        {
+            if (player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value >= service.SubscriptionLevelRequired)
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, 1, "", 0);
+        }
 
         player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         return false;
