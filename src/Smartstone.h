@@ -7,6 +7,12 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 
+struct SmartstonePetData
+{
+    uint32 CreatureId;
+    std::string Description;
+};
+
 class Smartstone
 {
 public:
@@ -14,6 +20,7 @@ public:
 
     bool IsEnabled{ true };
     Seconds BarberDuration = 1min;
+    std::vector<SmartstonePetData> Pets;
 };
 
 #define sSmartstone Smartstone::instance()

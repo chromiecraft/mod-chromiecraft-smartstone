@@ -24,8 +24,8 @@ enum Spells
 
 enum StoneActions
 {
-    SMARTSTONE_ACTION_BARBERSHOP = 1,
-    SMARTSTONE_TEST              = 2
+    SMARTSTONE_ACTION_BARBERSHOP             = 1,
+    SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION  = 2
 };
 
 enum Texts
@@ -48,7 +48,8 @@ struct SmartstoneServices
 
 const SmartstoneServices StoneServices[] =
 {
-    { SMARTSTONE_ACTION_BARBERSHOP, "Request Barber Services", 0 }
+    { SMARTSTONE_ACTION_BARBERSHOP, "Request Barber Services", 1 },
+    { SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION, "Rare Beasts of Azeroth", 0 }
 };
 
 Smartstone* Smartstone::instance()
@@ -65,10 +66,15 @@ public:
 
     item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone") { }
 
-    void OnGossipSelect(Player* player, Item* /*item*/, uint32  /*sender*/, uint32 action) override
+    void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
-        player->PlayerTalkClass->ClearMenus();
-        player->PlayerTalkClass->SendCloseGossip();
+        if (action > 80000)
+        {
+            player->PlayerTalkClass->ClearMenus();
+            player->PlayerTalkClass->SendCloseGossip();
+            player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, action);
+            return;
+        }
 
         switch (action)
         {
@@ -91,6 +97,16 @@ public:
                         barber->DespawnOrUnsummon(4000);
                     }, sSmartstone->BarberDuration);
                 }
+
+                player->PlayerTalkClass->ClearMenus();
+                player->PlayerTalkClass->SendCloseGossip();
+                break;
+            case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
+                player->PlayerTalkClass->ClearMenus();
+                for (auto const& pet : sSmartstone->Pets)
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
+
+                player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
                 break;
             default:
                 break;
@@ -107,7 +123,7 @@ public:
         for (auto const& service : StoneServices)
         {
             if (player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value >= service.SubscriptionLevelRequired)
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, 1, "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
         }
 
         player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
@@ -124,6 +140,20 @@ public:
     {
         sSmartstone->IsEnabled = sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false);
         sSmartstone->BarberDuration = Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300));
+
+        QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description FROM smartstone_pets WHERE Enabled = 1");
+        SmartstonePetData petData;
+
+        if (result)
+        {
+            do
+            {
+                Field* fields = result->Fetch();
+                petData.CreatureId = fields[0].Get<uint32>();
+                petData.Description = fields[1].Get<std::string>();
+                sSmartstone->Pets.push_back(petData);
+            } while (result->NextRow());
+        }
     }
 };
 
