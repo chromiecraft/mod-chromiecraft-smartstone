@@ -44,12 +44,6 @@ enum Misc
     ACTION_RANGE_SUMMON_PET = 80000
 };
 
-Smartstone* Smartstone::instance()
-{
-    static Smartstone instance;
-    return &instance;
-}
-
 const std::string SubsModName = "acore_cms_subscriptions";
 
 class item_chromiecraft_smartstone : public ItemScript
@@ -139,6 +133,7 @@ public:
 
         if (sSmartstone->IsSmartstoneEnabled())
         {
+            sSmartstone->LoadServices();
             sSmartstone->LoadPets();
         }
     }
