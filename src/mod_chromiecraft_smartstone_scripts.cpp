@@ -54,6 +54,16 @@ public:
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
+        if (action == ACTION_RANGE_SUMMON_PET)
+        {
+            player->PlayerTalkClass->ClearMenus();
+            player->PlayerTalkClass->SendCloseGossip();
+            if (Creature* cr = ObjectAccessor::GetCreature(*player, player->m_SummonSlot[SUMMON_SLOT_MINIPET]))
+                cr->DespawnOrUnsummon();
+
+            return;
+        }
+
         if (action > ACTION_RANGE_SUMMON_PET)
         {
             player->PlayerTalkClass->ClearMenus();
@@ -91,6 +101,9 @@ public:
                 break;
             case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
                 player->PlayerTalkClass->ClearMenus();
+
+                if (Creature* cr = ObjectAccessor::GetCreature(*player, player->m_SummonSlot[SUMMON_SLOT_MINIPET]))
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 for (auto const& pet : pets)
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
