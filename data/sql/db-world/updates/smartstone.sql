@@ -1,4 +1,25 @@
 --
+DROP TABLE IF EXISTS `smartstone_pets`;
+CREATE TABLE `smartstone_pets` (
+ `CreatureId` INT UNSIGNED NOT NULL,
+ `Enabled` TINYINT DEFAULT 1,
+ `Description` TEXT,
+ PRIMARY KEY(`CreatureId`)
+ );
+ 
+DROP TABLE IF EXISTS `smartstone_services`;
+CREATE TABLE `smartstone_services` (
+ `ServiceId` INT UNSIGNED NOT NULL,
+ `Title` TEXT,
+ `SubscriptionLevel` INT UNSIGNED NOT NULL,
+ `Enabled` TINYINT,
+ PRIMARY KEY(`ServiceId`)
+ );
+
+INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
+(1, 'Request Barber Services', 1, 1),
+(2, 'Rare Beasts of Azeroth', 0, 1);
+
 UPDATE `item_template` SET `name` = "Smartstone", `ScriptName` = 'item_chromiecraft_smartstone', stackable = 1, `spellid_1` = 36177, maxcount = 1 WHERE (entry = 32547);
 
 DELETE FROM `creature_template` WHERE `entry` = 80000;
@@ -42,16 +63,8 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
-
-DROP TABLE IF EXISTS `smartstone_pets`;
-CREATE TABLE `smartstone_pets` (
- `CreatureId` INT UNSIGNED NOT NULL,
- `Enabled` TINYINT DEFAULT 1,
- `Description` TEXT,
- PRIMARY KEY(`CreatureId`)
- );
  
- INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
- (80001, 1, 'Summon Amani\'shi Bruteling');
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
+(80001, 1, 'Summon Amani\'shi Bruteling');
  
  

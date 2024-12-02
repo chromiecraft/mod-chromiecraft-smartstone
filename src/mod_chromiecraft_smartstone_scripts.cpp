@@ -39,19 +39,6 @@ enum Settings
     SETTING_MEMBERSHIP_LEVEL
 };
 
-struct SmartstoneServices
-{
-    uint8 Id;
-    std::string ServiceTitle;
-    uint8 SubscriptionLevelRequired;
-};
-
-const SmartstoneServices StoneServices[] =
-{
-    { SMARTSTONE_ACTION_BARBERSHOP, "Request Barber Services", 1 },
-    { SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION, "Rare Beasts of Azeroth", 0 }
-};
-
 enum Misc
 {
     ACTION_RANGE_SUMMON_PET = 80000
@@ -85,7 +72,7 @@ public:
         {
             case SMARTSTONE_ACTION_BARBERSHOP:
                 if (player->GetMap()->IsBattleground() || player->GetMap()->IsDungeon()
-                    || sSmartstone->BarberDuration == Seconds::zero())
+                    || sSmartstone->GetBarberDuration() == Seconds::zero())
                     return;
 
                 if (Creature* barber = player->SummonCreature(NPC_BARBER, player->GetNearPosition(2.0f, 0.0f), TEMPSUMMON_MANUAL_DESPAWN))
@@ -100,7 +87,7 @@ public:
                         Position pos = barber->GetNearPosition(20.0f, 0.0f);
                         barber->GetMotionMaster()->MovePoint(0, pos);
                         barber->DespawnOrUnsummon(4000);
-                    }, sSmartstone->BarberDuration);
+                    }, sSmartstone->GetBarberDuration());
                 }
 
                 player->PlayerTalkClass->ClearMenus();
@@ -120,14 +107,16 @@ public:
 
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
     {
-        if (!sSmartstone->IsEnabled)
+        if (!sSmartstone->IsSmartstoneEnabled())
             return false;
 
         player->PlayerTalkClass->ClearMenus();
 
         uint8 subscriptionLevel = player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
-        for (auto const& service : StoneServices)
+        auto const& services = sSmartstone->Services;
+
+        for (auto const& service : services)
         {
             if (subscriptionLevel >= service.SubscriptionLevelRequired)
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
@@ -145,21 +134,12 @@ public:
 
     void OnAfterConfigLoad(bool /*reload*/) override
     {
-        sSmartstone->IsEnabled = sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false);
-        sSmartstone->BarberDuration = Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300));
+        sSmartstone->SetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false));
+        sSmartstone->SetBarberDuration(Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300)));
 
-        QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description FROM smartstone_pets WHERE Enabled = 1");
-        SmartstonePetData petData;
-
-        if (result)
+        if (sSmartstone->IsSmartstoneEnabled())
         {
-            do
-            {
-                Field* fields = result->Fetch();
-                petData.CreatureId = fields[0].Get<uint32>();
-                petData.Description = fields[1].Get<std::string>();
-                sSmartstone->Pets.push_back(petData);
-            } while (result->NextRow());
+            sSmartstone->LoadPets();
         }
     }
 };
