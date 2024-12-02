@@ -19,6 +19,8 @@ void Smartstone::LoadPets()
     QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description FROM smartstone_pets WHERE Enabled = 1");
     SmartstonePetData petData;
 
+    Pets.clear();
+
     if (result)
     {
         do
@@ -36,6 +38,8 @@ void Smartstone::LoadServices()
     // Load services from the database
     QueryResult result = WorldDatabase.Query("SELECT ServiceId, Title, SubscriptionLevel FROM smartstone_services WHERE Enabled = 1");
     SmartstoneServices serviceData;
+
+    Services.clear();
 
     if (result)
     {
