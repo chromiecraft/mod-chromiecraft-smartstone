@@ -51,20 +51,21 @@ INSERT INTO `spell_dbc` (`ID`, `Category`, `DispelType`, `Mechanic`, `Attributes
 (90000,0,0,0,262416,0,0,536870912,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,31,0,0,0,101,0,0,0,0,21,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,28,0,0,1,0,0,0,0,0,0,0,0,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,0,0,190011,0,0,41,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,458,0,2808,0,0,'Summon Exotic Pet','','','','','','','','','','','','','','','',16712190,'','','','','','','','','','','','','','','','',16712190,'Right Click to summon and dismiss your Exotic Pet.','','','','','','','','','','','','','','','',16712190,'','','','','','','','','','','','','','','','',16712190,0,133,1500,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 SET
-@Entry = 80001,
-@Name = "Amani'shi Bruteling",
-@Model = 22353,
-@Scale = 0.30;
+@Entry := 80001,
+@Name := "Amani'shi Bruteling",
+@Model := 22353,
+@Scale := 0.30;
+@Description := "Summon Amani'shi Bruteling";
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
 
 INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
-(@Entry, @Name, NULL, NULL, 0, 80, 80, 2, 35, 0, @Scale, 0, 0, 2000, 0, 1, 0, 7, 0, 0, 0, 0, '', 0, 1, 0, 0, 1, 0, 0, '');
+(@Entry, @Name, NULL, NULL, 0, 1, 1, 2, 35, 0, @Scale, 0, 0, 2000, 0, 1, 0, 7, 0, 0, 0, 0, '', 0, 1, 0, 0, 1, 0, 0, '');
 
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
  
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(80001, 1, 'Summon Amani\'shi Bruteling');
+(80001, 1, @Description);
  
  
