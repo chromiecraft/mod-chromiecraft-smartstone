@@ -122,7 +122,8 @@ public:
 
         player->PlayerTalkClass->ClearMenus();
 
-        uint8 subscriptionLevel = player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+        uint8 subscriptionLevel = player->IsGameMaster() ? 3
+            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
         auto const& services = sSmartstone->Services;
 
