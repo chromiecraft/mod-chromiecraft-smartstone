@@ -58,7 +58,7 @@ public:
         {
             player->PlayerTalkClass->ClearMenus();
             player->PlayerTalkClass->SendCloseGossip();
-            if (Creature* cr = ObjectAccessor::GetCreature(*player, player->m_SummonSlot[SUMMON_SLOT_MINIPET]))
+            if (Creature* cr = player->GetCompanionPet())
                 cr->DespawnOrUnsummon();
 
             return;
@@ -102,7 +102,7 @@ public:
             case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
                 player->PlayerTalkClass->ClearMenus();
 
-                if (Creature* cr = ObjectAccessor::GetCreature(*player, player->m_SummonSlot[SUMMON_SLOT_MINIPET]))
+                if (Creature* cr = player->GetCompanionPet())
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 for (auto const& pet : pets)
