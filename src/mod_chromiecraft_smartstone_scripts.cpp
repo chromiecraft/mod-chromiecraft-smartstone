@@ -62,6 +62,8 @@ public:
             return;
         }
 
+        auto const& pets = sSmartstone->Pets;
+
         switch (action)
         {
             case SMARTSTONE_ACTION_BARBERSHOP:
@@ -89,7 +91,8 @@ public:
                 break;
             case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
                 player->PlayerTalkClass->ClearMenus();
-                for (auto const& pet : sSmartstone->Pets)
+
+                for (auto const& pet : pets)
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
