@@ -52,6 +52,11 @@ const SmartstoneServices StoneServices[] =
     { SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION, "Rare Beasts of Azeroth", 0 }
 };
 
+enum Misc
+{
+    ACTION_RANGE_SUMMON_PET = 80000
+};
+
 Smartstone* Smartstone::instance()
 {
     static Smartstone instance;
@@ -68,7 +73,7 @@ public:
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
-        if (action > 80000)
+        if (action > ACTION_RANGE_SUMMON_PET)
         {
             player->PlayerTalkClass->ClearMenus();
             player->PlayerTalkClass->SendCloseGossip();
@@ -120,9 +125,11 @@ public:
 
         player->PlayerTalkClass->ClearMenus();
 
+        uint8 subscriptionLevel = player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
         for (auto const& service : StoneServices)
         {
-            if (player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value >= service.SubscriptionLevelRequired)
+            if (subscriptionLevel >= service.SubscriptionLevelRequired)
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
         }
 
