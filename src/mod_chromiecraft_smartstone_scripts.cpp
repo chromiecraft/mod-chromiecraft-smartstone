@@ -54,20 +54,14 @@ public:
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
-        if (action == ACTION_RANGE_SUMMON_PET)
+        if (action != SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION)
         {
             player->PlayerTalkClass->ClearMenus();
             player->PlayerTalkClass->SendCloseGossip();
-            if (Creature* cr = player->GetCompanionPet())
-                cr->DespawnOrUnsummon();
-
-            return;
         }
 
         if (action > ACTION_RANGE_SUMMON_PET)
         {
-            player->PlayerTalkClass->ClearMenus();
-            player->PlayerTalkClass->SendCloseGossip();
             player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, action);
             return;
         }
@@ -95,9 +89,6 @@ public:
                         barber->DespawnOrUnsummon(4000);
                     }, sSmartstone->GetBarberDuration());
                 }
-
-                player->PlayerTalkClass->ClearMenus();
-                player->PlayerTalkClass->SendCloseGossip();
                 break;
             case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
                 player->PlayerTalkClass->ClearMenus();
@@ -109,6 +100,10 @@ public:
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
+                break;
+            case ACTION_RANGE_SUMMON_PET:
+                if (Creature* cr = player->GetCompanionPet())
+                    cr->DespawnOrUnsummon();
                 break;
             default:
                 break;
