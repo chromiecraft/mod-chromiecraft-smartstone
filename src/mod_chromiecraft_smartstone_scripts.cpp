@@ -64,7 +64,6 @@ public:
 
         if (action > ACTION_RANGE_SUMMON_COMBAT_PET)
         {
-            LOG_ERROR("sql.sql", "Player {} tried to summon a combat pet with id {}", player->GetName().c_str(), action);
             player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
             return;
         }
@@ -101,7 +100,7 @@ public:
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName, pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled() || player->IsGameMaster())
+                    if (player->GetPlayerSetting(ModName+"#pets", pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled() || player->IsGameMaster())
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
 
@@ -117,7 +116,7 @@ public:
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName, pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
+                    if (player->GetPlayerSetting(ModName+"#combatpets", pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
 
