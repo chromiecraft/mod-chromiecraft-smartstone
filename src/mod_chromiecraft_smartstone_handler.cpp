@@ -54,3 +54,14 @@ void Smartstone::LoadServices()
     }
 }
 
+SmartstonePetData Smartstone::GetPetData(uint32 creatureId) const
+{
+    for (auto const& pet : sSmartstone->Pets)
+    {
+        if (pet.CreatureId == creatureId)
+            return pet;
+    }
+
+    return SmartstonePetData();
+}
+

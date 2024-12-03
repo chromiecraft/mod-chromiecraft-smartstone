@@ -16,6 +16,13 @@
 
 ModChromiecraftSmartstone.Enable = 1
 
+#    ModChromiecraftSmartstone.ItemID
+#        Description: Item entry from item_template used as SmartStone.
+#        Default:     32547
+#
+
+ModChromiecraftSmartstone.ItemID = 32547
+
 #
 #    ModChromiecraftSmartstone.Features.BarberDuration
 #        Description: Sets the duration for the Barbershop Chair feature (in seconds).
@@ -23,3 +30,4 @@ ModChromiecraftSmartstone.Enable = 1
 #
 
 ModChromiecraftSmartstone.Features.BarberDuration = 300
+

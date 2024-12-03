@@ -39,11 +39,6 @@ enum Settings
     SETTING_MEMBERSHIP_LEVEL
 };
 
-enum Misc
-{
-    ACTION_RANGE_SUMMON_PET = 80000
-};
-
 const std::string SubsModName = "acore_cms_subscriptions";
 
 class item_chromiecraft_smartstone : public ItemScript
@@ -66,7 +61,7 @@ public:
             return;
         }
 
-        auto const& pets = sSmartstone->Pets;
+        auto pets = sSmartstone->Pets;
 
         switch (action)
         {
@@ -97,7 +92,10 @@ public:
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 for (auto const& pet : pets)
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
+                {
+                    if (player->GetPlayerSetting(ModName, pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled())
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
+                }
 
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
                 break;
@@ -142,6 +140,7 @@ public:
     {
         sSmartstone->SetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false));
         sSmartstone->SetBarberDuration(Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300)));
+        sSmartstone->SetSmartstoneItemID(sConfigMgr->GetOption<uint32>("ModChromiecraftSmartstone.ItemID", 32547));
 
         if (sSmartstone->IsSmartstoneEnabled())
         {

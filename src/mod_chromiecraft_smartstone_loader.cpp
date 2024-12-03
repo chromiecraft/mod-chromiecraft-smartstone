@@ -3,9 +3,11 @@
  */
 
 void Addmod_cc_smartstoneScripts();
+void AddSC_smartstone_commandscript();
 
 void Addmod_chromiecraft_smartstoneScripts()
 {
     Addmod_cc_smartstoneScripts();
+    AddSC_smartstone_commandscript();
 }
 
