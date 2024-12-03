@@ -129,7 +129,7 @@ public:
         {
             if (Player* target = player.GetConnectedPlayer())
             {
-                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_PET + petId);
+                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_COMBAT_PET + petId);
 
                 if (target->GetPlayerSetting(ModName+"#combatpet", petId).IsEnabled())
                 {
@@ -146,7 +146,7 @@ public:
         {
             if (Player* target = player.GetConnectedPlayer())
             {
-                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_PET + petId);
+                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_COMBAT_PET + petId);
                 if (!target->GetPlayerSetting(ModName + "#combatpet", petId).IsEnabled())
                 {
                     handler->PSendSysMessage("The player does not have the pet {}.", petData.Description);
