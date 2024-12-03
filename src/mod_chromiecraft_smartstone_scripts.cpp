@@ -93,7 +93,7 @@ public:
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName, pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled())
+                    if (player->GetPlayerSetting(ModName, pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled() || player->IsGameMaster())
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
 
