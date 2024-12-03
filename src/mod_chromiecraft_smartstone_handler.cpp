@@ -16,7 +16,7 @@ Smartstone* Smartstone::instance()
 void Smartstone::LoadPets()
 {
     // Load pets from the database
-    QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description FROM smartstone_pets WHERE Enabled = 1");
+    QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description, Category FROM smartstone_pets WHERE Enabled = 1");
     SmartstonePetData petData;
 
     Pets.clear();
@@ -28,7 +28,7 @@ void Smartstone::LoadPets()
             Field* fields = result->Fetch();
             petData.CreatureId = fields[0].Get<uint32>();
             petData.Description = fields[1].Get<std::string>();
-            Pets.push_back(petData);
+            fields[2].Get<uint32>() ? CombatPets.push_back(petData) : Pets.push_back(petData);
         } while (result->NextRow());
     }
 }
@@ -54,9 +54,9 @@ void Smartstone::LoadServices()
     }
 }
 
-SmartstonePetData Smartstone::GetPetData(uint32 creatureId) const
+SmartstonePetData Smartstone::GetPetData(uint32 creatureId, uint8 category) const
 {
-    for (auto const& pet : sSmartstone->Pets)
+    for (auto const& pet : category ? sSmartstone->CombatPets : sSmartstone->Pets)
     {
         if (pet.CreatureId == creatureId)
             return pet;

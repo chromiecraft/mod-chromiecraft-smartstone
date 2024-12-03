@@ -22,7 +22,8 @@ struct SmartstoneServices
 
 enum Misc
 {
-    ACTION_RANGE_SUMMON_PET = 80000
+    ACTION_RANGE_SUMMON_PET        = 80000,
+    ACTION_RANGE_SUMMON_COMBAT_PET = 90000
 };
 
 const std::string ModName = "mod-cc-smartstone";
@@ -48,9 +49,10 @@ public:
     void LoadServices();
     void LoadPets();
 
-    [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId) const;
+    [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 category = 0) const;
 
     std::vector<SmartstonePetData> Pets;
+    std::vector<SmartstonePetData> CombatPets;
     std::vector<SmartstoneServices> Services;
 };
 

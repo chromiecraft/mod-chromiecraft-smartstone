@@ -25,7 +25,8 @@ enum Spells
 enum StoneActions
 {
     SMARTSTONE_ACTION_BARBERSHOP             = 1,
-    SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION  = 2
+    SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION  = 2,
+    SMARTSTONE_ACTION_LIMITED_DURATION_PETS  = 3
 };
 
 enum Texts
@@ -55,9 +56,16 @@ public:
             player->PlayerTalkClass->SendCloseGossip();
         }
 
-        if (action > ACTION_RANGE_SUMMON_PET)
+        if (action > ACTION_RANGE_SUMMON_PET && action < ACTION_RANGE_SUMMON_COMBAT_PET)
         {
             player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, action);
+            return;
+        }
+
+        if (action > ACTION_RANGE_SUMMON_COMBAT_PET)
+        {
+            LOG_ERROR("sql.sql", "Player {} tried to summon a combat pet with id {}", player->GetName().c_str(), action);
+            player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
             return;
         }
 
@@ -98,6 +106,22 @@ public:
                 }
 
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
+                break;
+            case SMARTSTONE_ACTION_LIMITED_DURATION_PETS:
+                player->PlayerTalkClass->ClearMenus();
+
+                if (Pet* cr = player->GetPet())
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
+
+                pets = sSmartstone->CombatPets;
+
+                for (auto const& pet : pets)
+                {
+                    if (player->GetPlayerSetting(ModName, pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
+                }
+
+                player->PlayerTalkClass->SendGossipMenu(92003, item->GetGUID());
                 break;
             case ACTION_RANGE_SUMMON_PET:
                 if (Creature* cr = player->GetCompanionPet())
