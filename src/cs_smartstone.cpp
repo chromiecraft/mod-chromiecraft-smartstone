@@ -49,7 +49,6 @@ public:
         return commandTable;
     }
 
-
     static bool HandleSmartStoneCommand(ChatHandler* handler)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
