@@ -2,10 +2,11 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU AGPL v3 license: https://github.com/azerothcore/azerothcore-wotlk/blob/master/LICENSE-AGPL3
  */
 
-#include "ScriptMgr.h"
-#include "Player.h"
 #include "Chat.h"
+#include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "Pet.h"
+#include "Player.h"
 
 enum GameObjectEntry
 {
@@ -95,7 +96,7 @@ public:
             case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
                 player->PlayerTalkClass->ClearMenus();
 
-                if (Creature* cr = player->GetCompanionPet())
+                if (player->GetCompanionPet())
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 for (auto const& pet : pets)
@@ -109,7 +110,7 @@ public:
             case SMARTSTONE_ACTION_LIMITED_DURATION_PETS:
                 player->PlayerTalkClass->ClearMenus();
 
-                if (Pet* cr = player->GetPet())
+                if (player->GetPet())
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 pets = sSmartstone->CombatPets;
@@ -124,6 +125,10 @@ public:
                 break;
             case ACTION_RANGE_SUMMON_PET:
                 if (Creature* cr = player->GetCompanionPet())
+                    cr->DespawnOrUnsummon();
+                break;
+            case ACTION_RANGE_SUMMON_COMBAT_PET:
+                if (Pet* cr = player->GetPet())
                     cr->DespawnOrUnsummon();
                 break;
             default:
