@@ -100,6 +100,8 @@ void Smartstone::ProcessExpiredServices(Player* player)
 
     if (expireInfo != ServiceExpireInfo.end())
     {
+        std::vector<SmartstoneServiceExpireInfo> toRemove;
+
         for (auto const& info : expireInfo->second)
         {
             if (info.ExpirationTime < GameTime::GetGameTime().count())
@@ -109,14 +111,18 @@ void Smartstone::ProcessExpiredServices(Player* player)
                     case SERVICE_CAT_COMBAT_PET:
                         player->UpdatePlayerSetting(ModName + "#combatpet", info.ServiceId - ACTION_RANGE_SUMMON_COMBAT_PET, false);
                         ChatHandler(player->GetSession()).PSendSysMessage("Your grasp on {} wanes, you can no longer summon that pet.", GetPetData(info.ServiceId, SERVICE_CAT_COMBAT_PET).Description);
-                        ServiceExpireInfo[playerGUID].remove_if([info](const SmartstoneServiceExpireInfo& data) -> bool
-                        {
-                            return data.ServiceId == info.ServiceId && data.Category == info.Category;
-                        });
+                        toRemove.push_back(info);
                         CharacterDatabase.Execute("DELETE FROM smartstone_char_temp_services WHERE PlayerGUID = {} AND ServiceId = {} AND Category = {}", playerGUID, info.ServiceId, info.Category);
                         break;
                 }
             }
+        }
+
+        for (const auto& info : toRemove)
+        {
+            ServiceExpireInfo[playerGUID].remove_if([&](const SmartstoneServiceExpireInfo& data) -> bool {
+                return data.ServiceId == info.ServiceId && data.Category == info.Category;
+            });
         }
     }
 }
