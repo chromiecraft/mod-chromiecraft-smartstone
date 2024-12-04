@@ -19,7 +19,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 DELETE FROM `creature_template_spell`  WHERE `CreatureId` = @Entry; 
 INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
 (@Entry, 0, 46661),
-(@Entry, 1, 44755);
+(@Entry, 1, 44755),
+(@Entry, 2, 3714),
  
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Enabled`, `Description`) VALUES

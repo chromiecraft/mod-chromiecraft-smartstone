@@ -74,9 +74,14 @@ public:
         switch (action)
         {
             case SMARTSTONE_ACTION_BARBERSHOP:
-                if (player->GetMap()->IsBattleground() || player->GetMap()->IsDungeon()
-                    || sSmartstone->GetBarberDuration() == Seconds::zero())
+                if (!sSmartstone->CanUseSmartstone(player) || sSmartstone->GetBarberDuration() == Seconds::zero())
                     return;
+
+                if (player->FindNearestCreature(NPC_BARBER, 100.0f))
+                {
+                    player->SendSystemMessage("The barber is already summoned.");
+                    return;
+                }
 
                 if (Creature* barber = player->SummonCreature(NPC_BARBER, player->GetNearPosition(2.0f, 0.0f), TEMPSUMMON_MANUAL_DESPAWN))
                 {

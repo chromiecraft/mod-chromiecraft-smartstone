@@ -37,6 +37,8 @@ private:
 public:
     static Smartstone* instance();
 
+    bool CanUseSmartstone(Player* player) { return !player->GetMap()->IsDungeon() && !player->GetMap()->IsBattlegroundOrArena(); }
+
     void SetEnabled(bool enabled) { IsEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneEnabled() { return IsEnabled; }
 
