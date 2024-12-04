@@ -3,6 +3,7 @@
  */
 
 #include "Chat.h"
+#include "GameTime.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Pet.h"
@@ -51,6 +52,8 @@ public:
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
+        sSmartstone->ProcessExpiredServices(player);
+
         if (action != SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION)
         {
             player->PlayerTalkClass->ClearMenus();
@@ -69,7 +72,35 @@ public:
             return;
         }
 
+        ProcessGossipAction(player, action, item);
+    }
+
+    bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+            return false;
+
+        player->PlayerTalkClass->ClearMenus();
+
+        uint8 subscriptionLevel = player->IsGameMaster() ? 3
+            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
+        auto const& services = sSmartstone->Services;
+
+        for (auto const& service : services)
+        {
+            if (subscriptionLevel >= service.SubscriptionLevelRequired)
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
+        }
+
+        player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
+        return false;
+    }
+
+    void ProcessGossipAction(Player* player, uint32 action, Item* item)
+    {
         auto pets = sSmartstone->Pets;
+        auto const& expireInfo = sSmartstone->ServiceExpireInfo.find(player->GetGUID().GetCounter());
 
         switch (action)
         {
@@ -106,7 +137,7 @@ public:
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName+"#pets", pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled() || player->IsGameMaster())
+                    if (player->GetPlayerSetting(ModName + "#pets", pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled() || player->IsGameMaster())
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
 
@@ -115,14 +146,14 @@ public:
             case SMARTSTONE_ACTION_LIMITED_DURATION_PETS:
                 player->PlayerTalkClass->ClearMenus();
 
-                if (player->GetPet())
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
-
                 pets = sSmartstone->CombatPets;
+
+                if (player->GetCompanionPet())
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_COMBAT_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName+"#combatpets", pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
+                    if (player->GetPlayerSetting(ModName + "#combatpet", pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
 
@@ -139,28 +170,6 @@ public:
             default:
                 break;
         }
-    }
-
-    bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
-    {
-        if (!sSmartstone->IsSmartstoneEnabled())
-            return false;
-
-        player->PlayerTalkClass->ClearMenus();
-
-        uint8 subscriptionLevel = player->IsGameMaster() ? 3
-            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
-
-        auto const& services = sSmartstone->Services;
-
-        for (auto const& service : services)
-        {
-            if (subscriptionLevel >= service.SubscriptionLevelRequired)
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
-        }
-
-        player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
-        return false;
     }
 };
 
@@ -179,6 +188,7 @@ public:
         {
             sSmartstone->LoadServices();
             sSmartstone->LoadPets();
+            sSmartstone->LoadServiceExpirationInfo();
         }
     }
 };

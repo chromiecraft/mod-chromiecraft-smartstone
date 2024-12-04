@@ -11,6 +11,7 @@ struct SmartstonePetData
 {
     uint32 CreatureId;
     std::string Description;
+    uint32 Duration;
 };
 
 struct SmartstoneServices
@@ -20,10 +21,25 @@ struct SmartstoneServices
     uint8 SubscriptionLevelRequired;
 };
 
+struct SmartstoneServiceExpireInfo
+{
+    uint32 ServiceId;
+    uint32 PlayerGUID;
+    uint8 Category;
+    uint32 ActivationTime;
+    uint32 ExpirationTime;
+};
+
 enum Misc
 {
     ACTION_RANGE_SUMMON_PET        = 80000,
     ACTION_RANGE_SUMMON_COMBAT_PET = 90000
+};
+
+enum ServiceCategory
+{
+    SERVICE_CAT_PET = 0,
+    SERVICE_CAT_COMBAT_PET = 1
 };
 
 const std::string ModName = "mod-cc-smartstone";
@@ -50,12 +66,17 @@ public:
 
     void LoadServices();
     void LoadPets();
+    void LoadServiceExpirationInfo();
 
-    [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 category = 0) const;
+    void ProcessExpiredServices(Player* player);
+
+    [[nodiscard]] SmartstoneServiceExpireInfo GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 category) const;
+    [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 category = SERVICE_CAT_PET) const;
 
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;
     std::vector<SmartstoneServices> Services;
+    std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 };
 
 #define sSmartstone Smartstone::instance()

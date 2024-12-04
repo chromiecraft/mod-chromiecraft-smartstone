@@ -16,6 +16,7 @@
  */
 
 #include "Chat.h"
+#include "GameTime.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "ScriptMgr.h"
@@ -30,15 +31,9 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
-        static ChatCommandTable unlockServiceTable =
-        {
-            { "pet",       HandleSmartstonePet,          SEC_MODERATOR, Console::Yes },
-            { "combatpet", HandleSmartstoneCombatPet,    SEC_MODERATOR, Console::Yes },
-        };
-
         static ChatCommandTable smartstoneTable =
         {
-            { "unlock", unlockServiceTable },
+            { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR, Console::No},
             { "",       HandleSmartStoneCommand, SEC_MODERATOR, Console::No },
         };
 
@@ -70,96 +65,80 @@ public:
         return true;
     }
 
-    static bool HandleSmartstonePet(ChatHandler* handler, PlayerIdentifier player, uint32 petId, bool add)
+    static bool HandleSmartStoneUnlockServiceCommand(ChatHandler* handler, PlayerIdentifier player, uint8 category, uint32 petId, bool add)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->GetPlayer()->SendSystemMessage("The smartstone is disabled.");
-            handler->SetSentErrorMessage(true);
+            handler->SendErrorMessage("The smartstone is disabled.");
             return false;
         }
 
+        Player* target = player.GetConnectedPlayer();
+
+        if (!target)
+        {
+            handler->SendErrorMessage("The player is not online.");
+            return false;
+        }
+
+        std::string ModuleString = ModName + GetModuleStringForCategory(category);
+
         if (add)
         {
-            if (Player* target = player.GetConnectedPlayer())
+            SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + petId : ACTION_RANGE_SUMMON_COMBAT_PET + petId, category);
+
+            if (target->GetPlayerSetting(ModuleString, petId).IsEnabled())
             {
-                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_PET + petId);
-
-                if (target->GetPlayerSetting(ModName + "#pet", petId).IsEnabled())
-                {
-                    handler->PSendSysMessage("The pet {} is already unlocked.", petData.Description);
-                    handler->SetSentErrorMessage(true);
-                    return false;
-                }
-
-                target->UpdatePlayerSetting(ModName + "#pet", petId, true);
-                handler->PSendSysMessage("The pet {} has been unlocked for {}.", petData.Description, target->GetName());
+                handler->PSendSysMessage("The pet {} is already unlocked.", petData.Description);
+                handler->SetSentErrorMessage(true);
+                return false;
             }
+
+            if (petData.Duration)
+            {
+                CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()+{})",
+                    target->GetGUID().GetCounter(), petData.CreatureId, category, petData.Duration);
+
+                SmartstoneServiceExpireInfo expireInfo;
+                expireInfo.PlayerGUID = target->GetGUID().GetCounter();
+                expireInfo.ServiceId = petData.CreatureId;
+                expireInfo.Category = category;
+                expireInfo.ActivationTime = GameTime::GetGameTime().count();
+                expireInfo.ExpirationTime = GameTime::GetGameTime().count() + petData.Duration;
+                sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
+            }
+
+            target->UpdatePlayerSetting(ModuleString, petId, true);
+            handler->PSendSysMessage("The pet {} has been unlocked for {}.", petData.Description, target->GetName());
         }
         else
         {
-            if (Player* target = player.GetConnectedPlayer())
+            SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + petId : ACTION_RANGE_SUMMON_COMBAT_PET + petId, category);
+            if (!target->GetPlayerSetting(ModuleString, petId).IsEnabled())
             {
-                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_PET + petId);
-                if (!target->GetPlayerSetting(ModName + "#pet", petId).IsEnabled())
-                {
-                    handler->PSendSysMessage("The player does not have the pet {}.", petData.Description);
-                    handler->SetSentErrorMessage(true);
-                    return false;
-                }
-
-                target->UpdatePlayerSetting(ModName + "#pet", petId, false);
-                handler->PSendSysMessage("The pet {} has been removed for {}.", petData.Description, target->GetName());
+                handler->PSendSysMessage("The player does not have the pet {}.", petData.Description);
+                handler->SetSentErrorMessage(true);
+                return false;
             }
+
+            target->UpdatePlayerSetting(ModuleString, petId, false);
+            handler->PSendSysMessage("The pet {} has been removed for {}.", petData.Description, target->GetName());
         }
 
         return true;
     }
 
-    static bool HandleSmartstoneCombatPet(ChatHandler* handler, PlayerIdentifier player, uint32 petId, bool add)
+    static std::string GetModuleStringForCategory(uint8 category)
     {
-        if (!sSmartstone->IsSmartstoneEnabled())
+        switch (category)
         {
-            handler->GetPlayer()->SendSystemMessage("The smartstone is disabled.");
-            handler->SetSentErrorMessage(true);
-            return false;
+            case SERVICE_CAT_PET:
+                return "#pet";
+            case SERVICE_CAT_COMBAT_PET:
+                return "#combatpet";
+            default:
+                return "";
         }
-
-        if (add)
-        {
-            if (Player* target = player.GetConnectedPlayer())
-            {
-                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_COMBAT_PET + petId);
-
-                if (target->GetPlayerSetting(ModName+"#combatpet", petId).IsEnabled())
-                {
-                    handler->PSendSysMessage("The pet {} is already unlocked.", petData.Description);
-                    handler->SetSentErrorMessage(true);
-                    return false;
-                }
-
-                target->UpdatePlayerSetting(ModName + "#combatpet", petId, true);
-                handler->PSendSysMessage("The pet {} has been unlocked for {}.", petData.Description, target->GetName());
-            }
-        }
-        else
-        {
-            if (Player* target = player.GetConnectedPlayer())
-            {
-                SmartstonePetData petData = sSmartstone->GetPetData(ACTION_RANGE_SUMMON_COMBAT_PET + petId);
-                if (!target->GetPlayerSetting(ModName + "#combatpet", petId).IsEnabled())
-                {
-                    handler->PSendSysMessage("The player does not have the pet {}.", petData.Description);
-                    handler->SetSentErrorMessage(true);
-                    return false;
-                }
-
-                target->UpdatePlayerSetting(ModName + "#combatpet", petId, false);
-                handler->PSendSysMessage("The pet {} has been removed for {}.", petData.Description, target->GetName());
-            }
-        }
-
-        return true;
     }
 };
 

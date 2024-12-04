@@ -4,6 +4,7 @@ CREATE TABLE `smartstone_pets` (
  `CreatureId` INT UNSIGNED NOT NULL,
  `Category` TINYINT DEFAULT 0,
  `Enabled` TINYINT DEFAULT 1,
+ `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
  `Description` TEXT,
  PRIMARY KEY(`CreatureId`)
  );
@@ -20,7 +21,7 @@ CREATE TABLE `smartstone_services` (
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, 'Request Barber Services', 1, 1),
 (2, 'Rare Beasts of Azeroth', 0, 1),
-(3, 'Echoes of the Unseen (limited duration companions)', 0, 1);
+(3, 'Limited Duration Companions', 0, 1);
 
 UPDATE `item_template` SET `name` = "Smartstone", `ScriptName` = 'item_chromiecraft_smartstone', stackable = 1, `spellid_1` = 36177, maxcount = 1 WHERE (entry = 32547);
 
