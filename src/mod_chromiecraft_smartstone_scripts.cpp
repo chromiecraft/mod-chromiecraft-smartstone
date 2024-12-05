@@ -144,6 +144,7 @@ public:
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
                 break;
             case SMARTSTONE_ACTION_LIMITED_DURATION_PETS:
+            {
                 player->PlayerTalkClass->ClearMenus();
 
                 pets = sSmartstone->CombatPets;
@@ -151,14 +152,22 @@ public:
                 if (player->GetCompanionPet())
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_COMBAT_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
+                auto& expireInfo = sSmartstone->ServiceExpireInfo[player->GetGUID().GetCounter()];
+
+                std::map<uint32, tm> expireInfoMap;
+
+                for (auto const& info : expireInfo)
+                    expireInfoMap[info.ServiceId] = Acore::Time::TimeBreakdown(info.ExpirationTime);
+
                 for (auto const& pet : pets)
                 {
                     if (player->GetPlayerSetting(ModName + "#combatpet", pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description + Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]), 0, pet.CreatureId, "", 0);
                 }
 
                 player->PlayerTalkClass->SendGossipMenu(92003, item->GetGUID());
                 break;
+            }
             case ACTION_RANGE_SUMMON_PET:
                 if (Creature* cr = player->GetCompanionPet())
                     cr->DespawnOrUnsummon();
