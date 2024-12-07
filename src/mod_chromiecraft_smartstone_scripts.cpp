@@ -105,8 +105,14 @@ public:
         switch (action)
         {
             case SMARTSTONE_ACTION_BARBERSHOP:
-                if (!sSmartstone->CanUseSmartstone(player) || sSmartstone->GetBarberDuration() == Seconds::zero())
+                if (sSmartstone->GetBarberDuration() == Seconds::zero())
                     return;
+
+                if (!sSmartstone->CanUseSmartstone(player))
+                {
+                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    return;
+                }
 
                 if (player->FindNearestCreature(NPC_BARBER, 100.0f))
                 {
