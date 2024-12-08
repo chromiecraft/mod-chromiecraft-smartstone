@@ -19,7 +19,7 @@ CREATE TABLE `smartstone_services` (
  );
 
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
-(1, 'Request Barber Services', 1, 1),
+(1, 'Request Barber Services', 2, 1),
 (2, 'Rare Beasts of Azeroth', 0, 1),
 (3, 'Limited Duration Companions', 0, 1);
 
