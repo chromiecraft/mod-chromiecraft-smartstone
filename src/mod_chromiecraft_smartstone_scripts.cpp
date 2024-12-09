@@ -68,6 +68,12 @@ public:
 
         if (action > ACTION_RANGE_SUMMON_COMBAT_PET)
         {
+            if (!sSmartstone->CanUseSmartstone(player))
+            {
+                player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                return;
+            }
+
             player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
             return;
         }
