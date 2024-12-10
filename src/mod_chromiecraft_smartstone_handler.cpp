@@ -155,12 +155,8 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
     if (pet.SubscriptionLevelRequired && subscriptionLevel >= pet.SubscriptionLevelRequired)
         return true;
 
-    std::string const& setting = pet.Category == SERVICE_CAT_COMBAT_PET ? ModName + "#combatpet" : ModName + "#pets";
-    uint32 petIndex = pet.CreatureId - (pet.Category == SERVICE_CAT_COMBAT_PET ? ACTION_RANGE_SUMMON_COMBAT_PET : ACTION_RANGE_SUMMON_PET);
+    std::string const& setting = pet.Category == SERVICE_CAT_COMBAT_PET ? ModName + "#combatpet" : ModName + "#pet";
 
-    if (player->GetPlayerSetting(setting, petIndex).IsEnabled())
-        return true;
-
-    return false;
+    return player->GetPlayerSetting(setting, pet.GetServiceId()).IsEnabled();
 }
 

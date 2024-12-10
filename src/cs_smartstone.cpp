@@ -87,6 +87,12 @@ public:
         {
             SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + petId : ACTION_RANGE_SUMMON_COMBAT_PET + petId, category);
 
+            if (!petData.CreatureId)
+            {
+                handler->SendErrorMessage("The pet {} does not exist.", petId);
+                return false;
+            }
+
             if (target->GetPlayerSetting(ModuleString, petId).IsEnabled())
             {
                 handler->PSendSysMessage("The pet {} is already unlocked.", petData.Description);

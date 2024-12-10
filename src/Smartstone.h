@@ -7,6 +7,18 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 
+enum Misc
+{
+    ACTION_RANGE_SUMMON_PET        = 80000,
+    ACTION_RANGE_SUMMON_COMBAT_PET = 90000
+};
+
+enum ServiceCategory
+{
+    SERVICE_CAT_PET        = 0,
+    SERVICE_CAT_COMBAT_PET = 1
+};
+
 struct SmartstonePetData
 {
     uint32 CreatureId;
@@ -14,6 +26,9 @@ struct SmartstonePetData
     uint32 Duration;
     uint8 Category;
     uint8 SubscriptionLevelRequired;
+
+    uint32 GetServiceId() const { return Category == SERVICE_CAT_COMBAT_PET ?
+        CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET : CreatureId - ACTION_RANGE_SUMMON_PET; }
 };
 
 struct SmartstoneService
@@ -30,18 +45,6 @@ struct SmartstoneServiceExpireInfo
     uint8 Category;
     uint32 ActivationTime;
     uint32 ExpirationTime;
-};
-
-enum Misc
-{
-    ACTION_RANGE_SUMMON_PET        = 80000,
-    ACTION_RANGE_SUMMON_COMBAT_PET = 90000
-};
-
-enum ServiceCategory
-{
-    SERVICE_CAT_PET = 0,
-    SERVICE_CAT_COMBAT_PET = 1
 };
 
 enum Settings
