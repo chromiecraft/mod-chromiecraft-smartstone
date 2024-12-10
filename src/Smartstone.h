@@ -12,9 +12,11 @@ struct SmartstonePetData
     uint32 CreatureId;
     std::string Description;
     uint32 Duration;
+    uint8 Category;
+    uint8 SubscriptionLevelRequired;
 };
 
-struct SmartstoneServices
+struct SmartstoneService
 {
     uint8 Id;
     std::string ServiceTitle;
@@ -42,7 +44,13 @@ enum ServiceCategory
     SERVICE_CAT_COMBAT_PET = 1
 };
 
+enum Settings
+{
+    SETTING_MEMBERSHIP_LEVEL
+};
+
 const std::string ModName = "mod-cc-smartstone";
+const std::string SubsModName = "acore_cms_subscriptions";
 
 class Smartstone
 {
@@ -53,7 +61,9 @@ private:
 public:
     static Smartstone* instance();
 
-    bool CanUseSmartstone(Player* player) { return !player->GetMap()->IsDungeon() && !player->GetMap()->IsBattlegroundOrArena(); }
+    bool IsPetAvailable(Player* player, SmartstonePetData service, uint8 subscriptionLevel) const;
+
+    bool CanUseSmartstone(Player* player) const { return !player->GetMap()->IsDungeon() && !player->GetMap()->IsBattlegroundOrArena(); }
 
     void SetEnabled(bool enabled) { IsEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneEnabled() { return IsEnabled; }
@@ -75,7 +85,7 @@ public:
 
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;
-    std::vector<SmartstoneServices> Services;
+    std::vector<SmartstoneService> Services;
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 };
 

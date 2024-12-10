@@ -37,13 +37,6 @@ enum Texts
     SAY_BARBER_DESPAWN         = 1
 };
 
-enum Settings
-{
-    SETTING_MEMBERSHIP_LEVEL
-};
-
-const std::string SubsModName = "acore_cms_subscriptions";
-
 class item_chromiecraft_smartstone : public ItemScript
 {
 public:
@@ -108,6 +101,9 @@ public:
         auto pets = sSmartstone->Pets;
         auto const& expireInfo = sSmartstone->ServiceExpireInfo.find(player->GetGUID().GetCounter());
 
+        uint8 subscriptionLevel = player->IsGameMaster() ? 3
+            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
         switch (action)
         {
             case SMARTSTONE_ACTION_BARBERSHOP:
@@ -149,7 +145,7 @@ public:
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName + "#pets", pet.CreatureId - ACTION_RANGE_SUMMON_PET).IsEnabled() || player->IsGameMaster())
+                    if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
 
@@ -161,9 +157,6 @@ public:
 
                 pets = sSmartstone->CombatPets;
 
-                if (player->GetCompanionPet())
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_COMBAT_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
-
                 auto& expireInfo = sSmartstone->ServiceExpireInfo[player->GetGUID().GetCounter()];
 
                 std::map<uint32, tm> expireInfoMap;
@@ -173,7 +166,7 @@ public:
 
                 for (auto const& pet : pets)
                 {
-                    if (player->GetPlayerSetting(ModName + "#combatpet", pet.CreatureId - ACTION_RANGE_SUMMON_COMBAT_PET).IsEnabled() || player->IsGameMaster())
+                    if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description + Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]), 0, pet.CreatureId, "", 0);
                 }
 

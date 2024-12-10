@@ -17,7 +17,7 @@ Smartstone* Smartstone::instance()
 void Smartstone::LoadPets()
 {
     // Load pets from the database
-    QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description, Category, Duration FROM smartstone_pets WHERE Enabled = 1");
+    QueryResult result = WorldDatabase.Query("SELECT CreatureId, Description, Category, Duration, SubscriptionLevel FROM smartstone_pets WHERE Enabled = 1");
     SmartstonePetData petData;
 
     Pets.clear();
@@ -29,7 +29,9 @@ void Smartstone::LoadPets()
             Field* fields = result->Fetch();
             petData.CreatureId = fields[0].Get<uint32>();
             petData.Description = fields[1].Get<std::string>();
+            petData.Category = fields[2].Get<uint8>();
             petData.Duration = fields[3].Get<uint32>();
+            petData.SubscriptionLevelRequired = fields[4].Get<uint8>();
             fields[2].Get<uint32>() ? CombatPets.push_back(petData) : Pets.push_back(petData);
         } while (result->NextRow());
     }
@@ -39,7 +41,7 @@ void Smartstone::LoadServices()
 {
     // Load services from the database
     QueryResult result = WorldDatabase.Query("SELECT ServiceId, Title, SubscriptionLevel FROM smartstone_services WHERE Enabled = 1");
-    SmartstoneServices serviceData;
+    SmartstoneService serviceData;
 
     Services.clear();
 
@@ -136,5 +138,29 @@ SmartstonePetData Smartstone::GetPetData(uint32 creatureId, uint8 category) cons
     }
 
     return SmartstonePetData();
+}
+
+bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 subscriptionLevel) const
+{
+    if (player->IsGameMaster())
+        return true;
+
+    if (pet.Duration)
+    {
+        SmartstoneServiceExpireInfo expireInfo = GetServiceExpireInfo(player->GetGUID().GetCounter(), pet.CreatureId, pet.Category);
+        if (expireInfo.ExpirationTime >= GameTime::GetGameTime().count())
+            return true;
+    }
+
+    if (pet.SubscriptionLevelRequired && subscriptionLevel >= pet.SubscriptionLevelRequired)
+        return true;
+
+    std::string const& setting = pet.Category == SERVICE_CAT_COMBAT_PET ? ModName + "#combatpet" : ModName + "#pets";
+    uint32 petIndex = pet.CreatureId - (pet.Category == SERVICE_CAT_COMBAT_PET ? ACTION_RANGE_SUMMON_COMBAT_PET : ACTION_RANGE_SUMMON_PET);
+
+    if (player->GetPlayerSetting(setting, petIndex).IsEnabled())
+        return true;
+
+    return false;
 }
 

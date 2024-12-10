@@ -3,9 +3,10 @@ DROP TABLE IF EXISTS `smartstone_pets`;
 CREATE TABLE `smartstone_pets` (
  `CreatureId` INT UNSIGNED NOT NULL,
  `Category` TINYINT DEFAULT 0,
- `Enabled` TINYINT DEFAULT 1,
+ `SubscriptionLevel` TINYINT DEFAULT 0, -- if set, pet will be available for free for that sub level
  `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
  `Description` TEXT,
+ `Enabled` TINYINT DEFAULT 1,
  PRIMARY KEY(`CreatureId`)
  );
  
@@ -13,7 +14,7 @@ DROP TABLE IF EXISTS `smartstone_services`;
 CREATE TABLE `smartstone_services` (
  `ServiceId` INT UNSIGNED NOT NULL,
  `Title` TEXT,
- `SubscriptionLevel` INT UNSIGNED NOT NULL,
+ `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
  `Enabled` TINYINT,
  PRIMARY KEY(`ServiceId`)
  );
@@ -126,6 +127,7 @@ SET
 @Name := "Vashj'ir Enforcer",
 @Model := 20200,
 @Scale := 0.2,
+@SubLevel := 2,
 @Description := "Summon Vashj'ir Enforcer";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
@@ -144,7 +146,8 @@ SET
 @Name := "Infernaling",
 @Model := 12817,
 @Scale := 0.2,
-@Description := "Summon Vashj'ir Enforcer";
+@SubLevel := 2,
+@Description := "Summon Infernaling";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
 INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
@@ -154,8 +157,8 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
  
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 1, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, @SubLevel, @Description);
 
 SET
 @Entry := 90001,
