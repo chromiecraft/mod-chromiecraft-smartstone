@@ -157,6 +157,19 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
 
     std::string const& setting = pet.Category == SERVICE_CAT_COMBAT_PET ? ModName + "#combatpet" : ModName + "#pet";
 
+    if (pet.Category == SERVICE_CAT_PET)
+    {
+        const std::string ModZoneDifficultyString = "mod-zone-difficulty#ct";
+
+        switch (pet.GetServiceId())
+        {
+            case 2: // Hyjal Wisp
+                return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_HYJAL).IsEnabled();
+            case 3: // Serpentshrine Waterspawn
+                return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SSC).IsEnabled();
+        }
+    }
+
     return player->GetPlayerSetting(setting, pet.GetServiceId()).IsEnabled();
 }
 

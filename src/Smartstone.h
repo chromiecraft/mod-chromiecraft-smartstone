@@ -10,7 +10,13 @@
 enum Misc
 {
     ACTION_RANGE_SUMMON_PET        = 80000,
-    ACTION_RANGE_SUMMON_COMBAT_PET = 90000
+    ACTION_RANGE_SUMMON_COMBAT_PET = 90000,
+
+    // Completed tiers settings
+    SETTING_BLACK_TEMPLE = 0,
+    SETTING_ZULAMAN      = 1,
+    SETTING_SSC          = 2,
+    SETTING_HYJAL        = 3
 };
 
 enum ServiceCategory
