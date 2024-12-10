@@ -138,8 +138,8 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
  
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 1, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80005,
