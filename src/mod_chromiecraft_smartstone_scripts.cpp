@@ -99,7 +99,6 @@ public:
     void ProcessGossipAction(Player* player, uint32 action, Item* item)
     {
         auto pets = sSmartstone->Pets;
-        auto const& expireInfo = sSmartstone->ServiceExpireInfo.find(player->GetGUID().GetCounter());
 
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
