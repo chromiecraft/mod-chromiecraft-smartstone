@@ -84,7 +84,7 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
  
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 1, @Description);
+(@Entry, 0, @Description);
 
 SET
 @Entry := 80002,

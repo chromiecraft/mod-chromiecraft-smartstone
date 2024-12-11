@@ -7,6 +7,7 @@ SET
 @Gossip := 92004,
 @AIName := "SmartAI",
 @Duration := 120,
+@Enabled := 0,
 @Description := "Winterveil Helper (7 days)";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
@@ -25,7 +26,7 @@ INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
  
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Enabled`, `Duration`, `Description`) VALUES
-(@Entry, 1, 1, @Duration, @Description);
+(@Entry, 1, @Enabled, @Duration, @Description);
 
 DELETE FROM `creature_text` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Language`, `Probability`, `Emote`, `TextRange`, `comment`) VALUES
