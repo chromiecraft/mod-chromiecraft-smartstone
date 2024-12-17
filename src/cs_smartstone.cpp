@@ -102,15 +102,21 @@ public:
 
             if (petData.Duration)
             {
-                CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()+{})",
-                    target->GetGUID().GetCounter(), petData.CreatureId, category, petData.Duration);
+                uint32 expireDate = 0;
+                if (petData.Duration > 31556926)
+                    expireDate = petData.Duration;
+                else
+                    expireDate = GameTime::GetGameTime().count() + petData.Duration;
+
+                CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
+                    target->GetGUID().GetCounter(), petData.CreatureId, category, expireDate);
 
                 SmartstoneServiceExpireInfo expireInfo;
                 expireInfo.PlayerGUID = target->GetGUID().GetCounter();
                 expireInfo.ServiceId = petData.CreatureId;
                 expireInfo.Category = category;
                 expireInfo.ActivationTime = GameTime::GetGameTime().count();
-                expireInfo.ExpirationTime = GameTime::GetGameTime().count() + petData.Duration;
+                expireInfo.ExpirationTime = expireDate;
                 sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
             }
 

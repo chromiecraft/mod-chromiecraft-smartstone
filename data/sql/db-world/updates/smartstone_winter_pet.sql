@@ -6,7 +6,7 @@ SET
 @Scale := 1,
 @Gossip := 92004,
 @AIName := "SmartAI",
-@Duration := 120,
+@Duration := 1735700400,
 @Enabled := 0,
 @Description := "Winterveil Helper (7 days)";
 
