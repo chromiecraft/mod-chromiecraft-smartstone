@@ -168,6 +168,9 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
             case 3: // Serpentshrine Waterspawn
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SSC).IsEnabled();
         }
+    } else
+    {
+        return true;
     }
 
     return player->GetPlayerSetting(setting, pet.GetServiceId()).IsEnabled();
