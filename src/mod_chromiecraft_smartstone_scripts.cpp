@@ -166,8 +166,13 @@ public:
 
                 for (auto const& pet : pets)
                 {
+                    std::string expireMsg = "";
+
+                    if (expireInfoMap[pet.CreatureId].tm_year != 1970)
+                        expireMsg = Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]);
+
                     if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description + Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]), 0, pet.CreatureId, "", 0);
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description + expireMsg, 0, pet.CreatureId, "", 0);
                 }
 
                 player->PlayerTalkClass->SendGossipMenu(92003, item->GetGUID());
