@@ -7,7 +7,7 @@ SET
 @Gossip := 92004,
 @AIName := "SmartAI",
 @Duration := 1735700400,
-@Enabled := 1,
+@Enabled := 0,
 @Description := "Winterveil Helper";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
