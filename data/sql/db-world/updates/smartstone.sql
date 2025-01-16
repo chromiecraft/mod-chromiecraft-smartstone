@@ -19,6 +19,7 @@ CREATE TABLE `smartstone_services` (
  PRIMARY KEY(`ServiceId`)
  );
 
+DELETE FROM `smartstone_services`;
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, 'Request Barber Services', 2, 1),
 (2, 'Rare Beasts of Azeroth', 0, 1),
@@ -71,10 +72,10 @@ UPDATE `spell_dbc`SET `EffectMiscValueB_1` = 67 WHERE `ID` = 90001;
 
 SET
 @Entry := 80001,
-@Name := "Amani'shi Bruteling",
+@Name := "Amani'shi Groundbreaker",
 @Model := 22353,
 @Scale := 0.30,
-@Description := "Summon Amani'shi Bruteling";
+@Description := "Summon Amani'shi Groundbreaker";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
 INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
@@ -85,7 +86,7 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
  
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 0, @Description);
+(@Entry, 1, @Description);
 
 SET
 @Entry := 80002,
@@ -160,6 +161,31 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
  
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
+
+SET
+@Entry := 80006,
+@Name := "Thunderwing",
+@Model := 22255,
+@Scale := 0.40,
+@Description := "Summon Thunderwing";
+
+DELETE FROM `creature_template` WHERE `entry` = @Entry;
+INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
+(@Entry, @Name, NULL, NULL, 0, 1, 1, 2, 35, 0, @Scale, 0, 0, 2000, 0, 1, 0, 7, 0, 0, 0, 0, '', 0, 1, 0, 0, 1, 0, 0, '');
+
+DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
+INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
+(@Entry, 0, @Model, @Scale, 1, 0);
+ 
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
+(@Entry, 1, @Description);
+
+-- Thunderwing AI
+UPDATE `creature_template` SET `AIName` = 'SmartAI' WHERE `entry` = 80006;
+
+DELETE FROM `smart_scripts` WHERE (`entryorguid` = 80006) AND (`source_type` = 0);
+INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
+(80006, 0, 0, 0, 1, 0, 100, 1, 1, 1, 0, 0, 0, 0, 11, 37964, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Thunderwing - Out of Combat - Cast \'Call Lightning (Cosmetic)\' (No Repeat)');
 
 SET
 @Entry := 90001,
