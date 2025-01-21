@@ -167,6 +167,8 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_HYJAL).IsEnabled();
             case 3: // Serpentshrine Waterspawn
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SSC).IsEnabled();
+            case 6: // Thunderwing (Zul'Aman)
+                return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_ZULAMAN).IsEnabled();
         }
     } else
     {
