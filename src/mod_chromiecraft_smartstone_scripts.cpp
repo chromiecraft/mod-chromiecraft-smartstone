@@ -24,14 +24,6 @@ enum Spells
     SPELL_FLYING_MACHINE = 44153
 };
 
-enum StoneActions
-{
-    SMARTSTONE_ACTION_BARBERSHOP             = 1,
-    SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION  = 2,
-    SMARTSTONE_ACTION_LIMITED_DURATION_PETS  = 3,
-    SMARTSTONE_ACTION_CHAR_SETTINGS          = 4
-};
-
 enum Texts
 {
     SAY_BARBER_SPAWN           = 0,
@@ -52,6 +44,18 @@ public:
         {
             player->PlayerTalkClass->ClearMenus();
             player->PlayerTalkClass->SendCloseGossip();
+        }
+
+        if (action > MAX_SMARTSTONE_ACTIONS && action < ACTION_RANGE_SUMMON_PET)
+        {
+            player->SetDisplayId(action);
+            sSmartstone->SetCurrentCostume(player, action);
+
+            player->m_Events.AddEventAtOffset([player] {
+                if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
+                    player->SetDisplayId(player->GetNativeDisplayId());
+            }, Minutes(sSmartstone->GetCostumeDuration(action)));
+            return;
         }
 
         if (action > ACTION_RANGE_SUMMON_PET && action < ACTION_RANGE_SUMMON_COMBAT_PET)
@@ -100,6 +104,7 @@ public:
     void ProcessGossipAction(Player* player, uint32 action, Item* item)
     {
         auto pets = sSmartstone->Pets;
+        auto costumes = sSmartstone->Costumes;
 
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
@@ -178,6 +183,17 @@ public:
                 player->PlayerTalkClass->SendGossipMenu(92003, item->GetGUID());
                 break;
             }
+            case SMARTSTONE_ACTION_COSTUMES:
+                player->PlayerTalkClass->ClearMenus();
+
+                for (auto const& costume : costumes)
+                {
+                    if (sSmartstone->IsServiceAvailable(player, "#costumes", SMARTSTONE_ACTION_COSTUMES))
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.DisplayId, "", 0);
+                }
+
+                player->PlayerTalkClass->SendGossipMenu(92005, item->GetGUID());
+                break;
             case ACTION_RANGE_SUMMON_PET:
                 if (Creature* cr = player->GetCompanionPet())
                     cr->DespawnOrUnsummon();
@@ -207,6 +223,7 @@ public:
         {
             sSmartstone->LoadServices();
             sSmartstone->LoadPets();
+            sSmartstone->LoadCostumes();
             sSmartstone->LoadServiceExpirationInfo();
         }
     }

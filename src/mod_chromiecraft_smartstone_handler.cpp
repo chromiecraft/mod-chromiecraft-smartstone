@@ -37,6 +37,26 @@ void Smartstone::LoadPets()
     }
 }
 
+void Smartstone::LoadCostumes()
+{
+    // Load costumes from the database
+    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Duration, Description, SubscriptionLevel FROM smartstone_costumes WHERE Enabled = 1");
+    SmartstoneCostumeData costumeData;
+    Costumes.clear();
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            costumeData.DisplayId = fields[0].Get<uint32>();
+            costumeData.Duration = fields[1].Get<uint32>();
+            costumeData.Description = fields[2].Get<std::string>();
+            costumeData.SubscriptionLevelRequired = fields[3].Get<uint8>();
+            Costumes.push_back(costumeData);
+        } while (result->NextRow());
+    }
+}
+
 void Smartstone::LoadServices()
 {
     // Load services from the database
@@ -140,6 +160,16 @@ SmartstonePetData Smartstone::GetPetData(uint32 creatureId, uint8 category) cons
     return SmartstonePetData();
 }
 
+SmartstoneCostumeData Smartstone::GetCostumeData(uint32 displayId) const
+{
+    for (auto const& costume : sSmartstone->Costumes)
+    {
+        if (costume.DisplayId == displayId)
+            return costume;
+    }
+    return SmartstoneCostumeData();
+}
+
 bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 subscriptionLevel) const
 {
     if (player->IsGameMaster())
@@ -176,5 +206,13 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
     }
 
     return player->GetPlayerSetting(setting, pet.GetServiceId()).IsEnabled();
+}
+
+bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const
+{
+    if (player->IsGameMaster())
+        return true;
+
+    return player->GetPlayerSetting(ModName + service, serviceId).IsEnabled();
 }
 
