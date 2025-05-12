@@ -245,6 +245,67 @@ INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `De
 (@Entry, 1, @SubLevel, @Description);
 
 SET
+@Entry := 80009,
+@Name := "Sunblade Mini Protector",
+@Model := 23240,
+@Scale := 0.10,
+@SubLevel := 2,
+@Description := "Summon Sunblade Mini Protector";
+
+DELETE FROM `creature_template` WHERE `entry` = @Entry;
+INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
+(@Entry, @Name, NULL, NULL, 0, 1, 1, 2, 35, 0, @Scale, 0, 0, 2000, 0, 1, 0, 7, 0, 0, 0, 0, '', 0, 1, 0, 0, 1, 0, 0, '');
+
+DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
+INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
+(@Entry, 0, @Model, @Scale, 1, 0);
+ 
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, @SubLevel, @Description);
+
+SET
+@Entry := 80010,
+@Name := "Alythessa",
+@Model := 23334,
+@Scale := 0.20,
+@SubLevel := 0,
+@Description := "Summon Alythessa";
+
+DELETE FROM `creature_template` WHERE `entry` = @Entry;
+INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
+(@Entry, @Name, NULL, NULL, 0, 1, 1, 2, 35, 0, @Scale, 0, 0, 2000, 0, 1, 0, 7, 0, 0, 0, 0, '', 0, 1, 0, 0, 1, 0, 0, '');
+
+DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
+INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
+(@Entry, 0, @Model, @Scale, 1, 0);
+ 
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, @SubLevel, @Description);
+
+DELETE FROM `creature_template_addon` WHERE `entry` = @ENTRY;
+INSERT INTO `creature_template_addon` (`entry`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `visibilityDistanceType`, `auras`) VALUES
+(@ENTRY, 0, 0, 0, 0, 0, 0, '45457');
+
+SET
+@Entry := 80011,
+@Name := "Scorchling of Azzinoth",
+@Model := 21321,
+@Scale := 0.40,
+@SubLevel := 0,
+@Description := "Summon Scorchling of Azzinoth";
+
+DELETE FROM `creature_template` WHERE `entry` = @Entry;
+INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `scale`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`, `unit_class`, `unit_flags`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `AIName`, `MovementType`, `HoverHeight`, `RacialLeader`, `movementId`, `RegenHealth`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES
+(@Entry, @Name, NULL, NULL, 0, 1, 1, 2, 35, 0, @Scale, 0, 0, 2000, 0, 1, 0, 7, 0, 0, 0, 0, '', 0, 1, 0, 0, 1, 0, 0, '');
+
+DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
+INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
+(@Entry, 0, @Model, @Scale, 1, 0);
+ 
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, @SubLevel, @Description);
+
+SET
 @Entry := 90001,
 @Name := "Winterveil Helper",
 @Model := 19342,

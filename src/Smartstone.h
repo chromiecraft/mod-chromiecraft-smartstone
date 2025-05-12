@@ -17,6 +17,7 @@ enum Misc
     SETTING_ZULAMAN      = 1,
     SETTING_SSC          = 2,
     SETTING_HYJAL        = 3,
+    SETTING_SWP          = 4,
 
     SETTING_CURR_COSTUME = 0
 };

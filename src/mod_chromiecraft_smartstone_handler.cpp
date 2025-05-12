@@ -199,6 +199,10 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SSC).IsEnabled();
             case 6: // Thunderwing (Zul'Aman)
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_ZULAMAN).IsEnabled();
+            case 10: // Alythessa
+                return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SWP).IsEnabled();
+            case 11: // Scorchling of Azzinoth
+                return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_BLACK_TEMPLE).IsEnabled();
         }
     } else
     {
