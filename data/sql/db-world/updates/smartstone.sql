@@ -29,6 +29,17 @@ CREATE TABLE `smartstone_services` (
  `Enabled` TINYINT,
  PRIMARY KEY(`ServiceId`)
  );
+ 
+DROP TABLE IF EXISTS `smartstone_categories`;
+CREATE TABLE `smartstone_categories` (
+ `Id` INT UNSIGNED NOT NULL,
+ `CategoryType` INT UNSIGNED NOT NULL,
+ `Title` TEXT,
+ `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ `NPCTextId` INT DEFAULT 0,
+ `Enabled` TINYINT,
+ PRIMARY KEY(`Id`)
+ );
 
 DELETE FROM `smartstone_services`;
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
@@ -36,6 +47,12 @@ INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `E
 (2, 'Rare Beasts of Azeroth', 0, 1),
 (3, 'Limited Duration Companions', 0, 1),
 (5, 'Costumes', 0, 1);
+
+INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
+(1,0,'Azeroth Villains',0,92006,1);
+
+INSERT INTO `smartstone_costumes` (`DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
+(2029,1,2,0,'Edwin VanCleef',1);
 
 UPDATE `item_template` SET `name` = "Smartstone", `ScriptName` = 'item_chromiecraft_smartstone', stackable = 1, `spellid_1` = 36177, maxcount = 1 WHERE (entry = 32547);
 UPDATE `item_template_locale` SET `Name` = "Smartstone" WHERE (ID = 32547);
@@ -53,14 +70,15 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (80000, 0, 0, 'Looking for a change, ay? I got just what you need! Come, take a seat.', 12, 0, 'Smartstone - Barber - Spawn'),
 (80000, 1, 0, 'Time is up, pal! Off we go!', 12, 0, 'Smartstone - Barber - Despawn');
 
-DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005);
+DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006);
 INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike. \n\nYet, its magic is not without its quirks; a flicker of its light might summon a mischievous imp or lead an adventurer to an unexpected adventure. \n\nThe Smartstone, ever playful and wise, stands ready to assist those who seek its guidance.'),
 (92001, 'Hey there, pal! Welcome to the finest chop shop in Azeroth! Need a trim, a shave, or a whole new look? We’ve got styles to make your enemies quake in fear—or at least wonder where you got such a snazzy do! Sit down, relax, and let’s get you looking spectacular!'),
 (92002, 'Scattered across Azeroth and beyond, these elusive creatures embody the essence of their environments. From spectral wolves prowling shadowed forests to fiery phoenixes soaring above molten peaks, each rare pet is a testament to the untamed beauty and danger of the world. Adventurers who seek them must be cunning, patient, and attuned to the whispers of the wild, for these beasts appear only to those who prove themselves worthy.'),
 (92003, 'Whispered through the ages, these rare companions hail from Azeroth’s most elusive corners—be it deep jungles, ancient ruins, or shadowed realms. Each carries a spark of their origin’s mystery, offering unique abilities to amuse and amaze. But beware, their bond with mortals is fleeting, and their return to legend is inevitable. Claim them while their tale lingers!'),
 (92004, 'Hey there, chum! Winter Veil enthusiast and purveyor of holiday cheer—Goblin-style at your service, if ya catch my drift. Ya look like someone who could use a little festive mischief. What d’ya say? Care to join ol’ Snizzlefizz for some presents, punch, and maybe a harmless boom or two? Ho, ho... ha-HA!"'),
-(92005, 'Bound within this stone lies the magic of transformation, a power to reshape one’s form into that of legends and beasts alike. With but a touch, the enchantment takes hold, weaving illusion and essence together, granting the guise of heroes, monsters, and all manner of fabled beings. Whether to inspire awe or sow fear, the choice is yours — the veil of reality is but a whisper away');
+(92005, 'Bound within this stone lies the magic of transformation, a power to reshape one’s form into that of legends and beasts alike. With but a touch, the enchantment takes hold, weaving illusion and essence together, granting the guise of heroes, monsters, and all manner of fabled beings. Whether to inspire awe or sow fear, the choice is yours — the veil of reality is but a whisper away'),
+(92006, 'The line between myth and mortal blurs. This relic bends that line, allowing you to wear the shape of Azeroth’s darkest names. Appearances deceive — let yours terrify.');
 
 DELETE FROM `gossip_menu` WHERE `MenuID` IN (92000, 92001, 92004);
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES

@@ -40,7 +40,7 @@ void Smartstone::LoadPets()
 void Smartstone::LoadCostumes()
 {
     // Load costumes from the database
-    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Duration, Description, SubscriptionLevel FROM smartstone_costumes WHERE Enabled = 1");
+    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Category, SubscriptionLevel, Duration, Description FROM smartstone_costumes WHERE Enabled = 1");
     SmartstoneCostumeData costumeData;
     Costumes.clear();
     if (result)
@@ -49,10 +49,10 @@ void Smartstone::LoadCostumes()
         {
             Field* fields = result->Fetch();
             costumeData.DisplayId = fields[0].Get<uint32>();
-            costumeData.Duration = fields[1].Get<uint32>();
-            costumeData.Description = fields[2].Get<std::string>();
-            costumeData.SubscriptionLevelRequired = fields[3].Get<uint8>();
-            Costumes.push_back(costumeData);
+            costumeData.SubscriptionLevelRequired = fields[2].Get<uint8>();
+            costumeData.Duration = fields[3].Get<uint32>();
+            costumeData.Description = fields[4].Get<std::string>();
+            Costumes[fields[1].Get<uint8>()].push_back(costumeData);
         } while (result->NextRow());
     }
 }
@@ -95,6 +95,27 @@ void Smartstone::LoadServiceExpirationInfo()
             expireInfo.ActivationTime = fields[3].Get<uint32>();
             expireInfo.ExpirationTime = fields[4].Get<uint32>();
             ServiceExpireInfo[expireInfo.PlayerGUID].push_back(expireInfo);
+        } while (result->NextRow());
+    }
+}
+
+void Smartstone::LoadCategories()
+{
+    // Load categories from the database
+    QueryResult result = WorldDatabase.Query("SELECT CategoryType, Title, SubscriptionLevel, NpcTextId, Id FROM smartstone_categories WHERE Enabled = 1");
+    SmartstoneCategoryData categoryData;
+    Categories.clear();
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            categoryData.Type = fields[0].Get<uint8>();
+            categoryData.Title = fields[1].Get<std::string>();
+            categoryData.SubscriptionLevelRequired = fields[2].Get<uint8>();
+            categoryData.NpcTextId = fields[3].Get<uint32>();
+            categoryData.Id = fields[4].Get<uint32>();
+            Categories[fields[0].Get<uint32>()].push_back(categoryData);
         } while (result->NextRow());
     }
 }
@@ -162,16 +183,21 @@ SmartstonePetData Smartstone::GetPetData(uint32 creatureId, uint8 category) cons
 
 SmartstoneCostumeData Smartstone::GetCostumeData(uint32 displayId) const
 {
-    for (auto const& costume : sSmartstone->Costumes)
+    for (auto const& category : sSmartstone->Categories[CATEGORY_COSTUMES])
     {
-        if (costume.DisplayId == displayId)
-            return costume;
+        for (auto const& costume : sSmartstone->Costumes[category.Id])
+        {
+            if (costume.DisplayId == displayId)
+                return costume;
+        }
     }
+
     return SmartstoneCostumeData();
 }
 
 Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 displayId) const
 {
+    // If the costume has a duration override set in database, use it instead
     if (uint32 duration = GetCostumeData(displayId).Duration)
         return Minutes(duration);
 
@@ -248,5 +274,15 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
         return true;
 
     return player->GetPlayerSetting(ModName + service, serviceId).IsEnabled();
+}
+
+uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
+{
+    for (auto const& categoryData : sSmartstone->Categories[type])
+    {
+        if (categoryData.Id == category)
+            return categoryData.NpcTextId;
+    }
+    return 0;
 }
 

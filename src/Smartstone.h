@@ -9,6 +9,7 @@
 
 enum Misc
 {
+    ACTION_RANGE_COSTUMES          = 10000,
     ACTION_RANGE_SUMMON_PET        = 80000,
     ACTION_RANGE_SUMMON_COMBAT_PET = 90000,
 
@@ -34,6 +35,10 @@ enum StoneActions
 
 enum ServiceCategory
 {
+    // catalogue categories
+    CATEGORY_COSTUMES      = 0,
+
+    // services
     SERVICE_CAT_PET        = 0,
     SERVICE_CAT_COMBAT_PET = 1
 };
@@ -63,6 +68,15 @@ struct SmartstoneService
     uint8 Id;
     std::string ServiceTitle;
     uint8 SubscriptionLevelRequired;
+};
+
+struct SmartstoneCategoryData
+{
+    uint32 Id;
+    uint8 Type;
+    std::string Title;
+    uint8 SubscriptionLevelRequired;
+    uint32 NpcTextId;
 };
 
 struct SmartstoneServiceExpireInfo
@@ -107,12 +121,14 @@ public:
     void SetCurrentCostume(Player* player, uint32 costumeId) { player->UpdatePlayerSetting(ModName + "#costume", SETTING_CURR_COSTUME, costumeId); }
     [[nodiscard]] uint32 GetCurrentCostume(Player* player) { return player->GetPlayerSetting(ModName + "#costume", SETTING_CURR_COSTUME).value; }
 
+    [[nodiscard]] uint32 GetNPCTextForCategory(uint32 type, uint8 category) const;
     [[nodiscard]] bool IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const;
 
     void LoadServices();
     void LoadPets();
     void LoadCostumes();
     void LoadServiceExpirationInfo();
+    void LoadCategories();
 
     void ProcessExpiredServices(Player* player);
 
@@ -125,7 +141,8 @@ public:
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;
     std::vector<SmartstoneService> Services;
-    std::vector<SmartstoneCostumeData> Costumes;
+    std::unordered_map<uint32, std::vector<SmartstoneCostumeData>> Costumes;
+    std::unordered_map<uint32, std::vector<SmartstoneCategoryData>> Categories;
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 };
 

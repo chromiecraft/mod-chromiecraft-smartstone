@@ -40,6 +40,26 @@ public:
     {
         sSmartstone->ProcessExpiredServices(player);
 
+        uint8 subscriptionLevel = player->IsGameMaster() ? 3
+            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
+        if (action > ACTION_RANGE_COSTUMES && action < ACTION_RANGE_SUMMON_PET)
+        {
+            player->PlayerTalkClass->ClearMenus();
+
+            for (auto const& costume : sSmartstone->Costumes[action - ACTION_RANGE_COSTUMES])
+            {
+                LOG_ERROR("sql.sql", "Costume: {} - Subscription Level: {}", costume.DisplayId, costume.SubscriptionLevelRequired);
+
+                if (sSmartstone->IsServiceAvailable(player, "#costumes", action - ACTION_RANGE_COSTUMES)
+                    || subscriptionLevel >= costume.SubscriptionLevelRequired)
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.DisplayId, "", 0);
+            }
+
+            player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, action - ACTION_RANGE_COSTUMES), item->GetGUID());
+            return;
+        }
+
         if (action != SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION)
         {
             player->PlayerTalkClass->ClearMenus();
@@ -80,7 +100,7 @@ public:
             return;
         }
 
-        ProcessGossipAction(player, action, item);
+        ProcessGossipAction(player, action, item, subscriptionLevel);
     }
 
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
@@ -105,13 +125,10 @@ public:
         return false;
     }
 
-    void ProcessGossipAction(Player* player, uint32 action, Item* item)
+    void ProcessGossipAction(Player* player, uint32 action, Item* item, uint8 subscriptionLevel)
     {
         auto pets = sSmartstone->Pets;
         auto costumes = sSmartstone->Costumes;
-
-        uint8 subscriptionLevel = player->IsGameMaster() ? 3
-            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
         switch (action)
         {
@@ -190,11 +207,8 @@ public:
             case SMARTSTONE_ACTION_COSTUMES:
                 player->PlayerTalkClass->ClearMenus();
 
-                for (auto const& costume : costumes)
-                {
-                    if (sSmartstone->IsServiceAvailable(player, "#costumes", SMARTSTONE_ACTION_COSTUMES))
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.DisplayId, "", 0);
-                }
+                for (auto const& category : sSmartstone->Categories[CATEGORY_COSTUMES])
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id + 10000, 0, category.Title, 0, category.Id + 10000, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92005, item->GetGUID());
                 break;
@@ -229,6 +243,7 @@ public:
             sSmartstone->LoadPets();
             sSmartstone->LoadCostumes();
             sSmartstone->LoadServiceExpirationInfo();
+            sSmartstone->LoadCategories();
         }
     }
 };
