@@ -170,6 +170,36 @@ SmartstoneCostumeData Smartstone::GetCostumeData(uint32 displayId) const
     return SmartstoneCostumeData();
 }
 
+Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 displayId) const
+{
+    if (uint32 duration = GetCostumeData(displayId).Duration)
+        return Minutes(duration);
+
+    Milliseconds duration = 30min;
+
+    uint8 membershipLevel = player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+    switch (membershipLevel)
+    {
+        case 0:
+            duration = 15min;
+            break;
+        case 1:
+            duration = 30min;
+            break;
+        case 2:
+            duration = 1h;
+            break;
+        case 3:
+            duration = 0s;
+            break;
+        default:
+            break;
+
+    }
+
+    return duration;
+}
+
 bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 subscriptionLevel) const
 {
     if (player->IsGameMaster())

@@ -51,10 +51,14 @@ public:
             player->SetDisplayId(action);
             sSmartstone->SetCurrentCostume(player, action);
 
-            player->m_Events.AddEventAtOffset([player] {
-                if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
-                    player->SetDisplayId(player->GetNativeDisplayId());
-            }, Minutes(sSmartstone->GetCostumeDuration(action)));
+            Milliseconds duration = sSmartstone->GetCostumeDuration(player, action);
+            if (duration > 0s)
+            {
+                player->m_Events.AddEventAtOffset([player] {
+                    if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
+                        player->SetDisplayId(player->GetNativeDisplayId());
+                }, duration);
+            }
             return;
         }
 

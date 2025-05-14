@@ -116,7 +116,7 @@ public:
 
     void ProcessExpiredServices(Player* player);
 
-    [[nodiscard]] uint32 GetCostumeDuration(uint32 displayId) const { return GetCostumeData(displayId).Duration; }
+    [[nodiscard]] Milliseconds GetCostumeDuration(Player* player, uint32 displayId) const;
 
     [[nodiscard]] SmartstoneServiceExpireInfo GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 category) const;
     [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 category = SERVICE_CAT_PET) const;
