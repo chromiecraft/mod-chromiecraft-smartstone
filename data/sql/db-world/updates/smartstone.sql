@@ -51,6 +51,7 @@ INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `E
 INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0,'Azeroth Villains',0,92006,1);
 
+DELETE FROM `smartstone_costumes`;
 INSERT INTO `smartstone_costumes` (`DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
 (2029,1,2,0,'Edwin VanCleef',1);
 
@@ -100,10 +101,6 @@ INSERT INTO `spell_dbc` (`ID`, `Category`, `DispelType`, `Mechanic`, `Attributes
 (90001,0,0,0,262416,0,0,536870912,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,31,0,0,0,101,0,0,0,0,21,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,28,0,0,1,0,0,0,0,0,0,0,0,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,0,0,190011,0,0,41,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,458,0,2808,0,0,'Summon Combat Pet','','','','','','','','','','','','','','','',16712190,'','','','','','','','','','','','','','','','',16712190,'Right Click to summon and dismiss your Exotic Pet.','','','','','','','','','','','','','','','',16712190,'','','','','','','','','','','','','','','','',16712190,0,133,1500,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 UPDATE `spell_dbc` SET `EffectMiscValueB_1` = 67 WHERE `ID` = 90001;
-
-DELETE FROM `smartstone_costumes`;
-INSERT INTO `smartstone_costumes` (`DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
-(2029, 0, 2, 1, 'Edwin VanCleef', 1); 
 
 SET
 @Entry := 80001,
