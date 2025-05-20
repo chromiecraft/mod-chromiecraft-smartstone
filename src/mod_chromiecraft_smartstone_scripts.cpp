@@ -49,8 +49,6 @@ public:
 
             for (auto const& costume : sSmartstone->Costumes[action - ACTION_RANGE_COSTUMES])
             {
-                LOG_ERROR("sql.sql", "Costume: {} - Subscription Level: {}", costume.DisplayId, costume.SubscriptionLevelRequired);
-
                 if (sSmartstone->IsServiceAvailable(player, "#costumes", action - ACTION_RANGE_COSTUMES)
                     || subscriptionLevel >= costume.SubscriptionLevelRequired)
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.DisplayId, "", 0);
@@ -68,8 +66,21 @@ public:
 
         if (action > MAX_SMARTSTONE_ACTIONS && action < ACTION_RANGE_SUMMON_PET)
         {
+            if (player->HasSpellCooldown(90002))
+            {
+                uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
+                uint32 seconds = remaining / 1000;
+                uint32 minutes = seconds / 60;
+                seconds = seconds % 60;
+                std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
+                player->SendSystemMessage(message);
+                return;
+            }
+
             player->SetDisplayId(action);
             sSmartstone->SetCurrentCostume(player, action);
+
+            player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
 
             Milliseconds duration = sSmartstone->GetCostumeDuration(player, action);
             if (duration > 0s)
