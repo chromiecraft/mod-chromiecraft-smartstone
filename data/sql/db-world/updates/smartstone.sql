@@ -49,7 +49,7 @@ INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `E
 (5, 'Costumes', 0, 1);
 
 INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
-(1,0,'Azeroth Villains',0,92006,1);
+(1,0,'Azeroth Villains',0,92006,0);
 
 DELETE FROM `smartstone_costumes`;
 INSERT INTO `smartstone_costumes` (`DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
