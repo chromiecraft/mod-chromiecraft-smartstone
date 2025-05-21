@@ -40,7 +40,7 @@ void Smartstone::LoadPets()
 void Smartstone::LoadCostumes()
 {
     // Load costumes from the database
-    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Category, SubscriptionLevel, Duration, Description FROM smartstone_costumes WHERE Enabled = 1");
+    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Category, SubscriptionLevel, Duration, Description, Id FROM smartstone_costumes WHERE Enabled = 1");
     SmartstoneCostumeData costumeData;
     Costumes.clear();
     if (result)
@@ -52,6 +52,7 @@ void Smartstone::LoadCostumes()
             costumeData.SubscriptionLevelRequired = fields[2].Get<uint8>();
             costumeData.Duration = fields[3].Get<uint32>();
             costumeData.Description = fields[4].Get<std::string>();
+            costumeData.Id = fields[5].Get<uint32>();
             Costumes[fields[1].Get<uint8>()].push_back(costumeData);
         } while (result->NextRow());
     }
@@ -181,13 +182,13 @@ SmartstonePetData Smartstone::GetPetData(uint32 creatureId, uint8 category) cons
     return SmartstonePetData();
 }
 
-SmartstoneCostumeData Smartstone::GetCostumeData(uint32 displayId) const
+SmartstoneCostumeData Smartstone::GetCostumeData(uint32 id) const
 {
     for (auto const& category : sSmartstone->Categories[CATEGORY_COSTUMES])
     {
         for (auto const& costume : sSmartstone->Costumes[category.Id])
         {
-            if (costume.DisplayId == displayId)
+            if (costume.Id == id)
                 return costume;
         }
     }
@@ -195,11 +196,11 @@ SmartstoneCostumeData Smartstone::GetCostumeData(uint32 displayId) const
     return SmartstoneCostumeData();
 }
 
-Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 displayId) const
+Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 costumeDuration) const
 {
     // If the costume has a duration override set in database, use it instead
-    if (uint32 duration = GetCostumeData(displayId).Duration)
-        return Minutes(duration);
+    if (costumeDuration)
+        return Minutes(costumeDuration);
 
     Milliseconds duration = 30min;
 
@@ -272,7 +273,7 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
 {
     if (player->IsGameMaster())
         return true;
-
+    LOG_ERROR("sql.sql", "service {}", serviceId);
     return player->GetPlayerSetting(ModName + service, serviceId).IsEnabled();
 }
 

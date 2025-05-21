@@ -12,13 +12,14 @@ CREATE TABLE `smartstone_pets` (
  
 DROP TABLE IF EXISTS `smartstone_costumes`;
 CREATE TABLE `smartstone_costumes` (
+ `Id` INT UNSIGNED NOT NULL,
  `DisplayId` INT UNSIGNED NOT NULL,
  `Category` TINYINT DEFAULT 0,
  `SubscriptionLevel` TINYINT DEFAULT 0,
  `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
  `Description` TEXT,
  `Enabled` TINYINT DEFAULT 1,
- PRIMARY KEY(`DisplayId`)
+ PRIMARY KEY(`Id`)
  );
  
 DROP TABLE IF EXISTS `smartstone_services`;
@@ -49,12 +50,12 @@ INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `E
 (5, 'Costumes', 0, 1);
 
 INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
-(1,0,'Azeroth Villains',0,92006,0);
+(1,0,'Azeroth Villains',0,92006,1);
 
 DELETE FROM `smartstone_costumes`;
-INSERT INTO `smartstone_costumes` (`DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
-(2029,1,2,0,'Edwin VanCleef',1),
-(2043,1,2,0,'High Inquisition Whitemane', 1);
+INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
+(20001, 2029,1,2,0,'Edwin VanCleef',1),
+(20002, 2043,1,2,0,'High Inquisition Whitemane', 1);
 
 UPDATE `item_template` SET `name` = "Smartstone", `ScriptName` = 'item_chromiecraft_smartstone', stackable = 1, `spellid_1` = 36177, maxcount = 1 WHERE (entry = 32547);
 UPDATE `item_template_locale` SET `Name` = "Smartstone" WHERE (ID = 32547);

@@ -9,9 +9,10 @@
 
 enum Misc
 {
-    ACTION_RANGE_COSTUMES          = 10000,
-    ACTION_RANGE_SUMMON_PET        = 80000,
-    ACTION_RANGE_SUMMON_COMBAT_PET = 90000,
+    ACTION_RANGE_COSTUMES_CATEGORIES = 10000,
+    ACTION_RANGE_COSTUMES            = 20000,
+    ACTION_RANGE_SUMMON_PET          = 80000,
+    ACTION_RANGE_SUMMON_COMBAT_PET   = 90000,
 
     // Completed tiers settings
     SETTING_BLACK_TEMPLE = 0,
@@ -40,7 +41,8 @@ enum ServiceCategory
 
     // services
     SERVICE_CAT_PET        = 0,
-    SERVICE_CAT_COMBAT_PET = 1
+    SERVICE_CAT_COMBAT_PET = 1,
+    SERVICE_CAT_COSTUMES   = 2
 };
 
 struct SmartstonePetData
@@ -57,6 +59,7 @@ struct SmartstonePetData
 
 struct SmartstoneCostumeData
 {
+    uint32 Id;
     uint32 DisplayId;
     std::string Description;
     uint32 Duration;
@@ -132,7 +135,7 @@ public:
 
     void ProcessExpiredServices(Player* player);
 
-    [[nodiscard]] Milliseconds GetCostumeDuration(Player* player, uint32 displayId) const;
+    [[nodiscard]] Milliseconds GetCostumeDuration(Player* player, uint32 duration) const;
 
     [[nodiscard]] SmartstoneServiceExpireInfo GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 category) const;
     [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 category = SERVICE_CAT_PET) const;

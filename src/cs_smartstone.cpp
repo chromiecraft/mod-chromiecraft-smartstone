@@ -65,7 +65,7 @@ public:
         return true;
     }
 
-    static bool HandleSmartStoneUnlockServiceCommand(ChatHandler* handler, PlayerIdentifier player, uint8 category, uint32 petId, bool add)
+    static bool HandleSmartStoneUnlockServiceCommand(ChatHandler* handler, PlayerIdentifier player, uint8 category, uint32 id, bool add)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
@@ -85,56 +85,112 @@ public:
 
         if (add)
         {
-            SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + petId : ACTION_RANGE_SUMMON_COMBAT_PET + petId, category);
-
-            if (!petData.CreatureId)
+            switch (category)
             {
-                handler->SendErrorMessage("The pet {} does not exist.", petId);
-                return false;
+                case SERVICE_CAT_PET:
+                case SERVICE_CAT_COMBAT_PET:
+                {
+                    SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + id : ACTION_RANGE_SUMMON_COMBAT_PET + id, category);
+
+                    if (!petData.CreatureId)
+                    {
+                        handler->SendErrorMessage("The pet {} does not exist.", id);
+                        return false;
+                    }
+
+                    if (target->GetPlayerSetting(ModuleString, id).IsEnabled())
+                    {
+                        handler->SendErrorMessage("The pet {} is already unlocked.", petData.Description);
+                        return false;
+                    }
+
+                    if (petData.Duration)
+                    {
+                        uint32 expireDate = 0;
+                        if (petData.Duration > 31556926)
+                            expireDate = petData.Duration;
+                        else
+                            expireDate = GameTime::GetGameTime().count() + petData.Duration;
+
+                        CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
+                            target->GetGUID().GetCounter(), petData.CreatureId, category, expireDate);
+
+                        SmartstoneServiceExpireInfo expireInfo;
+                        expireInfo.PlayerGUID = target->GetGUID().GetCounter();
+                        expireInfo.ServiceId = petData.CreatureId;
+                        expireInfo.Category = category;
+                        expireInfo.ActivationTime = GameTime::GetGameTime().count();
+                        expireInfo.ExpirationTime = expireDate;
+                        sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
+                    }
+
+                    target->UpdatePlayerSetting(ModuleString, id, true);
+                    handler->PSendSysMessage("The pet {} has been unlocked for {}.", petData.Description, target->GetName());
+                    break;
+                }
+                case SERVICE_CAT_COSTUMES:
+                {
+                    SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
+
+                    if (!costume.DisplayId)
+                    {
+                        handler->SendErrorMessage("The costume {} does not exist.", id);
+                        return false;
+                    }
+
+                    if (target->GetPlayerSetting(ModuleString, id).IsEnabled())
+                    {
+                        handler->SendErrorMessage("The costume {} is already unlocked.", costume.Description);
+                        return false;
+                    }
+
+                    target->UpdatePlayerSetting(ModuleString, id, true);
+                    handler->PSendSysMessage("The costume {} has been unlocked for {}.", costume.Description, target->GetName());
+                    break;
+                }
+
             }
-
-            if (target->GetPlayerSetting(ModuleString, petId).IsEnabled())
-            {
-                handler->PSendSysMessage("The pet {} is already unlocked.", petData.Description);
-                handler->SetSentErrorMessage(true);
-                return false;
-            }
-
-            if (petData.Duration)
-            {
-                uint32 expireDate = 0;
-                if (petData.Duration > 31556926)
-                    expireDate = petData.Duration;
-                else
-                    expireDate = GameTime::GetGameTime().count() + petData.Duration;
-
-                CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
-                    target->GetGUID().GetCounter(), petData.CreatureId, category, expireDate);
-
-                SmartstoneServiceExpireInfo expireInfo;
-                expireInfo.PlayerGUID = target->GetGUID().GetCounter();
-                expireInfo.ServiceId = petData.CreatureId;
-                expireInfo.Category = category;
-                expireInfo.ActivationTime = GameTime::GetGameTime().count();
-                expireInfo.ExpirationTime = expireDate;
-                sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
-            }
-
-            target->UpdatePlayerSetting(ModuleString, petId, true);
-            handler->PSendSysMessage("The pet {} has been unlocked for {}.", petData.Description, target->GetName());
         }
         else
         {
-            SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + petId : ACTION_RANGE_SUMMON_COMBAT_PET + petId, category);
-            if (!target->GetPlayerSetting(ModuleString, petId).IsEnabled())
+            switch (category)
             {
-                handler->PSendSysMessage("The player does not have the pet {}.", petData.Description);
-                handler->SetSentErrorMessage(true);
-                return false;
-            }
+                case SERVICE_CAT_PET:
+                case SERVICE_CAT_COMBAT_PET:
+                {
+                    SmartstonePetData petData = sSmartstone->GetPetData(category == SERVICE_CAT_PET ? ACTION_RANGE_SUMMON_PET + id : ACTION_RANGE_SUMMON_COMBAT_PET + id, category);
+                    if (!target->GetPlayerSetting(ModuleString, id).IsEnabled())
+                    {
+                        handler->PSendSysMessage("The player does not have the pet {}.", petData.Description);
+                        handler->SetSentErrorMessage(true);
+                        return false;
+                    }
 
-            target->UpdatePlayerSetting(ModuleString, petId, false);
-            handler->PSendSysMessage("The pet {} has been removed for {}.", petData.Description, target->GetName());
+                    target->UpdatePlayerSetting(ModuleString, id, false);
+                    handler->PSendSysMessage("The pet {} has been removed for {}.", petData.Description, target->GetName());
+                    break;
+                }
+                case SERVICE_CAT_COSTUMES:
+                {
+                    SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
+
+                    if (!costume.DisplayId)
+                    {
+                        handler->SendErrorMessage("The costume {} does not exist.", id);
+                        return false;
+                    }
+
+                    if (!target->GetPlayerSetting(ModuleString, id).IsEnabled())
+                    {
+                        handler->SendErrorMessage("The player does not have the costume {}.", costume.Description);
+                        return false;
+                    }
+
+                    target->UpdatePlayerSetting(ModuleString, id, false);
+                    handler->PSendSysMessage("The costume {} has been removed for {}.", costume.Description, target->GetName());
+                    break;
+                }
+            }
         }
 
         return true;
@@ -148,6 +204,8 @@ public:
                 return "#pet";
             case SERVICE_CAT_COMBAT_PET:
                 return "#combatpet";
+            case SERVICE_CAT_COSTUMES:
+                return "#costume";
             default:
                 return "";
         }

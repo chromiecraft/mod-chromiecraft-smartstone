@@ -43,18 +43,18 @@ public:
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
-        if (action > ACTION_RANGE_COSTUMES && action < ACTION_RANGE_SUMMON_PET)
+        if (action > ACTION_RANGE_COSTUMES_CATEGORIES && action < ACTION_RANGE_COSTUMES)
         {
             player->PlayerTalkClass->ClearMenus();
 
-            for (auto const& costume : sSmartstone->Costumes[action - ACTION_RANGE_COSTUMES])
+            for (auto const& costume : sSmartstone->Costumes[action - ACTION_RANGE_COSTUMES_CATEGORIES])
             {
-                if (sSmartstone->IsServiceAvailable(player, "#costumes", action - ACTION_RANGE_COSTUMES)
+                if (sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - ACTION_RANGE_COSTUMES)
                     || subscriptionLevel >= costume.SubscriptionLevelRequired)
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.DisplayId, "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.Id, "", 0);
             }
 
-            player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, action - ACTION_RANGE_COSTUMES), item->GetGUID());
+            player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, action - ACTION_RANGE_COSTUMES_CATEGORIES), item->GetGUID());
             return;
         }
 
@@ -64,7 +64,7 @@ public:
             player->PlayerTalkClass->SendCloseGossip();
         }
 
-        if (action > MAX_SMARTSTONE_ACTIONS && action < ACTION_RANGE_SUMMON_PET)
+        if (action > ACTION_RANGE_COSTUMES && action < ACTION_RANGE_SUMMON_PET)
         {
             if (player->HasSpellCooldown(90002))
             {
@@ -77,12 +77,13 @@ public:
                 return;
             }
 
-            player->SetDisplayId(action);
-            sSmartstone->SetCurrentCostume(player, action);
+            SmartstoneCostumeData costume = sSmartstone->GetCostumeData(action);
+            player->SetDisplayId(costume.DisplayId);
+            sSmartstone->SetCurrentCostume(player, costume.DisplayId);
 
             player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
 
-            Milliseconds duration = sSmartstone->GetCostumeDuration(player, action);
+            Milliseconds duration = sSmartstone->GetCostumeDuration(player, costume.Duration);
             if (duration > 0s)
             {
                 player->m_Events.AddEventAtOffset([player] {
