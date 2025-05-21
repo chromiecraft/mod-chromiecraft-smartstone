@@ -273,7 +273,7 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
 {
     if (player->IsGameMaster())
         return true;
-    LOG_ERROR("sql.sql", "service {}", serviceId);
+
     return player->GetPlayerSetting(ModName + service, serviceId).IsEnabled();
 }
 
