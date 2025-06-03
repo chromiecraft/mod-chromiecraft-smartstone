@@ -33,8 +33,8 @@ public:
     {
         static ChatCommandTable smartstoneTable =
         {
-            { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR, Console::No},
-            { "",       HandleSmartStoneCommand, SEC_PLAYER, Console::No },
+            { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR, Console::Yes },
+            { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
         };
 
         static ChatCommandTable commandTable =
