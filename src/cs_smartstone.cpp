@@ -130,7 +130,7 @@ public:
                 }
                 case SERVICE_CAT_COSTUMES:
                 {
-                    SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
+                    SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id + ACTION_RANGE_COSTUMES);
 
                     if (!costume.DisplayId)
                     {
