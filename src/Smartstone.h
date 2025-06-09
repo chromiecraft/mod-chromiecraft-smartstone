@@ -135,6 +135,8 @@ public:
 
     void ProcessExpiredServices(Player* player);
 
+    std::string GetModuleStringForCategory(uint8 category);
+
     [[nodiscard]] Milliseconds GetCostumeDuration(Player* player, uint32 duration) const;
 
     [[nodiscard]] SmartstoneServiceExpireInfo GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 category) const;

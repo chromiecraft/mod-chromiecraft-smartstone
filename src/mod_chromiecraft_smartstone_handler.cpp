@@ -261,9 +261,6 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
             case 11: // Scorchling of Azzinoth
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_BLACK_TEMPLE).IsEnabled();
         }
-    } else
-    {
-        return true;
     }
 
     return player->GetPlayerSetting(setting, pet.GetServiceId()).IsEnabled();
@@ -285,5 +282,20 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
             return categoryData.NpcTextId;
     }
     return 0;
+}
+
+std::string Smartstone::GetModuleStringForCategory(uint8 category)
+{
+    switch (category)
+    {
+        case SERVICE_CAT_PET:
+            return "#pet";
+        case SERVICE_CAT_COMBAT_PET:
+            return "#combatpet";
+        case SERVICE_CAT_COSTUMES:
+            return "#costume";
+        default:
+            return "";
+    }
 }
 

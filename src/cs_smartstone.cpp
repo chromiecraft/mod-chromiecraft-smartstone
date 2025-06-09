@@ -81,7 +81,7 @@ public:
             return false;
         }
 
-        std::string ModuleString = ModName + GetModuleStringForCategory(category);
+        std::string ModuleString = ModName + sSmartstone->GetModuleStringForCategory(category);
 
         if (add)
         {
@@ -194,21 +194,6 @@ public:
         }
 
         return true;
-    }
-
-    static std::string GetModuleStringForCategory(uint8 category)
-    {
-        switch (category)
-        {
-            case SERVICE_CAT_PET:
-                return "#pet";
-            case SERVICE_CAT_COMBAT_PET:
-                return "#combatpet";
-            case SERVICE_CAT_COSTUMES:
-                return "#costume";
-            default:
-                return "";
-        }
     }
 };
 
