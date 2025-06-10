@@ -8,10 +8,13 @@ The Smartstone is a versatile item that offers a wide range of gossip options, e
 
 This module makes use of Azerothcore's subscription system (from [acore-cms](https://github.com/azerothcore/acore-cms/) intregated subscription system.)
 
+> [!NOTE]
+> You may get a worldserver error `STORAGE: Can't equip or store initial item 32547 for race X class Y, error msg = 17` you may ignore the error.
+
 ## How to use this?
 
 > [!WARNING]  
-> This module changes an existing Item "Tier 5 Mage Test Gear" ([32547](https://wowgaming.altervista.org/aowow/?item=32547)) to be named Smartstone and use the smartstone scripts.
+> This module changes an existing Item `Tier 5 Mage Test Gear` ([32547](https://wowgaming.altervista.org/aowow/?item=32547)) to be named `Smartstone` and use the smartstone scripts.
 
 > [!NOTE]
 > This module requires you to have `EnablePlayerSettings = 1` in your `worldserver.conf` to work, the information gets stored in `character_settings` in your `acore_characters`.
