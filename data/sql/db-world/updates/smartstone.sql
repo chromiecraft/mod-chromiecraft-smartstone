@@ -55,7 +55,7 @@ INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `Subscriptio
 DELETE FROM `smartstone_costumes`;
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
 (20001, 2029,1,2,0,'Edwin VanCleef',1),
-(20002, 2043,1,2,0,'High Inquisition Whitemane', 1);
+(20002, 2043,1,2,0,'High Inquisitor Whitemane', 1);
 
 UPDATE `item_template` SET `name` = "Smartstone", `ScriptName` = 'item_chromiecraft_smartstone', stackable = 1, `spellid_1` = 36177, maxcount = 1 WHERE (entry = 32547);
 UPDATE `item_template_locale` SET `Name` = "Smartstone" WHERE (ID = 32547);
