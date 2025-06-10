@@ -206,12 +206,15 @@ public:
                 {
                     std::string expireMsg = "";
 
-                    if (expireInfoMap[pet.CreatureId].tm_year != 1970)
+                    if (expireInfoMap[pet.CreatureId].tm_year != 1900)
                         expireMsg = Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]);
 
                     if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description + expireMsg, 0, pet.CreatureId, "", 0);
                 }
+
+                if (player->GetGuardianPet())
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET + 90000, 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, ACTION_RANGE_SUMMON_COMBAT_PET, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92003, item->GetGUID());
                 break;
@@ -235,7 +238,7 @@ public:
                     cr->DespawnOrUnsummon();
                 break;
             case ACTION_RANGE_SUMMON_COMBAT_PET:
-                if (Pet* cr = player->GetPet())
+                if (Guardian* cr = player->GetGuardianPet())
                     cr->DespawnOrUnsummon();
                 break;
             default:
