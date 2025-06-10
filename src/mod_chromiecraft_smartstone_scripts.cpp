@@ -222,7 +222,13 @@ public:
                 for (auto const& category : sSmartstone->Categories[CATEGORY_COSTUMES])
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id + 10000, 0, category.Title, 0, category.Id + 10000, "", 0);
 
+                if (sSmartstone->GetCurrentCostume(player))
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(SMARTSTONE_ACTION_REMOVE_COSTUME, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, SMARTSTONE_ACTION_REMOVE_COSTUME, "", 0);
                 player->PlayerTalkClass->SendGossipMenu(92005, item->GetGUID());
+                break;
+            case SMARTSTONE_ACTION_REMOVE_COSTUME:
+                player->DeMorph();
+                sSmartstone->SetCurrentCostume(player, 0);
                 break;
             case ACTION_RANGE_SUMMON_PET:
                 if (Creature* cr = player->GetCompanionPet())
