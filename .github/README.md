@@ -14,7 +14,7 @@ This module makes use of Azerothcore's subscription system (from [acore-cms](htt
 > This module changes an existing Item "Tier 5 Mage Test Gear" (32547) to be named Smartstone and use the smartstone scripts.
 
 > [!NOTE]
-> This module requires you to have `EnablePlayerSettings = 1` in your `worldserver.conf` to work.
+> This module requires you to have `EnablePlayerSettings = 1` in your `worldserver.conf` to work, the information gets stored in `character_settings` in your `acore_characters`.
 
 | Category ID     | Catergory Name    | Catergory Range | Command Value           | Database Table      |
 | --------------- | ----------------- | --------------- | ----------------------- | ------------------- |
@@ -78,17 +78,3 @@ Example for `Edwin VanCleef` [here](https://github.com/chromiecraft/mod-chromiec
 | ----------------- | ------------ | ---------------------------- | ----------------- | --------------------------------------------------------- | -------------------- |
 | Unique Identifier | 0            | Title that shows a sub-menu? | 1 to 3            | npc_text.id                                               | 1 (Show) or 0 (Hide) |
 
-### smartstone_char_temp_services (acore_Characters)
-
-| PlayerGUID | ServiceId | Category | ActivationTime | ExpirationTime |
-| ---------: | --------: | -------: | -------------: | -------------: |
-|            |           |          |                |                |
-
-### character_settings (acore_Characters) (an example how a character without anything unlock would look)
-
-| [guid](https://www.azerothcore.org/wiki/characters#guid) | source                    | data                                                                    |
-| -------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------- |
-| characters.guid                                          | acore_cms_subscriptions   | 0                                                                       |
-| characters.guid                                          | mod-cc-smartstone#costume | 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 |
-| characters.guid                                          | mod-cc-smartstone#pet     | 0 0 0 0 0 0 0 0 0 0                                                     |
-| characters.guid                                          | mod-zone-difficulty#ct    | 0 0 0 0 0                                                               |
