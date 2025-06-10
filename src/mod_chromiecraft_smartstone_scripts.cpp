@@ -34,7 +34,7 @@ class item_chromiecraft_smartstone : public ItemScript
 {
 public:
 
-    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone") { }
+    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _lastAction(0) { }
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
@@ -43,6 +43,7 @@ public:
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
+        // Handle categories
         if (action > ACTION_RANGE_COSTUMES_CATEGORIES && action < ACTION_RANGE_COSTUMES)
         {
             player->PlayerTalkClass->ClearMenus();
@@ -64,54 +65,63 @@ public:
             player->PlayerTalkClass->SendCloseGossip();
         }
 
-        if (action > ACTION_RANGE_COSTUMES && action < ACTION_RANGE_SUMMON_PET)
+        switch (_lastAction)
         {
-            if (player->HasSpellCooldown(90002))
-            {
-                uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
-                uint32 seconds = remaining / 1000;
-                uint32 minutes = seconds / 60;
-                seconds = seconds % 60;
-                std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
-                player->SendSystemMessage(message);
-                return;
-            }
+            case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
+                player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, action);
+                break;
+            case SMARTSTONE_ACTION_LIMITED_DURATION_PETS:
+                if (!sSmartstone->CanUseSmartstone(player))
+                {
+                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    return;
+                }
 
-            SmartstoneCostumeData costume = sSmartstone->GetCostumeData(action);
-            player->SetDisplayId(costume.DisplayId);
-            sSmartstone->SetCurrentCostume(player, costume.DisplayId);
+                player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
+                break;
+            case SMARTSTONE_ACTION_COSTUMES:
+                if (action == SMARTSTONE_ACTION_REMOVE_COSTUME)
+                {
+                    if (sSmartstone->GetCurrentCostume(player))
+                    {
+                        player->DeMorph();
+                        sSmartstone->SetCurrentCostume(player, 0);
+                    }
 
-            player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+                    ClearLastAction();
+                    return;
+                }
 
-            Milliseconds duration = sSmartstone->GetCostumeDuration(player, costume.Duration);
-            if (duration > 0s)
-            {
-                player->m_Events.AddEventAtOffset([player] {
-                    if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
-                        player->SetDisplayId(player->GetNativeDisplayId());
-                }, duration);
-            }
-            return;
+                if (player->HasSpellCooldown(90002) && !player->GetCommandStatus(CHEAT_COOLDOWN))
+                {
+                    uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
+                    uint32 seconds = remaining / 1000;
+                    uint32 minutes = seconds / 60;
+                    seconds = seconds % 60;
+                    std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
+                    player->SendSystemMessage(message);
+                    ClearLastAction();
+                    return;
+                }
+
+                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(action);
+                player->SetDisplayId(costume.DisplayId);
+                sSmartstone->SetCurrentCostume(player, costume.DisplayId);
+
+                player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+
+                Milliseconds duration = sSmartstone->GetCostumeDuration(player, costume.Duration);
+                if (duration > 0s)
+                {
+                    player->m_Events.AddEventAtOffset([player] {
+                        if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
+                            player->SetDisplayId(player->GetNativeDisplayId());
+                    }, duration);
+                }
+                break;
         }
 
-        if (action > ACTION_RANGE_SUMMON_PET && action < ACTION_RANGE_SUMMON_COMBAT_PET)
-        {
-            player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, action);
-            return;
-        }
-
-        if (action > ACTION_RANGE_SUMMON_COMBAT_PET)
-        {
-            if (!sSmartstone->CanUseSmartstone(player))
-            {
-                player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
-                return;
-            }
-
-            player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
-            return;
-        }
-
+        ClearLastAction();
         ProcessGossipAction(player, action, item, subscriptionLevel);
     }
 
@@ -141,6 +151,9 @@ public:
     {
         auto pets = sSmartstone->Pets;
         auto costumes = sSmartstone->Costumes;
+
+        if (!_lastAction)
+            SetLastAction(action);
 
         switch (action)
         {
@@ -223,28 +236,31 @@ public:
                 player->PlayerTalkClass->ClearMenus();
 
                 for (auto const& category : sSmartstone->Categories[CATEGORY_COSTUMES])
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id + 10000, 0, category.Title, 0, category.Id + 10000, "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id, 0, category.Title, 0, category.Id + 10000, "", 0);
 
                 if (sSmartstone->GetCurrentCostume(player))
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(SMARTSTONE_ACTION_REMOVE_COSTUME + 90000, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, SMARTSTONE_ACTION_REMOVE_COSTUME, "", 0);
                 player->PlayerTalkClass->SendGossipMenu(92005, item->GetGUID());
                 break;
-            case SMARTSTONE_ACTION_REMOVE_COSTUME:
-                player->DeMorph();
-                sSmartstone->SetCurrentCostume(player, 0);
-                break;
             case ACTION_RANGE_SUMMON_PET:
                 if (Creature* cr = player->GetCompanionPet())
                     cr->DespawnOrUnsummon();
+                ClearLastAction();
                 break;
             case ACTION_RANGE_SUMMON_COMBAT_PET:
                 if (Guardian* cr = player->GetGuardianPet())
                     cr->DespawnOrUnsummon();
+                ClearLastAction();
                 break;
             default:
                 break;
         }
     }
+
+    private:
+        uint16 _lastAction;
+        void SetLastAction(uint16 action) { _lastAction = action; }
+        void ClearLastAction() { _lastAction = SMARTSTONE_ACTION_NONE; }
 };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
