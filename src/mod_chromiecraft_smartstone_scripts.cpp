@@ -206,7 +206,7 @@ public:
                 {
                     std::string expireMsg = "";
 
-                    if (expireInfoMap[pet.CreatureId].tm_year != 1900)
+                    if (expireInfoMap[pet.CreatureId].tm_year && (expireInfoMap[pet.CreatureId].tm_year != 1900))
                         expireMsg = Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]);
 
                     if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
