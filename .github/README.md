@@ -68,13 +68,12 @@ Example for `Edwin VanCleef` [here](https://github.com/chromiecraft/mod-chromiec
 
 ### smartstone_costumes (acore_world)
 
-| Id             | [DisplayId](https://www.azerothcore.org/wiki/creature_template_model#creaturedisplayid) | Category | SubscriptionLevel | Duration   | Description | Enabled              |
-| -------------- | --------------------------------------------------------------------------------------- | -------- | ----------------- | ---------- | ----------- | -------------------- |
-| 20001 to 29999 | ModelID                                                                                 | 1        | 1 to 3            | In seconds | Gossip Text | 1 (Show) or 0 (Hide) |
+| Id             | [DisplayId](https://www.azerothcore.org/wiki/creature_template_model#creaturedisplayid) | Category                 | SubscriptionLevel | Duration   | Description | Enabled              |
+| -------------- | --------------------------------------------------------------------------------------- | ------------------------ | ----------------- | ---------- | ----------- | -------------------- |
+| 20001 to 29999 | ModelID                                                                                 | smartstone_categories.id | 1 to 3            | In seconds | Gossip Text | 1 (Show) or 0 (Hide) |
 
 ### smartstone_categories (acore_world)
 
 | Id                | CategoryType | Title                        | SubscriptionLevel | [NPCTextId](https://www.azerothcore.org/wiki/npc_text#id) | Enabled              |
 | ----------------- | ------------ | ---------------------------- | ----------------- | --------------------------------------------------------- | -------------------- |
 | Unique Identifier | 0            | Title that shows a sub-menu? | 1 to 3            | npc_text.id                                               | 1 (Show) or 0 (Hide) |
-
