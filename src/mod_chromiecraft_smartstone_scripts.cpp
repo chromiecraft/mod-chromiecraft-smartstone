@@ -178,14 +178,14 @@ public:
             case SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION:
                 player->PlayerTalkClass->ClearMenus();
 
-                if (player->GetCompanionPet())
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
-
                 for (auto const& pet : pets)
                 {
                     if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(pet.CreatureId, 0, pet.Description, 0, pet.CreatureId, "", 0);
                 }
+
+                if (player->GetCompanionPet())
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET, 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
                 break;

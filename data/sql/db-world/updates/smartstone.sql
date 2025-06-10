@@ -44,13 +44,13 @@ CREATE TABLE `smartstone_categories` (
 
 DELETE FROM `smartstone_services`;
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
-(1, 'Request Barber Services', 2, 1),
-(2, 'Rare Beasts of Azeroth', 0, 1),
-(3, 'Limited Duration Companions', 0, 1),
-(5, 'Costumes', 0, 1);
+(1, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),
+(2, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Rare Beasts of Azeroth', 0, 1),
+(3, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Limited Duration Companions', 0, 1),
+(5, '|TInterface/icons/Ability_Rogue_Disguise:30:30:-18:0|t Costumes', 0, 1);
 
 INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
-(1,0,'Azeroth Villains',0,92006,1);
+(1,0,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0,92006,1);
 
 DELETE FROM `smartstone_costumes`;
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
