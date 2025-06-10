@@ -11,7 +11,7 @@ This module makes use of Azerothcore's subscription system (from [acore-cms](htt
 ## How to use this?
 
 > [!WARNING]  
-> This module changes an existing Item "Tier 5 Mage Test Gear" (32547) to be named Smartstone and use the smartstone scripts.
+> This module changes an existing Item "Tier 5 Mage Test Gear" ([32547](https://wowgaming.altervista.org/aowow/?item=32547)) to be named Smartstone and use the smartstone scripts.
 
 > [!NOTE]
 > This module requires you to have `EnablePlayerSettings = 1` in your `worldserver.conf` to work, the information gets stored in `character_settings` in your `acore_characters`.
