@@ -33,6 +33,8 @@ enum StoneActions
     SMARTSTONE_ACTION_CHAR_SETTINGS          = 4,
     SMARTSTONE_ACTION_COSTUMES               = 5,
     SMARTSTONE_ACTION_REMOVE_COSTUME         = 6,
+    SMARTSTONE_ACTION_LAST_PAGE              = 7,
+    SMARTSTONE_ACTION_NEXT_PAGE              = 8,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -128,6 +130,8 @@ public:
 
     [[nodiscard]] uint32 GetNPCTextForCategory(uint32 type, uint8 category) const;
     [[nodiscard]] bool IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const;
+
+    [[nodiscard]] bool IsCostumeCategory(uint32 action) const { return action > ACTION_RANGE_COSTUMES_CATEGORIES && action < ACTION_RANGE_COSTUMES; }
 
     void LoadServices();
     void LoadPets();

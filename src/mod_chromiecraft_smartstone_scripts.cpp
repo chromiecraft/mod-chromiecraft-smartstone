@@ -34,7 +34,7 @@ class item_chromiecraft_smartstone : public ItemScript
 {
 public:
 
-    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _lastAction(0) { }
+    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _lastAction(0), _currentPage(0), _lastCategory(0) { }
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
@@ -43,23 +43,21 @@ public:
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
-        // Handle categories
-        if (action > ACTION_RANGE_COSTUMES_CATEGORIES && action < ACTION_RANGE_COSTUMES)
+        if (action == SMARTSTONE_ACTION_LAST_PAGE || action == SMARTSTONE_ACTION_NEXT_PAGE)
         {
-            player->PlayerTalkClass->ClearMenus();
-
-            for (auto const& costume : sSmartstone->Costumes[action - ACTION_RANGE_COSTUMES_CATEGORIES])
-            {
-                if (sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - ACTION_RANGE_COSTUMES)
-                    || subscriptionLevel >= costume.SubscriptionLevelRequired)
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.Id, "", 0);
-            }
-
-            player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, action - ACTION_RANGE_COSTUMES_CATEGORIES), item->GetGUID());
+            action == SMARTSTONE_ACTION_LAST_PAGE ? PreviousPage() : NextPage();
+            ProcessCategories(player, item, _lastCategory, subscriptionLevel, _currentPage);
             return;
         }
 
-        if (action != SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION)
+        // Handle categories
+        if (sSmartstone->IsCostumeCategory(action))
+        {
+            ProcessCategories(player, item, action, subscriptionLevel, _currentPage);
+            return;
+        }
+
+        if (action != SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION && !sSmartstone->IsCostumeCategory(action) && action != SMARTSTONE_ACTION_LAST_PAGE)
         {
             player->PlayerTalkClass->ClearMenus();
             player->PlayerTalkClass->SendCloseGossip();
@@ -80,6 +78,10 @@ public:
                 player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
                 break;
             case SMARTSTONE_ACTION_COSTUMES:
+            {
+                if (action == SMARTSTONE_ACTION_LAST_PAGE)
+                    return;
+
                 if (action == SMARTSTONE_ACTION_REMOVE_COSTUME)
                 {
                     if (sSmartstone->GetCurrentCostume(player))
@@ -118,11 +120,48 @@ public:
                             player->SetDisplayId(player->GetNativeDisplayId());
                     }, duration);
                 }
+
+                ClearLastAction();
                 break;
+            }
         }
 
         ClearLastAction();
         ProcessGossipAction(player, action, item, subscriptionLevel);
+    }
+
+    void ProcessCategories(Player* player, Item* item, uint32 action, uint8 subscriptionLevel, uint8 currentPage)
+    {
+        player->PlayerTalkClass->ClearMenus();
+
+        uint32 itemsPerPage = 25;
+        uint32 categoryIndex = action - ACTION_RANGE_COSTUMES_CATEGORIES;
+        uint32 pageNumber = currentPage;
+
+        auto const& costumes = sSmartstone->Costumes[categoryIndex];
+        uint32 totalItems = costumes.size();
+        uint32 startIndex = pageNumber * itemsPerPage;
+        uint32 endIndex = std::min(startIndex + itemsPerPage, totalItems);
+
+        for (uint32 i = startIndex; i < endIndex; ++i)
+        {
+            auto const& costume = costumes[i];
+            if (sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - ACTION_RANGE_COSTUMES)
+                || subscriptionLevel >= costume.SubscriptionLevelRequired)
+            {
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.Id, "", 0);
+            }
+        }
+
+        if (endIndex < totalItems)
+            player->PlayerTalkClass->GetGossipMenu().AddMenuItem(90000, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Next page", 0, SMARTSTONE_ACTION_NEXT_PAGE, "", 0);
+
+        if (pageNumber > 0)
+            player->PlayerTalkClass->GetGossipMenu().AddMenuItem(90001, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Previous page", 0, SMARTSTONE_ACTION_LAST_PAGE, "", 0);
+
+        player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, action - ACTION_RANGE_COSTUMES_CATEGORIES), item->GetGUID());
+        SetLastAction(SMARTSTONE_ACTION_COSTUMES);
+        SetLastCategory(action);
     }
 
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
@@ -131,6 +170,10 @@ public:
             return false;
 
         player->PlayerTalkClass->ClearMenus();
+
+        ResetPagination();
+        ClearLastAction();
+        ClearLastCategory();
 
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
@@ -259,8 +302,15 @@ public:
 
     private:
         uint16 _lastAction;
+        uint16 _currentPage;
+        uint32 _lastCategory;
         void SetLastAction(uint16 action) { _lastAction = action; }
         void ClearLastAction() { _lastAction = SMARTSTONE_ACTION_NONE; }
+        void SetLastCategory(uint32 category) { _lastCategory = category; }
+        void ClearLastCategory() { _lastCategory = 0; }
+        void ResetPagination() { _currentPage = 0; }
+        void NextPage() { ++_currentPage; }
+        void PreviousPage() { if (_currentPage > 0) --_currentPage; }
 };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
