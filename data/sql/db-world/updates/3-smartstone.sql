@@ -1,3 +1,7 @@
+--
+-- Smartstone Update Script
+--
+
 DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 5);
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),

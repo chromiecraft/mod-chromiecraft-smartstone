@@ -202,7 +202,9 @@ public:
                 || subscriptionLevel >= costume.SubscriptionLevelRequired)
             {
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.Id, "", 0);
-            } else {
+            }
+            else if (totalItems > 0)
+            {
                 totalItems--;
             }
         }
@@ -210,7 +212,9 @@ public:
         if (totalItems == 0)
         {
             player->PlayerTalkClass->GetGossipMenu().AddMenuItem(0, GOSSIP_ICON_CHAT, "No costumes available.", 0, 0, "", 0);
-        } else {
+        }
+        else
+        {
             if (endIndex < totalItems)
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 1, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Next page", 0, SMARTSTONE_ACTION_NEXT_PAGE, "", 0);
 
