@@ -186,7 +186,7 @@ public:
     {
         player->PlayerTalkClass->ClearMenus();
 
-        uint32 itemsPerPage = 25;
+        uint32 itemsPerPage = 20; // we need to include the utils buttons too
         uint32 categoryIndex = action - ACTION_RANGE_COSTUMES_CATEGORIES;
         uint32 pageNumber = currentPage;
 
@@ -206,6 +206,7 @@ public:
             else if (totalItems > 0)
             {
                 totalItems--;
+                i--; // Decrement i to account for the removed item
             }
         }
 
