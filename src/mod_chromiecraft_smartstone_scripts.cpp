@@ -34,7 +34,7 @@ class item_chromiecraft_smartstone : public ItemScript
 {
 public:
 
-    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _lastAction(0), _currentPage(0), _lastCategory(0) { }
+    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _lastAction(0), _currentPage(0), _lastCategory(0), _menuHistory() { }
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
@@ -42,6 +42,48 @@ public:
 
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
+        // Handle back button
+        if (action == SMARTSTONE_ACTION_BACK)
+        {
+            if (!_menuHistory.empty())
+            {
+                MenuState previousState = _menuHistory.back();
+                _menuHistory.pop_back();
+
+                // Restore previous state
+                _lastAction = previousState.lastAction;
+                _lastCategory = previousState.lastCategory;
+                _currentPage = previousState.currentPage;
+
+                // Navigate to previous menu
+                if (previousState.lastAction == SMARTSTONE_ACTION_NONE)
+                {
+                    // Go back to main menu
+                    ClearLastAction();
+                    ClearLastCategory();
+                    ShowMainMenu(player, item, subscriptionLevel);
+                }
+                else if (previousState.lastAction == SMARTSTONE_ACTION_COSTUMES)
+                {
+                    // Go back to costume categories menu
+                    ProcessGossipAction(player, SMARTSTONE_ACTION_COSTUMES, item, subscriptionLevel);
+                }
+                else
+                {
+                    // Go back to other service menus
+                    ProcessGossipAction(player, previousState.lastAction, item, subscriptionLevel);
+                }
+            }
+            else
+            {
+                // No history, go to main menu
+                ClearLastAction();
+                ClearLastCategory();
+                ShowMainMenu(player, item, subscriptionLevel);
+            }
+            return;
+        }
 
         if (action == SMARTSTONE_ACTION_LAST_PAGE || action == SMARTSTONE_ACTION_NEXT_PAGE)
         {
@@ -53,8 +95,18 @@ public:
         // Handle categories
         if (sSmartstone->IsCostumeCategory(action))
         {
+            // Save current state to history before navigating
+            PushMenuState();
             ProcessCategories(player, item, action, subscriptionLevel, _currentPage);
             return;
+        }
+
+        // Handle main service navigation - save state before transitioning
+        if (action == SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION ||
+            action == SMARTSTONE_ACTION_LIMITED_DURATION_PETS ||
+            action == SMARTSTONE_ACTION_COSTUMES)
+        {
+            PushMenuState();
         }
 
         if (action != SMARTSTONE_ACTION_EXOTIC_PET_COLLECTION && !sSmartstone->IsCostumeCategory(action) && action != SMARTSTONE_ACTION_LAST_PAGE)
@@ -150,14 +202,24 @@ public:
                 || subscriptionLevel >= costume.SubscriptionLevelRequired)
             {
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(costume.DisplayId, 0, costume.Description, 0, costume.Id, "", 0);
+            } else {
+                totalItems--;
             }
         }
 
-        if (endIndex < totalItems)
-            player->PlayerTalkClass->GetGossipMenu().AddMenuItem(90000, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Next page", 0, SMARTSTONE_ACTION_NEXT_PAGE, "", 0);
+        if (totalItems == 0)
+        {
+            player->PlayerTalkClass->GetGossipMenu().AddMenuItem(0, GOSSIP_ICON_CHAT, "No costumes available.", 0, 0, "", 0);
+        } else {
+            if (endIndex < totalItems)
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 1, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Next page", 0, SMARTSTONE_ACTION_NEXT_PAGE, "", 0);
 
-        if (pageNumber > 0)
-            player->PlayerTalkClass->GetGossipMenu().AddMenuItem(90001, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Previous page", 0, SMARTSTONE_ACTION_LAST_PAGE, "", 0);
+            if (pageNumber > 0)
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 2, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Previous page", 0, SMARTSTONE_ACTION_LAST_PAGE, "", 0);
+        }
+
+        // Add back button
+        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 3, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_Holy_BlessedRecovery:30:30:-18:0|t Back", 0, SMARTSTONE_ACTION_BACK, "", 0);
 
         player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, categoryIndex), item->GetGUID());
         SetLastAction(SMARTSTONE_ACTION_COSTUMES);
@@ -174,19 +236,12 @@ public:
         ResetPagination();
         ClearLastAction();
         ClearLastCategory();
+        ClearMenuHistory();
 
         uint8 subscriptionLevel = player->IsGameMaster() ? 3
             : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
-        auto const& services = sSmartstone->Services;
-
-        for (auto const& service : services)
-        {
-            if (subscriptionLevel >= service.SubscriptionLevelRequired)
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
-        }
-
-        player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
+        ShowMainMenu(player, item, subscriptionLevel);
         return false;
     }
 
@@ -241,7 +296,10 @@ public:
                 }
 
                 if (player->GetCompanionPet())
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET + 90000, 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 1 , 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, ACTION_RANGE_SUMMON_PET, "", 0);
+
+                // Add back button
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 2, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_Holy_BlessedRecovery:30:30:-18:0|t Back", 0, SMARTSTONE_ACTION_BACK, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92002, item->GetGUID());
                 break;
@@ -270,7 +328,10 @@ public:
                 }
 
                 if (player->GetGuardianPet())
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_SUMMON_PET + 90000, 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, ACTION_RANGE_SUMMON_COMBAT_PET, "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 1, 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, ACTION_RANGE_SUMMON_COMBAT_PET, "", 0);
+
+                // Add back button
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 2, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_Holy_BlessedRecovery:30:30:-18:0|t Back", 0, SMARTSTONE_ACTION_BACK, "", 0);
 
                 player->PlayerTalkClass->SendGossipMenu(92003, item->GetGUID());
                 break;
@@ -282,7 +343,11 @@ public:
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id, 0, category.Title, 0, category.Id + ACTION_RANGE_COSTUMES_CATEGORIES, "", 0);
 
                 if (sSmartstone->GetCurrentCostume(player))
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(SMARTSTONE_ACTION_REMOVE_COSTUME + 90000, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, SMARTSTONE_ACTION_REMOVE_COSTUME, "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 1, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, SMARTSTONE_ACTION_REMOVE_COSTUME, "", 0);
+
+                // Add back button
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(ACTION_RANGE_UTIL_BUTTONS + 2, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_Holy_BlessedRecovery:30:30:-18:0|t Back", 0, SMARTSTONE_ACTION_BACK, "", 0);
+
                 player->PlayerTalkClass->SendGossipMenu(92005, item->GetGUID());
                 break;
             case ACTION_RANGE_SUMMON_PET:
@@ -301,9 +366,21 @@ public:
     }
 
     private:
+        struct MenuState
+        {
+            uint16 lastAction;
+            uint16 currentPage;
+            uint32 lastCategory;
+
+            MenuState(uint16 action, uint16 page, uint32 category)
+                : lastAction(action), currentPage(page), lastCategory(category) {}
+        };
+
         uint16 _lastAction;
         uint16 _currentPage;
         uint32 _lastCategory;
+        std::vector<MenuState> _menuHistory;
+
         void SetLastAction(uint16 action) { _lastAction = action; }
         void ClearLastAction() { _lastAction = SMARTSTONE_ACTION_NONE; }
         void SetLastCategory(uint32 category) { _lastCategory = category; }
@@ -311,6 +388,23 @@ public:
         void ResetPagination() { _currentPage = 0; }
         void NextPage() { ++_currentPage; }
         void PreviousPage() { if (_currentPage > 0) --_currentPage; }
+        void PushMenuState() { _menuHistory.emplace_back(_lastAction, _currentPage, _lastCategory); }
+        void ClearMenuHistory() { _menuHistory.clear(); }
+
+        void ShowMainMenu(Player* player, Item* item, uint8 subscriptionLevel)
+        {
+            player->PlayerTalkClass->ClearMenus();
+
+            auto const& services = sSmartstone->Services;
+
+            for (auto const& service : services)
+            {
+                if (subscriptionLevel >= service.SubscriptionLevelRequired)
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(service.Id, 0, service.ServiceTitle, 0, service.Id, "", 0);
+            }
+
+            player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
+        }
 };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
