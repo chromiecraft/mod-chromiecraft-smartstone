@@ -159,7 +159,7 @@ public:
         if (pageNumber > 0)
             player->PlayerTalkClass->GetGossipMenu().AddMenuItem(90001, GOSSIP_ICON_CHAT, "|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Previous page", 0, SMARTSTONE_ACTION_LAST_PAGE, "", 0);
 
-        player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, action - ACTION_RANGE_COSTUMES_CATEGORIES), item->GetGUID());
+        player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(CATEGORY_COSTUMES, categoryIndex), item->GetGUID());
         SetLastAction(SMARTSTONE_ACTION_COSTUMES);
         SetLastCategory(action);
     }
@@ -279,7 +279,7 @@ public:
                 player->PlayerTalkClass->ClearMenus();
 
                 for (auto const& category : sSmartstone->Categories[CATEGORY_COSTUMES])
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id, 0, category.Title, 0, category.Id + 10000, "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(category.Id, 0, category.Title, 0, category.Id + ACTION_RANGE_COSTUMES_CATEGORIES, "", 0);
 
                 if (sSmartstone->GetCurrentCostume(player))
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(SMARTSTONE_ACTION_REMOVE_COSTUME + 90000, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, SMARTSTONE_ACTION_REMOVE_COSTUME, "", 0);

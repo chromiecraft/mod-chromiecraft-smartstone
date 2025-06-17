@@ -278,7 +278,7 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
 {
     for (auto const& categoryData : sSmartstone->Categories[type])
     {
-        if (categoryData.Id == category)
+        if (categoryData.Id == category && categoryData.NpcTextId != 0)
             return categoryData.NpcTextId;
     }
     return 1; // Default NPC text ID if not found
