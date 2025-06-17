@@ -2,16 +2,17 @@
 -- Smartstone Update Script
 --
 
-DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 5);
-INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
-(1, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),
-(2, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Rare Beasts of Azeroth', 0, 1),
-(3, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Limited Duration Companions', 0, 1),
-(5, '|TInterface/icons/Ability_Rogue_Disguise:30:30:-18:0|t Costumes', 0, 1);
+DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 40);
+INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
+(1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Rare Beasts of Azeroth', 0, 92002, 1),
+(2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Limited Duration Companions', 0, 92003, 1),
+(3,0, '|TInterface/icons/Ability_Rogue_Disguise:30:30:-18:0|t Costumes', 0, 92005, 1),
+(4,0, '|TInterface/icons/Spell_Shadow_Charm:30:30:-18:0|t Character', 0, 1, 1),
+(5,3,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0, 92006,1);
 
-DELETE FROM `smartstone_categories` WHERE `Id` = 1;
-INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
-(1,0,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0,92006,1);
+DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1);
+INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
+(1, 4, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1);
 
 DELETE FROM `smartstone_costumes` WHERE `Id` IN (20001, 20002);
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
@@ -316,5 +317,5 @@ INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
 (@Entry, 1, 44755);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Enabled`, `Description`) VALUES
-(@Entry, 1, 1, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Type`, `Category`, `Enabled`, `Description`) VALUES
+(@Entry, 1, 1, 1, @Description);

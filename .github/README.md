@@ -13,7 +13,7 @@ This module makes use of Azerothcore's subscription system (from [acore-cms](htt
 
 ## How to use this?
 
-> [!WARNING]  
+> [!WARNING]
 > This module changes an existing Item `Tier 5 Mage Test Gear` ([32547](https://wowgaming.altervista.org/aowow/?item=32547)) to be named `Smartstone` and use the smartstone scripts.
 
 > [!NOTE]
@@ -40,6 +40,16 @@ Unlocks `(Costume) Edwin VanCleef`
 
 > [!NOTE]
 > Some of the existing pets as example `Summon Hyjal Wisp`, will not work if you haven't completed their required raids in mythic from [mod-zone-difficulty](https://github.com/azerothcore/mod-zone-difficulty).
+
+## SQL File Prefixes
+
+All SQL files should have a numeric prefix to indicate their purpose and order of execution. The prefixes are as follows:
+
+0 -> creation of the table
+1 -> updates to the table
+2 -> add data to the table
+3 -> used by other modules to add data to the tables
+
 
 ## How to make your own?
 
