@@ -1,47 +1,3 @@
---
-DROP TABLE IF EXISTS `smartstone_pets`;
-CREATE TABLE `smartstone_pets` (
- `CreatureId` INT UNSIGNED NOT NULL,
- `Category` TINYINT DEFAULT 0,
- `SubscriptionLevel` TINYINT DEFAULT 0, -- if set, pet will be available for free for that sub level
- `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
- `Description` TEXT,
- `Enabled` TINYINT DEFAULT 1,
- PRIMARY KEY(`CreatureId`)
- );
- 
-DROP TABLE IF EXISTS `smartstone_costumes`;
-CREATE TABLE `smartstone_costumes` (
- `Id` INT UNSIGNED NOT NULL,
- `DisplayId` INT UNSIGNED NOT NULL,
- `Category` TINYINT DEFAULT 0,
- `SubscriptionLevel` TINYINT DEFAULT 0,
- `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
- `Description` TEXT,
- `Enabled` TINYINT DEFAULT 1,
- PRIMARY KEY(`Id`)
- );
- 
-DROP TABLE IF EXISTS `smartstone_services`;
-CREATE TABLE `smartstone_services` (
- `ServiceId` INT UNSIGNED NOT NULL,
- `Title` TEXT,
- `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
- `Enabled` TINYINT,
- PRIMARY KEY(`ServiceId`)
- );
- 
-DROP TABLE IF EXISTS `smartstone_categories`;
-CREATE TABLE `smartstone_categories` (
- `Id` INT UNSIGNED NOT NULL,
- `CategoryType` INT UNSIGNED NOT NULL,
- `Title` TEXT,
- `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
- `NPCTextId` INT DEFAULT 0,
- `Enabled` TINYINT,
- PRIMARY KEY(`Id`)
- );
-
 DELETE FROM `smartstone_services`;
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),
@@ -120,7 +76,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -138,10 +94,10 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
 (@Entry, 1, @Description);
- 
+
 SET
 @Entry := 80003,
 @Name := "Serpentshrine Waterspawn",
@@ -156,7 +112,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
 (@Entry, 1, @Description);
 
@@ -175,7 +131,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -194,7 +150,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -212,7 +168,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
 (@Entry, 1, @Description);
 
@@ -239,7 +195,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -258,7 +214,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -277,7 +233,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -296,7 +252,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -319,7 +275,7 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
+
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -337,12 +293,12 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
-DELETE FROM `creature_template_spell`  WHERE `CreatureId` = @Entry; 
+
+DELETE FROM `creature_template_spell`  WHERE `CreatureId` = @Entry;
 INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
 (@Entry, 0, 46661),
 (@Entry, 1, 44755);
- 
+
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Enabled`, `Description`) VALUES
 (@Entry, 1, 1, @Description);
