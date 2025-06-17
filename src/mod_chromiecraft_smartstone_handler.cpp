@@ -281,7 +281,7 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
         if (categoryData.Id == category)
             return categoryData.NpcTextId;
     }
-    return 0;
+    return 1; // Default NPC text ID if not found
 }
 
 std::string Smartstone::GetModuleStringForCategory(uint8 category)
