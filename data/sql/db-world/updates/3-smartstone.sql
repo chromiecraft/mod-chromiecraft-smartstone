@@ -1,14 +1,19 @@
-DELETE FROM `smartstone_services`;
+--
+-- Smartstone Update Script
+--
+
+DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 5);
 INSERT INTO `smartstone_services` (`ServiceId`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),
 (2, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Rare Beasts of Azeroth', 0, 1),
 (3, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Limited Duration Companions', 0, 1),
 (5, '|TInterface/icons/Ability_Rogue_Disguise:30:30:-18:0|t Costumes', 0, 1);
 
+DELETE FROM `smartstone_categories` WHERE `Id` = 1;
 INSERT INTO `smartstone_categories` (`Id`, `CategoryType`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0,92006,1);
 
-DELETE FROM `smartstone_costumes`;
+DELETE FROM `smartstone_costumes` WHERE `Id` IN (20001, 20002);
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
 (20001, 2029,1,2,0,'Edwin VanCleef',1),
 (20002, 2043,1,2,0,'High Inquisitor Whitemane', 1);
@@ -31,7 +36,7 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 
 DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006);
 INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
-(92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike. \n\nYet, its magic is not without its quirks; a flicker of its light might summon a mischievous imp or lead an adventurer to an unexpected adventure. \n\nThe Smartstone, ever playful and wise, stands ready to assist those who seek its guidance.'),
+(92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike.'),
 (92001, 'Hey there, pal! Welcome to the finest chop shop in Azeroth! Need a trim, a shave, or a whole new look? We’ve got styles to make your enemies quake in fear—or at least wonder where you got such a snazzy do! Sit down, relax, and let’s get you looking spectacular!'),
 (92002, 'Scattered across Azeroth and beyond, these elusive creatures embody the essence of their environments. From spectral wolves prowling shadowed forests to fiery phoenixes soaring above molten peaks, each rare pet is a testament to the untamed beauty and danger of the world. Adventurers who seek them must be cunning, patient, and attuned to the whispers of the wild, for these beasts appear only to those who prove themselves worthy.'),
 (92003, 'Whispered through the ages, these rare companions hail from Azeroth’s most elusive corners—be it deep jungles, ancient ruins, or shadowed realms. Each carries a spark of their origin’s mystery, offering unique abilities to amuse and amaze. But beware, their bond with mortals is fleeting, and their return to legend is inevitable. Claim them while their tale lingers!'),
@@ -77,6 +82,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -95,6 +101,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
 (@Entry, 1, @Description);
 
@@ -113,6 +120,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
 (@Entry, 1, @Description);
 
@@ -132,6 +140,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -151,6 +160,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -169,6 +179,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
 (@Entry, 1, @Description);
 
@@ -196,6 +207,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -215,6 +227,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -234,6 +247,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -253,6 +267,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
@@ -276,6 +291,7 @@ DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
 
+DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
 (@Entry, 1, @SubLevel, @Description);
 
