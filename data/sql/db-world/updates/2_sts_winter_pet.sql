@@ -26,7 +26,7 @@ INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Type`, `Enabled`, `Duration`, `Description`) VALUES
-(@Entry, 1, 1, @Enabled, @Duration, @Description);
+(@Entry, 2, 1, @Enabled, @Duration, @Description);
 
 DELETE FROM `creature_text` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Language`, `Probability`, `Emote`, `TextRange`, `comment`) VALUES

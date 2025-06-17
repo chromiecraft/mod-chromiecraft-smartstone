@@ -149,7 +149,7 @@ void Smartstone::LoadCategories()
             categoryData.Id = fields[4].Get<uint32>();
             Categories[categoryData.ParentId].push_back(categoryData);
 
-            MenuItems[categoryData.Id].push_back(MenuItem{
+            MenuItems[categoryData.ParentId].push_back(MenuItem{
                 categoryData.Id,
                 categoryData.Title,
                 categoryData.NpcTextId,
@@ -174,7 +174,14 @@ SmartstoneServiceExpireInfo Smartstone::GetServiceExpireInfo(uint32 playerGUID, 
         }
     }
 
-    return SmartstoneServiceExpireInfo();
+    // Return empty/default expire info with ServiceId = 0 to indicate not found
+    SmartstoneServiceExpireInfo defaultInfo = {};
+    defaultInfo.ServiceId = 0;
+    defaultInfo.PlayerGUID = 0;
+    defaultInfo.ServiceType = 0;
+    defaultInfo.ActivationTime = 0;
+    defaultInfo.ExpirationTime = 0;
+    return defaultInfo;
 }
 
 void Smartstone::ProcessExpiredServices(Player* player)
@@ -213,18 +220,23 @@ void Smartstone::ProcessExpiredServices(Player* player)
 
 SmartstonePetData Smartstone::GetPetData(uint32 creatureId, uint8 petType) const
 {
-    for (auto const& pet : petType == PET_TYPE_COMBAT ? sSmartstone->CombatPets : sSmartstone->Pets)
+    const auto& petList = (petType == PET_TYPE_COMBAT) ? CombatPets : Pets;
+
+    for (auto const& pet : petList)
     {
         if (pet.CreatureId == creatureId)
             return pet;
     }
 
-    return SmartstonePetData();
+    // Return empty/default pet data with CreatureId = 0 to indicate not found
+    SmartstonePetData defaultPet = {};
+    defaultPet.CreatureId = 0;
+    return defaultPet;
 }
 
 SmartstoneCostumeData Smartstone::GetCostumeData(uint32 id) const
 {
-    for (auto const& category : sSmartstone->Costumes)
+    for (auto const& category : Costumes)
     {
         for (auto const& costume : category.second)
         {
@@ -233,7 +245,10 @@ SmartstoneCostumeData Smartstone::GetCostumeData(uint32 id) const
         }
     }
 
-    return SmartstoneCostumeData();
+    // Return empty/default costume data with Id = 0 to indicate not found
+    SmartstoneCostumeData defaultCostume = {};
+    defaultCostume.Id = 0;
+    return defaultCostume;
 }
 
 Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 costumeDuration) const
@@ -316,7 +331,12 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
 
 uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
 {
-    for (auto const& categoryData : sSmartstone->Categories[type])
+    auto categoryIt = Categories.find(type);
+    if (categoryIt == Categories.end()) {
+        return 1; // Default NPC text ID if category type not found
+    }
+
+    for (auto const& categoryData : categoryIt->second)
     {
         if (categoryData.Id == category && categoryData.NpcTextId != 0)
             return categoryData.NpcTextId;

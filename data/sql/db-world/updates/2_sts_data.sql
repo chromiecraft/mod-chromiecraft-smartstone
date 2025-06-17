@@ -2,7 +2,7 @@
 -- Smartstone Update Script
 --
 
-DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 40);
+DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5);
 INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Rare Beasts of Azeroth', 0, 92002, 1),
 (2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Limited Duration Companions', 0, 92003, 1),
@@ -16,8 +16,8 @@ INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `Subscripti
 
 DELETE FROM `smartstone_costumes` WHERE `Id` IN (20001, 20002);
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
-(20001, 2029,1,2,0,'Edwin VanCleef',1),
-(20002, 2043,1,2,0,'High Inquisitor Whitemane', 1);
+(20001, 2029,5,1,0,'Edwin VanCleef',1),
+(20002, 2043,5,1,0,'High Inquisitor Whitemane', 1);
 
 UPDATE `item_template` SET `name` = "Smartstone", `ScriptName` = 'item_chromiecraft_smartstone', stackable = 1, `spellid_1` = 36177, maxcount = 1 WHERE (entry = 32547);
 UPDATE `item_template_locale` SET `Name` = "Smartstone" WHERE (ID = 32547);
@@ -84,8 +84,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80002,
@@ -103,8 +103,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 1, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80003,
@@ -122,8 +122,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 1, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80004,
@@ -142,8 +142,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80005,
@@ -162,8 +162,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80006,
@@ -181,8 +181,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Description`) VALUES
-(@Entry, 1, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 -- Thunderwing AI
 UPDATE `creature_template` SET `AIName` = 'SmartAI' WHERE `entry` = 80006;
@@ -209,8 +209,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80008,
@@ -229,8 +229,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80009,
@@ -249,8 +249,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 80010,
@@ -269,8 +269,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 DELETE FROM `creature_template_addon` WHERE `entry` = @ENTRY;
 INSERT INTO `creature_template_addon` (`entry`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `visibilityDistanceType`, `auras`) VALUES
@@ -293,8 +293,8 @@ INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`,
 (@Entry, 0, @Model, @Scale, 1, 0);
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `SubscriptionLevel`, `Description`) VALUES
-(@Entry, 1, @SubLevel, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Enabled`, `Category`, `SubscriptionLevel`, `Description`) VALUES
+(@Entry, 1, 1, @SubLevel, @Description);
 
 SET
 @Entry := 90001,
@@ -318,4 +318,4 @@ INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
 
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
 INSERT INTO `smartstone_pets` (`CreatureId`, `Type`, `Category`, `Enabled`, `Description`) VALUES
-(@Entry, 1, 1, 1, @Description);
+(@Entry, 1, 2, 1, @Description);

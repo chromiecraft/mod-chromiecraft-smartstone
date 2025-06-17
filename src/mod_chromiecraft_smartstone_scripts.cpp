@@ -34,7 +34,7 @@ class item_chromiecraft_smartstone : public ItemScript
 {
 public:
 
-    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _lastAction(0), _currentPage(0), _lastCategory(0), _menuHistory() { }
+    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _currentPage(0), _lastCategory(0), _menuHistory() { }
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
@@ -46,6 +46,10 @@ public:
         auto costumes = sSmartstone->Costumes;
 
         const auto actionKey = sSmartstone->DecodeActionId(action);
+        if (!actionKey.has_value()) {
+            player->SendSystemMessage("Invalid action selected.");
+            return;
+        }
         const auto actionId = actionKey->actionId;
         const auto actionType = actionKey->type;
 
@@ -56,6 +60,8 @@ public:
         switch (actionType) {
             case ACTION_TYPE_CATEGORY:
             {
+                // Save current state before navigating to new category
+                PushMenuState();
                 // Show items in the selected category
                 ShowCategoryItems(actionId, player, item, subscriptionLevel);
                 return;
@@ -70,18 +76,15 @@ public:
                             _menuHistory.pop_back();
 
                             // Restore previous state
-                            _lastAction = previousState.lastAction;
                             _lastCategory = previousState.lastCategory;
                             _currentPage = previousState.currentPage;
-                            // Go back to main menu
-                            ClearLastAction();
-                            ClearLastCategory();
-                            ShowCategoryItems(_lastCategory, player, item, subscriptionLevel);
+
+                            // Show the previous category (don't clear the restored state!)
+                            ShowCategoryItems(_lastCategory, player, item, subscriptionLevel, _currentPage);
                         }
                         else
                         {
                             // No history, go to main menu
-                            ClearLastAction();
                             ClearLastCategory();
                             ShowMainMenu(player, item, subscriptionLevel);
                         }
@@ -99,18 +102,16 @@ public:
                         if (Creature* cr = player->GetCompanionPet())
                         {
                             cr->DespawnOrUnsummon();
-                            ClearLastAction();
                         }
-                        return;
+                        break;
                     }
                     case SMARTSTONE_ACTION_UNSUMMON_PET:
                     {
                         if (Guardian* cr = player->GetGuardianPet())
                         {
                             cr->DespawnOrUnsummon();
-                            ClearLastAction();
                         }
-                        return;
+                        break;
                     }
                     case SMARTSTONE_ACTION_REMOVE_COSTUME:
                     {
@@ -119,10 +120,10 @@ public:
                             player->DeMorph();
                             sSmartstone->SetCurrentCostume(player, 0);
                         }
-                        ClearLastAction();
-                        return;
+                        break;
                     }
                 }
+                break;
             }
             case ACTION_TYPE_SERVICE:
             {
@@ -131,18 +132,21 @@ public:
                     case SERVICE_BARBERSHOP:
                     {
                         if (sSmartstone->GetBarberDuration() == Seconds::zero())
-                        return;
+                        {
+                            player->SendSystemMessage("Barbershop service is currently unavailable.");
+                            break;
+                        }
 
                         if (!sSmartstone->CanUseSmartstone(player))
                         {
                             player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
-                            return;
+                            break;
                         }
 
                         if (player->FindNearestCreature(NPC_BARBER, 100.0f))
                         {
                             player->SendSystemMessage("The barber is already summoned.");
-                            return;
+                            break;
                         }
 
                         if (Creature* barber = player->SummonCreature(NPC_BARBER, player->GetNearPosition(2.0f, 0.0f), TEMPSUMMON_MANUAL_DESPAWN))
@@ -162,21 +166,22 @@ public:
                         break;
                     }
                 }
+                break;
             }
             case ACTION_TYPE_PET:
             {
                 if (!sSmartstone->CanUseSmartstone(player))
                 {
                     player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
-                    return;
+                    break;
                 }
 
-                player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, action);
+                player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, actionId);
                 break;
             }
             case ACTION_TYPE_COMPANION:
             {
-                player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, action);
+                player->CastCustomSpell(90000, SPELLVALUE_MISCVALUE0, actionId);
                 break;
             }
             case ACTION_TYPE_COSTUME:
@@ -189,11 +194,10 @@ public:
                     seconds = seconds % 60;
                     std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
                     player->SendSystemMessage(message);
-                    ClearLastAction();
-                    return;
+                    break;
                 }
 
-                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(action);
+                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(actionId);
                 player->SetDisplayId(costume.DisplayId);
                 sSmartstone->SetCurrentCostume(player, costume.DisplayId);
 
@@ -215,12 +219,12 @@ public:
             {
                 // Invalid action type, show an error message
                 player->SendSystemMessage("Invalid action type selected.");
-                return;
+                break;
             }
         }
 
-
-        ClearLastAction();
+        // As default, after processing an action, we return to the main menu
+        ShowMainMenu(player, item, subscriptionLevel);
     }
 
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
@@ -228,10 +232,15 @@ public:
         if (!sSmartstone->IsSmartstoneEnabled())
             return false;
 
+        // Check if smartstone data is properly initialized
+        if (sSmartstone->MenuItems.empty()) {
+            player->SendSystemMessage("Smartstone is not properly configured. Please contact an administrator.");
+            return false;
+        }
+
         player->PlayerTalkClass->ClearMenus();
 
         ResetPagination();
-        ClearLastAction();
         ClearLastCategory();
         ClearMenuHistory();
 
@@ -244,27 +253,67 @@ public:
     private:
         struct MenuState
         {
-            uint16 lastAction;
             uint16 currentPage;
             uint32 lastCategory;
 
-            MenuState(uint16 action, uint16 page, uint32 category)
-                : lastAction(action), currentPage(page), lastCategory(category) {}
+            MenuState(uint16 page, uint32 category)
+                : currentPage(page), lastCategory(category) {}
         };
 
-        uint16 _lastAction;
         uint16 _currentPage;
         uint32 _lastCategory;
         std::vector<MenuState> _menuHistory;
 
-        void SetLastAction(uint16 action) { _lastAction = action; }
-        void ClearLastAction() { _lastAction = SMARTSTONE_ACTION_NONE; }
+        /**
+         * @brief Sets the current category ID for menu navigation tracking.
+         * Used to remember which category the player is currently viewing, enabling proper
+         * back navigation and state management when moving between menu levels.
+         *
+         * @param category The category ID to set as current (0 for main menu)
+         */
         void SetLastCategory(uint32 category) { _lastCategory = category; }
+
+        /**
+         * @brief Clears the current category by resetting it to 0 (main menu).
+         * Used when returning to the main menu or resetting the smartstone state.
+         * Called during initialization and when navigating back to the root level.
+         */
         void ClearLastCategory() { _lastCategory = 0; }
+
+        /**
+         * @brief Resets pagination to the first page (page 0).
+         * Called when initializing the smartstone interface or when starting fresh
+         * navigation to ensure the user sees the first page of available items.
+         */
         void ResetPagination() { _currentPage = 0; }
+
+        /**
+         * @brief Advances to the next page in the current category.
+         * Used when the player selects "Next page" to view more items in a category
+         * that has more items than can fit on a single page (20 items per page).
+         */
         void NextPage() { ++_currentPage; }
+
+        /**
+         * @brief Goes back to the previous page in the current category.
+         * Only decrements if current page is greater than 0 to prevent underflow.
+         * Used when the player selects "Previous page" to view earlier items.
+         */
         void PreviousPage() { if (_currentPage > 0) --_currentPage; }
-        void PushMenuState() { _menuHistory.emplace_back(_lastAction, _currentPage, _lastCategory); }
+
+        /**
+         * @brief Saves the current menu state (page, category) to navigation history.
+         * Creates a snapshot of the current menu state before navigating to a new category,
+         * enabling the "Back" functionality to restore the exact previous state including
+         * the current page number and category context.
+         */
+        void PushMenuState() { _menuHistory.emplace_back(_currentPage, _lastCategory); }
+
+        /**
+         * @brief Clears all navigation history.
+         * Used during smartstone initialization to start with a clean navigation state,
+         * preventing stale history from previous sessions from affecting current navigation.
+         */
         void ClearMenuHistory() { _menuHistory.clear(); }
 
         uint8 GetPlayerSubscriptionLevel(Player* player) const
@@ -281,7 +330,14 @@ public:
         {
             player->PlayerTalkClass->ClearMenus();
 
-            PushMenuState();
+            // Update current page
+            _currentPage = currentPage;
+
+            // Check if category exists
+            if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end()) {
+                player->SendSystemMessage("Category not found.");
+                return;
+            }
 
             auto const& menuItems = sSmartstone->MenuItems[ParentCategoryId];
 
@@ -314,16 +370,29 @@ public:
             uint32 startIndex = pageNumber * itemsPerPage;
             uint32 endIndex = std::min(startIndex + itemsPerPage, totalItems);
 
+            uint32 i = startIndex;
+
+            auto reduceCounters = [&totalItems, &i]()
+            {
+                totalItems--;
+                i--;
+            };
             /**
              * @brief Process each menu item
              */
-            for (auto const& menuItem : menuItems)
+            for (; i < endIndex; ++i)
             {
+                const auto& menuItem = menuItems[i];
+
+
 
                 if (menuItem.ServiceType == ACTION_TYPE_PET) {
-                    player->PlayerTalkClass->ClearMenus();
-
-                    auto pet = sSmartstone->CombatPets[menuItem.ItemId];
+                    // Don't clear menus here, it's already cleared above
+                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_PET);
+                    if (pet.CreatureId == 0) {
+                        reduceCounters();
+                        continue; // Skip if pet not found
+                    }
 
                     std::string expireMsg = "";
 
@@ -333,19 +402,22 @@ public:
                     if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, pet.Description + expireMsg, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_PET, pet.CreatureId), "", 0);
                     else if (totalItems > 0)
-                        totalItems--;
+                        reduceCounters();
                 }
 
                 if (menuItem.ServiceType == ACTION_TYPE_COMPANION)
                 {
-                    player->PlayerTalkClass->ClearMenus();
-
-                    auto pet = sSmartstone->Pets[menuItem.ItemId];
+                    // Don't clear menus here, it's already cleared above
+                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_COMPANION);
+                    if (pet.CreatureId == 0) {
+                        reduceCounters();
+                        continue; // Skip if pet not found
+                    }
 
                     if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, pet.Description, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_COMPANION, pet.CreatureId), "", 0);
                     else if (totalItems > 0)
-                        totalItems--;
+                        reduceCounters();
                 }
 
                 if (menuItem.ServiceType == ACTION_TYPE_COSTUME)
@@ -354,10 +426,35 @@ public:
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                     {
                         SmartstoneCostumeData costume = sSmartstone->GetCostumeData(menuItem.ItemId);
+                        if (costume.Id == 0) {
+                            reduceCounters();
+                            continue; // Skip if costume not found
+                        }
                         player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TABARD, costume.Description, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_COSTUME, costume.Id), "", 0);
                     }
                     else if (totalItems > 0)
-                        totalItems--;
+                        reduceCounters();
+                }
+
+                if (menuItem.ServiceType == ACTION_TYPE_CATEGORY)
+                {
+                    if (sSmartstone->IsServiceAvailable(player, "#category", menuItem.ItemId)
+                        || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                    {
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_CATEGORY, menuItem.ItemId), "", 0);
+                    }
+                    else if (totalItems > 0)
+                        reduceCounters();
+                }
+
+                if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
+                {
+                    if (subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                    {
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_SERVICE, menuItem.ItemId), "", 0);
+                    }
+                    else if (totalItems > 0)
+                        reduceCounters();
                 }
             }
 
@@ -366,7 +463,7 @@ public:
              */
             if (totalItems == 0)
             {
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(0, GOSSIP_ICON_TALK, "No actions available.", 0, 0, "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK, "No actions available.", 0, 0, "", 0);
             }
             else
             {
