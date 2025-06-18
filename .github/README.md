@@ -45,10 +45,10 @@ Unlocks `(Costume) Edwin VanCleef`
 
 All SQL files should have a numeric prefix to indicate their purpose and order of execution. The prefixes are as follows:
 
-0 -> creation of the table
-1 -> updates to the table
-2 -> add data to the table
-3 -> used by other modules to add data to the tables
+- 0 -> creation of the table
+- 1 -> updates to the table
+- 2 -> add data to the table
+- 3 -> used by other modules to add data to the tables
 
 
 ## How to make your own?
