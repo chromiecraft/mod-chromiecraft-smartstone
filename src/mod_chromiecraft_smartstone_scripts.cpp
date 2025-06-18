@@ -384,8 +384,6 @@ public:
             {
                 const auto& menuItem = menuItems[i];
 
-
-
                 if (menuItem.ServiceType == ACTION_TYPE_PET) {
                     // Don't clear menus here, it's already cleared above
                     auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_PET);
