@@ -17,16 +17,16 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `IconName`, `gossip
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`, `VerifiedBuild`) VALUES
 (@Entry, 0, @Model, @Scale, 1, 0);
- 
-DELETE FROM `creature_template_spell`  WHERE `CreatureId` = @Entry; 
+
+DELETE FROM `creature_template_spell`  WHERE `CreatureId` = @Entry;
 INSERT INTO `creature_template_spell` (`CreatureId`, `Index`, `Spell`) VALUES
 (@Entry, 0, 46661),
 (@Entry, 1, 44755),
 (@Entry, 2, 3714);
- 
+
 DELETE FROM `smartstone_pets` WHERE `CreatureId` = @Entry;
-INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Enabled`, `Duration`, `Description`) VALUES
-(@Entry, 1, @Enabled, @Duration, @Description);
+INSERT INTO `smartstone_pets` (`CreatureId`, `Category`, `Type`, `Enabled`, `Duration`, `Description`) VALUES
+(@Entry, 2, 1, @Enabled, @Duration, @Description);
 
 DELETE FROM `creature_text` WHERE `CreatureID` = @Entry;
 INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Language`, `Probability`, `Emote`, `TextRange`, `comment`) VALUES
