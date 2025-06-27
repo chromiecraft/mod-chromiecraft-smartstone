@@ -92,6 +92,7 @@ SET
 @Name := "Hyjal Wisp",
 @Model := 10045,
 @Scale := 0.3,
+@SubLevel := 0,
 @Description := "Summon Hyjal Wisp";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
@@ -111,6 +112,7 @@ SET
 @Name := "Serpentshrine Waterspawn",
 @Model := 20076,
 @Scale := 0.2,
+@SubLevel := 0,
 @Description := "Summon Serpentshrine Waterspawn";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
@@ -170,6 +172,7 @@ SET
 @Name := "Thunderwing",
 @Model := 22255,
 @Scale := 0.40,
+@SubLevel := 0,
 @Description := "Summon Thunderwing";
 
 DELETE FROM `creature_template` WHERE `entry` = @Entry;
