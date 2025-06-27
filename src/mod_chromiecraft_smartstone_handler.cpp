@@ -305,15 +305,15 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
 
         switch (pet.CreatureId)
         {
-            case 2: // Hyjal Wisp
+            case 80002: // Hyjal Wisp
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_HYJAL).IsEnabled();
-            case 3: // Serpentshrine Waterspawn
+            case 80003: // Serpentshrine Waterspawn
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SSC).IsEnabled();
-            case 6: // Thunderwing (Zul'Aman)
+            case 80006: // Thunderwing (Zul'Aman)
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_ZULAMAN).IsEnabled();
-            case 10: // Alythessa
+            case 80010: // Alythessa
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_SWP).IsEnabled();
-            case 11: // Scorchling of Azzinoth
+            case 80011: // Scorchling of Azzinoth
                 return player->GetPlayerSetting(ModZoneDifficultyString, SETTING_BLACK_TEMPLE).IsEnabled();
         }
     }
