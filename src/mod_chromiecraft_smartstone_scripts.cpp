@@ -495,6 +495,7 @@ public:
 
         if (sSmartstone->IsSmartstoneEnabled())
         {
+            sSmartstone->MenuItems.clear();
             sSmartstone->LoadServices();
             sSmartstone->LoadPets();
             sSmartstone->LoadCostumes();
