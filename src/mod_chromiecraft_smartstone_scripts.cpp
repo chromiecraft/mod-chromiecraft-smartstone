@@ -34,7 +34,7 @@ class item_chromiecraft_smartstone : public ItemScript
 {
 public:
 
-    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone"), _currentPage(0), _lastCategory(0), _menuHistory() { }
+    item_chromiecraft_smartstone() : ItemScript("item_chromiecraft_smartstone") { }
 
     void OnGossipSelect(Player* player, Item* item, uint32  /*sender*/, uint32 action) override
     {
@@ -61,7 +61,7 @@ public:
             case ACTION_TYPE_CATEGORY:
             {
                 // Save current state before navigating to new category
-                PushMenuState();
+                PushMenuState(player);
                 // Show items in the selected category
                 ShowCategoryItems(actionId, player, item, subscriptionLevel);
                 return;
@@ -70,22 +70,24 @@ public:
                 switch(actionId) {
                     case SMARTSTONE_ACTION_BACK:
                     {
+                        auto _menuHistory = sSmartstone->MenuStateHolder[player->GetGUID()];
                         if (!_menuHistory.empty())
                         {
-                            MenuState previousState = _menuHistory.back();
+                            SmartstoneMenuState previousState = _menuHistory.back();
                             _menuHistory.pop_back();
 
                             // Restore previous state
-                            _lastCategory = previousState.lastCategory;
-                            _currentPage = previousState.currentPage;
+                            _currentMenuState[player->GetGUID()].lastCategory = previousState.lastCategory;
+                            _currentMenuState[player->GetGUID()].currentPage = previousState.currentPage;
 
                             // Show the previous category (don't clear the restored state!)
-                            ShowCategoryItems(_lastCategory, player, item, subscriptionLevel, _currentPage);
+                            auto const& _menuState = _currentMenuState[player->GetGUID()];
+                            ShowCategoryItems(_menuState.lastCategory, player, item, subscriptionLevel, _menuState.currentPage);
                         }
                         else
                         {
                             // No history, go to main menu
-                            ClearLastCategory();
+                            ClearLastCategory(player);
                             ShowMainMenu(player, item, subscriptionLevel);
                         }
                         return;
@@ -93,24 +95,21 @@ public:
                     case SMARTSTONE_ACTION_NEXT_PAGE:
                     case SMARTSTONE_ACTION_LAST_PAGE:
                     {
-                        actionId == SMARTSTONE_ACTION_LAST_PAGE ? PreviousPage() : NextPage();
-                        ShowCategoryItems(_lastCategory, player, item, subscriptionLevel, _currentPage);
+                        actionId == SMARTSTONE_ACTION_LAST_PAGE ? PreviousPage(player) : NextPage(player);
+                        auto const& _menuState = _currentMenuState[player->GetGUID()];
+                        ShowCategoryItems(_menuState.lastCategory, player, item, subscriptionLevel, _menuState.currentPage);
                         return;
                     }
                     case SMARTSTONE_ACTION_UNSUMMON_COMPANION:
                     {
                         if (Creature* cr = player->GetCompanionPet())
-                        {
                             cr->DespawnOrUnsummon();
-                        }
                         break;
                     }
                     case SMARTSTONE_ACTION_UNSUMMON_PET:
                     {
                         if (Guardian* cr = player->GetGuardianPet())
-                        {
                             cr->DespawnOrUnsummon();
-                        }
                         break;
                     }
                     case SMARTSTONE_ACTION_REMOVE_COSTUME:
@@ -240,9 +239,7 @@ public:
 
         player->PlayerTalkClass->ClearMenus();
 
-        ResetPagination();
-        ClearLastCategory();
-        ClearMenuHistory();
+        ClearMenuHistory(player);
 
         uint8 subscriptionLevel = GetPlayerSubscriptionLevel(player);
 
@@ -251,18 +248,7 @@ public:
     }
 
     private:
-        struct MenuState
-        {
-            uint16 currentPage;
-            uint32 lastCategory;
-
-            MenuState(uint16 page, uint32 category)
-                : currentPage(page), lastCategory(category) {}
-        };
-
-        uint16 _currentPage;
-        uint32 _lastCategory;
-        std::vector<MenuState> _menuHistory;
+        std::unordered_map<ObjectGuid, SmartstoneMenuState> _currentMenuState;
 
         /**
          * @brief Sets the current category ID for menu navigation tracking.
@@ -271,35 +257,39 @@ public:
          *
          * @param category The category ID to set as current (0 for main menu)
          */
-        void SetLastCategory(uint32 category) { _lastCategory = category; }
+        void SetLastCategory(Player* player, uint32 category) { _currentMenuState[player->GetGUID()].lastCategory = category; }
 
         /**
          * @brief Clears the current category by resetting it to 0 (main menu).
          * Used when returning to the main menu or resetting the smartstone state.
          * Called during initialization and when navigating back to the root level.
          */
-        void ClearLastCategory() { _lastCategory = 0; }
+        void ClearLastCategory(Player* player) { SetLastCategory(player, 0); }
 
         /**
          * @brief Resets pagination to the first page (page 0).
          * Called when initializing the smartstone interface or when starting fresh
          * navigation to ensure the user sees the first page of available items.
          */
-        void ResetPagination() { _currentPage = 0; }
+        void ResetPagination(Player* player) { _currentMenuState[player->GetGUID()].currentPage = 0; }
 
         /**
          * @brief Advances to the next page in the current category.
          * Used when the player selects "Next page" to view more items in a category
          * that has more items than can fit on a single page (20 items per page).
          */
-        void NextPage() { ++_currentPage; }
+        void NextPage(Player* player) { ++_currentMenuState[player->GetGUID()].currentPage; }
 
         /**
          * @brief Goes back to the previous page in the current category.
          * Only decrements if current page is greater than 0 to prevent underflow.
          * Used when the player selects "Previous page" to view earlier items.
          */
-        void PreviousPage() { if (_currentPage > 0) --_currentPage; }
+        void PreviousPage(Player* player)
+        {
+            if (_currentMenuState[player->GetGUID()].currentPage)
+                --_currentMenuState[player->GetGUID()].currentPage;
+        }
 
         /**
          * @brief Saves the current menu state (page, category) to navigation history.
@@ -307,14 +297,14 @@ public:
          * enabling the "Back" functionality to restore the exact previous state including
          * the current page number and category context.
          */
-        void PushMenuState() { _menuHistory.emplace_back(_currentPage, _lastCategory); }
+        void PushMenuState(Player* player) { sSmartstone->GetMenuStates(player->GetGUID()).emplace_back(_currentMenuState[player->GetGUID()]); }
 
         /**
          * @brief Clears all navigation history.
          * Used during smartstone initialization to start with a clean navigation state,
          * preventing stale history from previous sessions from affecting current navigation.
          */
-        void ClearMenuHistory() { _menuHistory.clear(); }
+        void ClearMenuHistory(Player* player) { sSmartstone->MenuStateHolder[player->GetGUID()].clear(); }
 
         uint8 GetPlayerSubscriptionLevel(Player* player) const
         {
@@ -331,7 +321,7 @@ public:
             player->PlayerTalkClass->ClearMenus();
 
             // Update current page
-            _currentPage = currentPage;
+            _currentMenuState[player->GetGUID()].currentPage = currentPage;
 
             // Check if category exists
             if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end()) {
@@ -476,7 +466,7 @@ public:
             if (ParentCategoryId != CATEGORY_MAIN)
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT, "Back", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
 
-            SetLastCategory(ParentCategoryId);
+            SetLastCategory(player, ParentCategoryId);
 
             player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         }
@@ -495,6 +485,7 @@ public:
 
         if (sSmartstone->IsSmartstoneEnabled())
         {
+            sSmartstone->MenuStateHolder.clear();
             sSmartstone->MenuItems.clear();
             sSmartstone->LoadServices();
             sSmartstone->LoadPets();

@@ -124,6 +124,15 @@ struct SmartstoneServiceExpireInfo
     uint32 ExpirationTime;
 };
 
+struct SmartstoneMenuState
+{
+    uint16 currentPage;
+    uint32 lastCategory;
+
+    SmartstoneMenuState() : currentPage(0), lastCategory(0) { }
+    SmartstoneMenuState(uint16 page, uint32 category) : currentPage(page), lastCategory(category) { }
+};
+
 enum Settings
 {
     SETTING_MEMBERSHIP_LEVEL
@@ -239,12 +248,16 @@ public:
     [[nodiscard]] SmartstoneCostumeData GetCostumeData(uint32 displayId) const;
 
     std::vector<SmartstonePetData> Pets;
+
     std::vector<SmartstonePetData> CombatPets;
     std::unordered_map<uint32, std::vector<MenuItem>> MenuItems;
     std::unordered_map<uint32, std::vector<SmartstoneCostumeData>> Costumes;
     std::unordered_map<uint32, std::vector<SmartstoneCategoryData>> Categories;
     std::unordered_map<uint32, std::vector<SmartstoneService>> Services;
+    std::unordered_map<ObjectGuid, std::vector<SmartstoneMenuState>> MenuStateHolder;
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
+
+    std::vector<SmartstoneMenuState> GetMenuStates(const ObjectGuid& guid) { return MenuStateHolder[guid]; }
 };
 
 #define sSmartstone Smartstone::instance()
