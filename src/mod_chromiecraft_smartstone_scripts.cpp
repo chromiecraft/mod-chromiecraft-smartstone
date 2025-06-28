@@ -449,7 +449,7 @@ public:
             /**
              * @brief Navigation and utility buttons
              */
-            if (totalItems == 0)
+            if (menuItemIndex == 0)
             {
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK, "No actions available.", 0, 0, "", 0);
             }
