@@ -451,7 +451,7 @@ public:
              */
             if (menuItemIndex == 0)
             {
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK, "No actions available.", 0, 0, "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK, "No actions available.", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_NONE), "", 0);
             }
             else
             {
