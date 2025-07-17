@@ -98,7 +98,7 @@ public:
                         return false;
                     }
 
-                    uint32 relativeID = sSmartstone->GetActionTypeId(ACTION_TYPE_PET, pet.CreatureId);
+                    uint32 relativeID = sSmartstone->GetActionTypeId(serviceType, pet.CreatureId);
 
                     if (target->GetPlayerSetting(ModuleString, relativeID).IsEnabled())
                     {
