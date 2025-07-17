@@ -98,7 +98,9 @@ public:
                         return false;
                     }
 
-                    if (target->GetPlayerSetting(ModuleString, id).IsEnabled())
+                    uint32 relativeID = sSmartstone->GetActionTypeId(ACTION_TYPE_PET, pet.CreatureId);
+
+                    if (target->GetPlayerSetting(ModuleString, relativeID).IsEnabled())
                     {
                         handler->SendErrorMessage("The pet {} is already unlocked.", petData.Description);
                         return false;
@@ -124,7 +126,7 @@ public:
                         sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
                     }
 
-                    target->UpdatePlayerSetting(ModuleString, id, true);
+                    target->UpdatePlayerSetting(ModuleString, relativeID, true);
                     handler->PSendSysMessage("The pet {} has been unlocked for {}.", petData.Description, target->GetName());
                     break;
                 }
