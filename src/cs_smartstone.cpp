@@ -114,7 +114,7 @@ public:
                         else
                             expireDate = GameTime::GetGameTime().count() + petData.Duration;
 
-                        CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, ServiceType, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
+                        CharacterDatabase.Execute("INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
                             target->GetGUID().GetCounter(), petData.CreatureId, serviceType, expireDate);
 
                         SmartstoneServiceExpireInfo expireInfo;
