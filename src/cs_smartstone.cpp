@@ -81,7 +81,7 @@ public:
             return false;
         }
 
-        std::string ModuleString = ModName + sSmartstone->GetModuleStringForService(serviceType);
+        std::string ModuleString = sSmartstone->GetModuleStringForService(serviceType);
 
         if (add)
         {
