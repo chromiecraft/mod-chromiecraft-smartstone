@@ -326,6 +326,10 @@ public:
             // Check if category exists
             if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end()) {
                 player->SendSystemMessage("Category not found.");
+
+                ClearMenuHistory(player);
+                uint8 subscriptionLevel = GetPlayerSubscriptionLevel(player);
+                ShowMainMenu(player, item, subscriptionLevel);
                 return;
             }
 
