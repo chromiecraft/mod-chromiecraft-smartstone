@@ -27,16 +27,18 @@ This module makes use of Azerothcore's subscription system (from [acore-cms](htt
 
 The command usage in-game or via the worldserver:
 
-`.smartstone unlock service $characterName (or $characterGUID) $categoryID $petOrCostumeID $true (to add, or $false to remove)`.
+`.smartstone unlock service $characterName (or $characterGUID) $categoryID $petOrCostumeID $true # (to add, or $false to remove)`
 
-`.smartstone unlock service Nyeriah 0 1 true`
-Unlocks `(Pet) Amani'shi Groundbreaker`
+```bash
+# Unlocks (Pet) Amani'shi Groundbreaker
+.smartstone unlock service Nyeriah 0 80001 true
 
-`.smartstone unlock service Nyeriah 1 1 true`
-Unlocks `(Combat Pet) Winterveil Helper`
+# Unlocks (Combat Pet) Winterveil Helper
+.smartstone unlock service Nyeriah 1 90001 true
 
-`.smartstone unlock service Nyeriah 2 1 true`
-Unlocks `(Costume) Edwin VanCleef`
+# Unlocks (Costume) Edwin VanCleef
+.smartstone unlock service Nyeriah 2 20001 true
+```
 
 > [!NOTE]
 > Some of the existing pets as example `Summon Hyjal Wisp`, will not work if you haven't completed their required raids in mythic from [mod-zone-difficulty](https://github.com/azerothcore/mod-zone-difficulty).
@@ -45,11 +47,10 @@ Unlocks `(Costume) Edwin VanCleef`
 
 All SQL files should have a numeric prefix to indicate their purpose and order of execution. The prefixes are as follows:
 
-- 0 -> creation of the table
-- 1 -> updates to the table
-- 2 -> add data to the table
-- 3 -> used by other modules to add data to the tables
-
+-   0 -> creation of the table
+-   1 -> updates to the table
+-   2 -> add data to the table
+-   3 -> used by other modules to add data to the tables
 
 ## How to make your own?
 
@@ -57,19 +58,19 @@ All SQL files should have a numeric prefix to indicate their purpose and order o
 
 Requires `creature_template`, `creature_template_model` and `smartstone_pets`.
 
-Example for `Amani'shi Groundbreaker` [here](https://github.com/chromiecraft/mod-chromiecraft-smartstone/blob/master/data/sql/db-world/updates/smartstone.sql#L108).
+Example for `Amani'shi Groundbreaker` [here](https://github.com/chromiecraft/mod-chromiecraft-smartstone/blob/0203eb05a78b27475630f3ff3b57eac2bbc6f6d9/data/sql/db-world/updates/2_sts_data.sql#L70).
 
 ### Combat Pet
 
 Requires `creature_template`, `creature_template_model`, `creature_template_spell` and `smartstone_pets`.
 
-Example for `Winterveil Helper` [here](https://github.com/chromiecraft/mod-chromiecraft-smartstone/blob/master/data/sql/db-world/updates/smartstone.sql#L326).
+Example for `Winterveil Helper` [here](https://github.com/chromiecraft/mod-chromiecraft-smartstone/blob/0203eb05a78b27475630f3ff3b57eac2bbc6f6d9/data/sql/db-world/updates/2_sts_data.sql#L302).
 
 ### Costumes
 
 Requires only `smartstone_costumes`.
 
-Example for `Edwin VanCleef` [here](https://github.com/chromiecraft/mod-chromiecraft-smartstone/blob/master/data/sql/db-world/updates/smartstone.sql#L56).
+Example for `Edwin VanCleef` [here](https://github.com/chromiecraft/mod-chromiecraft-smartstone/blob/0203eb05a78b27475630f3ff3b57eac2bbc6f6d9/data/sql/db-world/updates/2_sts_data.sql#L19).
 
 ## Documentation
 
