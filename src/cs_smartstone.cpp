@@ -92,92 +92,92 @@ public:
 
         switch (serviceType)
         {
-        case ACTION_TYPE_COMPANION:
-        case ACTION_TYPE_PET:
-        {
-            SmartstonePetData pet = sSmartstone->GetPetData(id, serviceType);
-            if (!pet.CreatureId)
+            case ACTION_TYPE_COMPANION:
+            case ACTION_TYPE_PET:
             {
-                handler->SendErrorMessage("The pet {} does not exist.", id);
+                SmartstonePetData pet = sSmartstone->GetPetData(id, serviceType);
+                if (!pet.CreatureId)
+                {
+                    handler->SendErrorMessage("The pet {} does not exist.", id);
+                    return false;
+                }
+
+                uint32 settingId = sSmartstone->GetActionTypeId(static_cast<ActionType>(serviceType), pet.CreatureId);
+
+                if (target->GetPlayerSetting(module, settingId).IsEnabled() == add)
+                {
+                    sendDupError(pet.Description);
+                    return false;
+                }
+
+                if (add && pet.Duration)
+                {
+                    uint32 expiration = (pet.Duration > 31556926)
+                        ? pet.Duration
+                        : GameTime::GetGameTime().count() + pet.Duration;
+
+                    CharacterDatabase.Execute(
+                        "INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
+                        target->GetGUID().GetCounter(), pet.CreatureId, serviceType, expiration);
+
+                    SmartstoneServiceExpireInfo expireInfo;
+                    expireInfo.PlayerGUID = target->GetGUID().GetCounter();
+                    expireInfo.ServiceId = pet.CreatureId;
+                    expireInfo.ServiceType = serviceType;
+                    expireInfo.ActivationTime = GameTime::GetGameTime().count();
+                    expireInfo.ExpirationTime = expiration;
+                    sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
+                }
+
+                target->UpdatePlayerSetting(module, settingId, add);
+                sendSuccess(pet.Description);
+                break;
+            }
+
+            case ACTION_TYPE_COSTUME:
+            {
+                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
+                if (!costume.DisplayId)
+                {
+                    handler->SendErrorMessage("The costume {} does not exist.", id);
+                    return false;
+                }
+
+                if (target->GetPlayerSetting(module, id).IsEnabled() == add)
+                {
+                    sendDupError(costume.Description);
+                    return false;
+                }
+
+                target->UpdatePlayerSetting(module, id, add);
+                sendSuccess(costume.Description);
+                break;
+            }
+
+            case ACTION_TYPE_AURA:
+            {
+                SmartstoneAuraData aura = sSmartstone->GetAuraData(id);
+                if (!aura.SpellID)
+                {
+                    handler->SendErrorMessage("The aura {} does not exist.", id);
+                    return false;
+                }
+
+                uint32 actionId = id % 10000; // Or whatever rule you consistently use
+                if (target->GetPlayerSetting(module, actionId).IsEnabled() == add)
+                {
+                    sendDupError(aura.Description);
+                    return false;
+                }
+
+                target->UpdatePlayerSetting(module, actionId, add);
+                sendSuccess(aura.Description);
+                break;
+            }
+
+            default:
+                handler->SendErrorMessage("Unknown service type.");
                 return false;
-            }
-
-            uint32 settingId = sSmartstone->GetActionTypeId(static_cast<ActionType>(serviceType), pet.CreatureId);
-
-            if (target->GetPlayerSetting(module, settingId).IsEnabled() == add)
-            {
-                sendDupError(pet.Description);
-                return false;
-            }
-
-            if (add && pet.Duration)
-            {
-                uint32 expiration = (pet.Duration > 31556926)
-                    ? pet.Duration
-                    : GameTime::GetGameTime().count() + pet.Duration;
-
-                CharacterDatabase.Execute(
-                    "INSERT INTO smartstone_char_temp_services (PlayerGUID, ServiceId, Category, ActivationTime, ExpirationTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP(), {})",
-                    target->GetGUID().GetCounter(), pet.CreatureId, serviceType, expiration);
-
-                SmartstoneServiceExpireInfo expireInfo;
-                expireInfo.PlayerGUID = target->GetGUID().GetCounter();
-                expireInfo.ServiceId = pet.CreatureId;
-                expireInfo.ServiceType = serviceType;
-                expireInfo.ActivationTime = GameTime::GetGameTime().count();
-                expireInfo.ExpirationTime = expiration;
-                sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
-            }
-
-            target->UpdatePlayerSetting(module, settingId, add);
-            sendSuccess(pet.Description);
-            break;
-        }
-
-        case ACTION_TYPE_COSTUME:
-        {
-            SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
-            if (!costume.DisplayId)
-            {
-                handler->SendErrorMessage("The costume {} does not exist.", id);
-                return false;
-            }
-
-            if (target->GetPlayerSetting(module, id).IsEnabled() == add)
-            {
-                sendDupError(costume.Description);
-                return false;
-            }
-
-            target->UpdatePlayerSetting(module, id, add);
-            sendSuccess(costume.Description);
-            break;
-        }
-
-        case ACTION_TYPE_AURA:
-        {
-            SmartstoneAuraData aura = sSmartstone->GetAuraData(id);
-            if (!aura.SpellID)
-            {
-                handler->SendErrorMessage("The aura {} does not exist.", id);
-                return false;
-            }
-
-            uint32 actionId = id % 10000; // Or whatever rule you consistently use
-            if (target->GetPlayerSetting(module, actionId).IsEnabled() == add)
-            {
-                sendDupError(aura.Description);
-                return false;
-            }
-
-            target->UpdatePlayerSetting(module, actionId, add);
-            sendSuccess(aura.Description);
-            break;
-        }
-
-        default:
-            handler->SendErrorMessage("Unknown service type.");
-            return false;
         }
 
         return true;
