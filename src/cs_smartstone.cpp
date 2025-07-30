@@ -163,7 +163,7 @@ public:
                     return false;
                 }
 
-                uint32 actionId = id % 10000; // Or whatever rule you consistently use
+                uint32 actionId = id - (ACTION_TYPE_AURA * 10000);
                 if (target->GetPlayerSetting(module, actionId).IsEnabled() == add)
                 {
                     sendDupError(aura.Description);
