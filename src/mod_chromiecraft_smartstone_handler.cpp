@@ -161,6 +161,36 @@ void Smartstone::LoadCategories()
     }
 }
 
+void Smartstone::LoadAuras()
+{
+    // Load auras from the database
+    QueryResult result = WorldDatabase.Query("SELECT Id, SpellId, Description, SubscriptionLevel FROM smartstone_auras WHERE Enabled = 1");
+    SmartstoneAuraData auraData;
+
+    Auras.clear();
+
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            auraData.Id = fields[0].Get<uint32>();
+            auraData.SpellID = fields[1].Get<uint32>();
+            auraData.Description = fields[2].Get<std::string>();
+            auraData.SubscriptionLevelRequired = fields[3].Get<uint8>();
+            Auras.push_back(auraData);
+            MenuItems[ACTION_TYPE_AURA].push_back(MenuItem{
+                auraData.Id,
+                auraData.Description,
+                0, // NpcTextId
+                GOSSIP_ICON_TABARD,
+                ACTION_TYPE_AURA,
+                auraData.SubscriptionLevelRequired
+                });
+        } while (result->NextRow());
+    }
+}
+
 SmartstoneServiceExpireInfo Smartstone::GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 serviceType) const
 {
     auto const& expireInfo = ServiceExpireInfo.find(playerGUID);
@@ -247,6 +277,20 @@ SmartstoneCostumeData Smartstone::GetCostumeData(uint32 id) const
 
     // Return empty/default costume data with Id = 0 to indicate not found
     SmartstoneCostumeData defaultCostume = {};
+    defaultCostume.Id = 0;
+    return defaultCostume;
+}
+
+SmartstoneAuraData Smartstone::GetAuraData(uint32 id) const
+{
+    for (auto const& aura : Auras)
+    {
+        if (aura.Id == id)
+            return aura;
+    }
+
+    // Return empty/default aura data with Id = 0 to indicate not found
+    SmartstoneAuraData defaultCostume = {};
     defaultCostume.Id = 0;
     return defaultCostume;
 }
@@ -355,6 +399,8 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
             return ModName + "#combatpet";
         case ACTION_TYPE_COSTUME:
             return ModName + "#costume";
+        case ACTION_TYPE_AURA:
+            return ModName + "#aura";
         default:
             return "";
     }

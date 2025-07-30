@@ -46,7 +46,8 @@ public:
         auto costumes = sSmartstone->Costumes;
 
         const auto actionKey = sSmartstone->DecodeActionId(action);
-        if (!actionKey.has_value()) {
+        if (!actionKey.has_value())
+        {
             player->SendSystemMessage("Invalid action selected.");
             return;
         }
@@ -57,7 +58,8 @@ public:
          * @todo: refactor in multiple functions
          *
          */
-        switch (actionType) {
+        switch (actionType)
+        {
             case ACTION_TYPE_CATEGORY:
             {
                 // Save current state before navigating to new category
@@ -66,8 +68,10 @@ public:
                 ShowCategoryItems(actionId, player, item, subscriptionLevel);
                 return;
             }
-            case ACTION_TYPE_UTIL: {
-                switch(actionId) {
+            case ACTION_TYPE_UTIL:
+            {
+                switch(actionId)
+                {
                     case SMARTSTONE_ACTION_BACK:
                     {
                         auto _menuHistory = sSmartstone->MenuStateHolder[player->GetGUID()];
@@ -212,6 +216,19 @@ public:
                 }
                 break;
             }
+            case ACTION_TYPE_AURA:
+            {
+                SmartstoneAuraData aura = sSmartstone->GetAuraData(actionId);
+                if (player->HasAura(aura.SpellID))
+                {
+                    player->SendSystemMessage("You already have this aura active.");
+                    return;
+                }
+
+                player->AddAura(aura.SpellID, player);
+                player->SendSystemMessage(aura.Description + " is now active.");
+                break;
+            }
             case ACTION_TYPE_NONE:
             case MAX_ACTION_TYPE:
             default:
@@ -232,7 +249,8 @@ public:
             return false;
 
         // Check if smartstone data is properly initialized
-        if (sSmartstone->MenuItems.empty()) {
+        if (sSmartstone->MenuItems.empty())
+        {
             player->SendSystemMessage("Smartstone is not properly configured. Please contact an administrator.");
             return false;
         }
@@ -324,12 +342,12 @@ public:
             _currentMenuState[player->GetGUID()].currentPage = currentPage;
 
             // Check if category exists
-            if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end()) {
+            if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end())
+            {
                 player->SendSystemMessage("Category not found.");
 
                 ClearMenuHistory(player);
-                uint8 subscriptionLevel = GetPlayerSubscriptionLevel(player);
-                ShowMainMenu(player, item, subscriptionLevel);
+                ShowMainMenu(player, item, GetPlayerSubscriptionLevel(player));
                 return;
             }
 
@@ -428,6 +446,17 @@ public:
                         reduceCounters();
                 }
 
+                if (menuItem.ServiceType == ACTION_TYPE_AURA)
+                {
+                    if (sSmartstone->IsServiceAvailable(player, "#aura", menuItem.ItemId)
+                        || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                    {
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_AURA, menuItem.ItemId), "", 0);
+                    }
+                    else if (totalItems > 0)
+                        reduceCounters();
+                }
+
                 if (menuItem.ServiceType == ACTION_TYPE_CATEGORY)
                 {
                     if (sSmartstone->IsServiceAvailable(player, "#category", menuItem.ItemId)
@@ -496,6 +525,7 @@ public:
             sSmartstone->LoadCostumes();
             sSmartstone->LoadServiceExpirationInfo();
             sSmartstone->LoadCategories();
+            sSmartstone->LoadAuras();
         }
     }
 };

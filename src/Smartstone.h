@@ -47,12 +47,13 @@ enum Service
 enum ActionType
 {
     ACTION_TYPE_COMPANION = 0,
-    ACTION_TYPE_PET = 1,
-    ACTION_TYPE_COSTUME = 2,
-    ACTION_TYPE_CATEGORY = 3,
-    ACTION_TYPE_SERVICE = 4, // Character services like barber, name change, etc.
-    ACTION_TYPE_UTIL = 5, // Utility actions like next/previous page, back,
-    ACTION_TYPE_NONE = 6, // No action type, used for invalid or uninitialized
+    ACTION_TYPE_PET       = 1,
+    ACTION_TYPE_COSTUME   = 2,
+    ACTION_TYPE_CATEGORY  = 3,
+    ACTION_TYPE_SERVICE   = 4, // Character services like barber, name change, etc.
+    ACTION_TYPE_UTIL      = 5, // Utility actions like next/previous page, back,
+    ACTION_TYPE_AURA      = 6,
+    ACTION_TYPE_NONE      = 7, // No action type, used for invalid or uninitialized
     MAX_ACTION_TYPE,
 };
 
@@ -122,6 +123,14 @@ struct SmartstoneServiceExpireInfo
     uint8 ServiceType;
     uint32 ActivationTime;
     uint32 ExpirationTime;
+};
+
+struct SmartstoneAuraData
+{
+    uint32 Id;
+    uint32 SpellID;
+    std::string Description;
+    uint8 SubscriptionLevelRequired;
 };
 
 struct SmartstoneMenuState
@@ -236,6 +245,7 @@ public:
     void LoadCostumes();
     void LoadServiceExpirationInfo();
     void LoadCategories();
+    void LoadAuras();
 
     void ProcessExpiredServices(Player* player);
 
@@ -246,10 +256,12 @@ public:
     [[nodiscard]] SmartstoneServiceExpireInfo GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 category) const;
     [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 serviceType = ACTION_TYPE_COMPANION) const;
     [[nodiscard]] SmartstoneCostumeData GetCostumeData(uint32 displayId) const;
+    [[nodiscard]] SmartstoneAuraData GetAuraData(uint32 id) const;
 
     std::vector<SmartstonePetData> Pets;
-
     std::vector<SmartstonePetData> CombatPets;
+    std::vector<SmartstoneAuraData> Auras;
+
     std::unordered_map<uint32, std::vector<MenuItem>> MenuItems;
     std::unordered_map<uint32, std::vector<SmartstoneCostumeData>> Costumes;
     std::unordered_map<uint32, std::vector<SmartstoneCategoryData>> Categories;

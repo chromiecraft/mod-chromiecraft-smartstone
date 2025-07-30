@@ -150,6 +150,28 @@ public:
                     handler->PSendSysMessage("The costume {} has been unlocked for {}.", costume.Description, target->GetName());
                     break;
                 }
+                case ACTION_TYPE_AURA:
+                {
+                    SmartstoneAuraData auraData = sSmartstone->GetAuraData(id);
+                    auto const& actionKey = sSmartstone->DecodeActionId(id);
+                    auto const& actionId = actionKey->actionId;
+
+                    if (!auraData.SpellID)
+                    {
+                        handler->SendErrorMessage("The aura {} (relative ID: service type) does not exist.", id);
+                        return false;
+                    }
+
+                    if (target->GetPlayerSetting(ModuleString, actionId).IsEnabled())
+                    {
+                        handler->SendErrorMessage("The aura {} (Smartstone ID: {}) is already unlocked.", auraData.Description, actionId);
+                        return false;
+                    }
+
+                    target->UpdatePlayerSetting(ModuleString, actionId, true);
+                    handler->PSendSysMessage("Aura {} unlocked for player.", auraData.Description);
+                    break;
+                }
 
             }
         }
