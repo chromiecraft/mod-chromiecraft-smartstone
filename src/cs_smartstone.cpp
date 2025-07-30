@@ -139,8 +139,6 @@ public:
             SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
             if (!costume.DisplayId)
             {
-                        SmartstoneServiceExpireInfo expireInfo;
-                        expireInfo.PlayerGUID = target->GetGUID().GetCounter();
                 handler->SendErrorMessage("The costume {} does not exist.", id);
                 return false;
             }
