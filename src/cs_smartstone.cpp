@@ -153,8 +153,7 @@ public:
                 case ACTION_TYPE_AURA:
                 {
                     SmartstoneAuraData auraData = sSmartstone->GetAuraData(id);
-                    auto const& actionKey = sSmartstone->DecodeActionId(id);
-                    auto const& actionId = actionKey->actionId;
+                    uint32 const& actionId = id - serviceType * 10000;
 
                     if (!auraData.SpellID)
                     {
