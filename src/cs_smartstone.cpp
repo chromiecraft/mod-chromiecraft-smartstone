@@ -83,11 +83,11 @@ public:
         std::string module = sSmartstone->GetModuleStringForService(serviceType);
 
         auto sendDupError = [&](std::string_view desc) {
-            handler->SendErrorMessage("The {} {} is already {}.", module, desc, add ? "unlocked" : "locked");
+            handler->SendErrorMessage("The {} is already {}.", desc, add ? "unlocked" : "locked");
         };
 
         auto sendSuccess = [&](std::string_view desc) {
-            handler->PSendSysMessage("{} {} has been {} for {}.", module, desc, add ? "unlocked" : "removed", target->GetName());
+            handler->PSendSysMessage("{} has been {} for {}.", desc, add ? "unlocked" : "removed", target->GetName());
         };
 
         switch (serviceType)
