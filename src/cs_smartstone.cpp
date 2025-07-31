@@ -163,14 +163,13 @@ public:
                     return false;
                 }
 
-                uint32 actionId = id - (ACTION_TYPE_AURA * 10000);
-                if (target->GetPlayerSetting(module, actionId).IsEnabled() == add)
+                if (target->GetPlayerSetting(module, id).IsEnabled() == add)
                 {
                     sendDupError(aura.Description);
                     return false;
                 }
 
-                target->UpdatePlayerSetting(module, actionId, add);
+                target->UpdatePlayerSetting(module, id, add);
                 sendSuccess(aura.Description);
                 break;
             }
