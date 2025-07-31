@@ -89,6 +89,10 @@ struct SmartstonePetData
     STSPetType Type;
     uint32 Category;
     uint8 SubscriptionLevelRequired;
+
+public:
+    // Low id: used to store player settings
+    [[nodiscard]] uint32 GetId() const { return CreatureId - (Type == PET_TYPE_COMPANION ? 80000 : 90000); };
 };
 
 struct SmartstoneCostumeData
