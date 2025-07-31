@@ -362,8 +362,7 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
         }
     }
 
-    uint32 relativeID = sSmartstone->GetActionTypeId(static_cast<ActionType>(pet.Type), pet.CreatureId);
-    return player->GetPlayerSetting(setting, relativeID).IsEnabled();
+    return player->GetPlayerSetting(setting, pet.CreatureId).IsEnabled();
 }
 
 bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const
