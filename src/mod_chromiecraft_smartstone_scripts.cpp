@@ -70,7 +70,7 @@ public:
             }
             case ACTION_TYPE_UTIL:
             {
-                switch(actionId)
+                switch (actionId)
                 {
                     case SMARTSTONE_ACTION_BACK:
                     {
@@ -122,6 +122,15 @@ public:
                         {
                             player->DeMorph();
                             sSmartstone->SetCurrentCostume(player, 0);
+                        }
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_REMOVE_AURA:
+                    {
+                        if (uint32 spellId = sSmartstone->GetCurrentAura(player))
+                        {
+                            player->RemoveAurasDueToSpell(spellId);
+                            sSmartstone->SetCurrentAura(player, 0);
                         }
                         break;
                     }
@@ -225,6 +234,7 @@ public:
                     return;
                 }
 
+                sSmartstone->SetCurrentAura(player, aura.SpellID);
                 player->AddAura(aura.SpellID, player);
                 player->SendSystemMessage(aura.Description + " is now active.");
                 break;
@@ -377,6 +387,9 @@ public:
 
             if (sSmartstone->GetCurrentCostume(player))
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_COSTUME), "", 0);
+
+            if (sSmartstone->GetCurrentAura(player))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, "|TInterface/icons/Spell_Nature_WispSplode:30:30:-18:0|t Remove current aura", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_AURA), "", 0);
 
             uint32 totalItems = menuItems.size();
             uint32 startIndex = pageNumber * itemsPerPage;

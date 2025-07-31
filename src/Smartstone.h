@@ -20,7 +20,8 @@ enum Misc
     SETTING_HYJAL        = 3,
     SETTING_SWP          = 4,
 
-    SETTING_CURR_COSTUME = 0
+    SETTING_CURR_COSTUME = 0,
+    SETTING_CURR_AURA    = 1
 };
 
 enum UtilActions
@@ -32,6 +33,7 @@ enum UtilActions
     SMARTSTONE_ACTION_LAST_PAGE              = 4,
     SMARTSTONE_ACTION_NEXT_PAGE              = 5,
     SMARTSTONE_ACTION_BACK                   = 6,
+    SMARTSTONE_ACTION_REMOVE_AURA            = 7,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -170,16 +172,19 @@ public:
     bool CanUseSmartstone(Player* player) const { return !player->GetMap()->IsDungeon() && !player->GetMap()->IsBattlegroundOrArena(); }
 
     void SetEnabled(bool enabled) { IsEnabled = enabled; }
-    [[nodiscard]] bool IsSmartstoneEnabled() { return IsEnabled; }
+    [[nodiscard]] bool IsSmartstoneEnabled() const { return IsEnabled; }
 
     void SetBarberDuration(Seconds duration) { BarberDuration = duration; }
-    [[nodiscard]] Seconds GetBarberDuration() { return BarberDuration; }
+    [[nodiscard]] Seconds GetBarberDuration() const { return BarberDuration; }
 
     void SetSmartstoneItemID(uint32 itemId) { SmartstoneItemID = itemId; }
-    [[nodiscard]] uint32 GetSmartstoneItemID() { return SmartstoneItemID; }
+    [[nodiscard]] uint32 GetSmartstoneItemID() const { return SmartstoneItemID; }
 
-    void SetCurrentCostume(Player* player, uint32 costumeId) { player->UpdatePlayerSetting(ModName + "#costume", SETTING_CURR_COSTUME, costumeId); }
-    [[nodiscard]] uint32 GetCurrentCostume(Player* player) { return player->GetPlayerSetting(ModName + "#costume", SETTING_CURR_COSTUME).value; }
+    void SetCurrentCostume(Player* player, uint32 costumeId) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_CURR_COSTUME, costumeId); }
+    [[nodiscard]] uint32 GetCurrentCostume(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_CURR_COSTUME).value; }
+
+    void SetCurrentAura(Player* player, uint32 spellId) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_CURR_AURA, spellId); }
+    [[nodiscard]] uint32 GetCurrentAura(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_CURR_AURA).value; };
 
     [[nodiscard]] constexpr uint32_t GetActionTypeBaseId(ActionType type)
     {
