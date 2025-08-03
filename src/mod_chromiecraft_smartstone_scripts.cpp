@@ -522,8 +522,6 @@ public:
 
             player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         }
-
-
     };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
@@ -565,7 +563,6 @@ public:
     }
 
 };
-
 
 void Addmod_cc_smartstoneScripts()
 {
