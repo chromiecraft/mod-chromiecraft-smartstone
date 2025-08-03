@@ -30,6 +30,14 @@ enum Texts
     SAY_BARBER_DESPAWN         = 1
 };
 
+void removeCurrentAura(Player* player) {
+    if (uint32 spellId = sSmartstone->GetCurrentAura(player))
+    {
+        player->RemoveAurasDueToSpell(spellId);
+        sSmartstone->SetCurrentAura(player, 0);
+    }
+}
+
 class item_chromiecraft_smartstone : public ItemScript
 {
 public:
@@ -515,13 +523,7 @@ public:
             player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         }
 
-        void removeCurrentAura(Player* player) {
-            if (uint32 spellId = sSmartstone->GetCurrentAura(player))
-            {
-                player->RemoveAurasDueToSpell(spellId);
-                sSmartstone->SetCurrentAura(player, 0);
-            }
-        }
+
     };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
@@ -549,8 +551,25 @@ public:
     }
 };
 
+class mod_chromiecraft_smartstone_playerscript : public PlayerScript
+{
+public:
+    mod_chromiecraft_smartstone_playerscript() : PlayerScript("mod_chromiecraft_smartstone_playerscript") { }
+
+    void OnPlayerBeforeLogout(Player* player) override
+    {
+        if (sSmartstone->IsSmartstoneEnabled())
+        {
+            removeCurrentAura(player);
+        }
+    }
+
+};
+
+
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
     new mod_chromiecraft_smartstone_worldscript();
+    new mod_chromiecraft_smartstone_playerscript();
 }
