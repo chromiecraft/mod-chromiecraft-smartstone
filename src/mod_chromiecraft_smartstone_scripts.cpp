@@ -127,11 +127,7 @@ public:
                     }
                     case SMARTSTONE_ACTION_REMOVE_AURA:
                     {
-                        if (uint32 spellId = sSmartstone->GetCurrentAura(player))
-                        {
-                            player->RemoveAurasDueToSpell(spellId);
-                            sSmartstone->SetCurrentAura(player, 0);
-                        }
+                        removeCurrentAura(player);
                         break;
                     }
                 }
@@ -231,8 +227,10 @@ public:
                 if (player->HasAura(aura.SpellID))
                 {
                     player->SendSystemMessage("You already have this aura active.");
-                    return;
+                    break;
                 }
+
+                removeCurrentAura(player);
 
                 sSmartstone->SetCurrentAura(player, aura.SpellID);
                 player->AddAura(aura.SpellID, player);
@@ -516,7 +514,15 @@ public:
 
             player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         }
-};
+
+        void removeCurrentAura(Player* player) {
+            if (uint32 spellId = sSmartstone->GetCurrentAura(player))
+            {
+                player->RemoveAurasDueToSpell(spellId);
+                sSmartstone->SetCurrentAura(player, 0);
+            }
+        }
+    };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
 {
