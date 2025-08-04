@@ -40,4 +40,12 @@ CREATE TABLE IF NOT EXISTS `smartstone_categories` (
  `NPCTextId` INT DEFAULT 0,
  `Enabled` TINYINT,
  PRIMARY KEY(`Id`)
- );
+);
+
+CREATE TABLE IF NOT EXISTS `smartstone_auras` (
+    `Id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `SpellID` INT UNSIGNED NOT NULL,
+    `Description` TEXT,
+    `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `Enabled` TINYINT NOT NULL DEFAULT 1
+);

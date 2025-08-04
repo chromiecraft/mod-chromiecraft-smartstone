@@ -30,6 +30,14 @@ enum Texts
     SAY_BARBER_DESPAWN         = 1
 };
 
+void removeCurrentAura(Player* player) {
+    if (uint32 spellId = sSmartstone->GetCurrentAura(player))
+    {
+        player->RemoveAurasDueToSpell(spellId);
+        sSmartstone->SetCurrentAura(player, 0);
+    }
+}
+
 class item_chromiecraft_smartstone : public ItemScript
 {
 public:
@@ -127,11 +135,7 @@ public:
                     }
                     case SMARTSTONE_ACTION_REMOVE_AURA:
                     {
-                        if (uint32 spellId = sSmartstone->GetCurrentAura(player))
-                        {
-                            player->RemoveAurasDueToSpell(spellId);
-                            sSmartstone->SetCurrentAura(player, 0);
-                        }
+                        removeCurrentAura(player);
                         break;
                     }
                 }
@@ -231,8 +235,10 @@ public:
                 if (player->HasAura(aura.SpellID))
                 {
                     player->SendSystemMessage("You already have this aura active.");
-                    return;
+                    break;
                 }
+
+                removeCurrentAura(player);
 
                 sSmartstone->SetCurrentAura(player, aura.SpellID);
                 player->AddAura(aura.SpellID, player);
@@ -516,7 +522,7 @@ public:
 
             player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         }
-};
+    };
 
 class mod_chromiecraft_smartstone_worldscript : public WorldScript
 {
@@ -543,8 +549,24 @@ public:
     }
 };
 
+class mod_chromiecraft_smartstone_playerscript : public PlayerScript
+{
+public:
+    mod_chromiecraft_smartstone_playerscript() : PlayerScript("mod_chromiecraft_smartstone_playerscript") { }
+
+    void OnPlayerBeforeLogout(Player* player) override
+    {
+        if (sSmartstone->IsSmartstoneEnabled())
+        {
+            removeCurrentAura(player);
+        }
+    }
+
+};
+
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
     new mod_chromiecraft_smartstone_worldscript();
+    new mod_chromiecraft_smartstone_playerscript();
 }
