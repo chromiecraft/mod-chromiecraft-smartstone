@@ -215,6 +215,7 @@ public:
 
                 SmartstoneCostumeData costume = sSmartstone->GetCostumeData(actionId);
                 player->SetDisplayId(costume.DisplayId);
+                player->SetObjectScale(costume.Scale);
                 sSmartstone->SetCurrentCostume(player, costume.DisplayId);
 
                 player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);

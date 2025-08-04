@@ -50,7 +50,7 @@ void Smartstone::LoadPets()
 void Smartstone::LoadCostumes()
 {
     // Load costumes from the database
-    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Category, SubscriptionLevel, Duration, Description, Id FROM smartstone_costumes WHERE Enabled = 1");
+    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Category, SubscriptionLevel, Duration, Description, Id, Scale FROM smartstone_costumes WHERE Enabled = 1");
     SmartstoneCostumeData costumeData;
     Costumes.clear();
     if (result)
@@ -64,6 +64,7 @@ void Smartstone::LoadCostumes()
             costumeData.Duration = fields[3].Get<uint32>();
             costumeData.Description = fields[4].Get<std::string>();
             costumeData.Id = fields[5].Get<uint32>();
+            costumeData.Scale = fields[6].Get<float>();
             Costumes[category].push_back(costumeData);
 
             MenuItems[category].push_back(MenuItem{
