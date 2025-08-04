@@ -99,6 +99,7 @@ struct SmartstoneCostumeData
 {
     uint32 Id;
     uint32 DisplayId;
+    float Scale;
     std::string Description;
     uint32 Duration;
     uint8 SubscriptionLevelRequired;
