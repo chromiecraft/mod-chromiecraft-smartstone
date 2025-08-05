@@ -30,14 +30,6 @@ enum Texts
     SAY_BARBER_DESPAWN         = 1
 };
 
-void removeCurrentAura(Player* player) {
-    if (uint32 spellId = sSmartstone->GetCurrentAura(player))
-    {
-        player->RemoveAurasDueToSpell(spellId);
-        sSmartstone->SetCurrentAura(player, 0);
-    }
-}
-
 class item_chromiecraft_smartstone : public ItemScript
 {
 public:
@@ -135,7 +127,7 @@ public:
                     }
                     case SMARTSTONE_ACTION_REMOVE_AURA:
                     {
-                        removeCurrentAura(player);
+                        sSmartstone->removeCurrentAura(player);
                         break;
                     }
                 }
@@ -238,7 +230,7 @@ public:
                     break;
                 }
 
-                removeCurrentAura(player);
+                sSmartstone->removeCurrentAura(player);
 
                 sSmartstone->SetCurrentAura(player, aura.SpellID);
                 player->AddAura(aura.SpellID, player);
@@ -558,7 +550,7 @@ public:
     {
         if (sSmartstone->IsSmartstoneEnabled())
         {
-            removeCurrentAura(player);
+            sSmartstone->removeCurrentAura(player);
         }
     }
 

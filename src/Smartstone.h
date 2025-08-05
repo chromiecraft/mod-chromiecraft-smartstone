@@ -279,6 +279,14 @@ public:
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 
     std::vector<SmartstoneMenuState> GetMenuStates(const ObjectGuid& guid) { return MenuStateHolder[guid]; }
+
+    void removeCurrentAura(Player* player) {
+        if (uint32 spellId = GetCurrentAura(player))
+        {
+            player->RemoveAurasDueToSpell(spellId);
+            SetCurrentAura(player, 0);
+        }
+    }
 };
 
 #define sSmartstone Smartstone::instance()
