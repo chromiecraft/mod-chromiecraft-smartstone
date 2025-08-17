@@ -205,21 +205,14 @@ public:
                     break;
                 }
 
-                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(actionId);
-                player->SetDisplayId(costume.DisplayId);
-                player->SetObjectScale(costume.Scale);
-                sSmartstone->SetCurrentCostume(player, costume.DisplayId);
-
-                player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
-
-                Milliseconds duration = sSmartstone->GetCostumeDuration(player, costume.Duration);
-                if (duration > 0s)
-                {
-                    player->m_Events.AddEventAtOffset([player] {
-                        if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
-                            player->SetDisplayId(player->GetNativeDisplayId());
-                    }, duration);
+                if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+                    (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena())) {
+                    player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                    break;
                 }
+
+                sSmartstone->ApplyCostume(player, actionId);
+
                 break;
             }
             case ACTION_TYPE_AURA:
@@ -527,6 +520,8 @@ public:
         sSmartstone->SetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false));
         sSmartstone->SetBarberDuration(Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300)));
         sSmartstone->SetSmartstoneItemID(sConfigMgr->GetOption<uint32>("ModChromiecraftSmartstone.ItemID", 32547));
+        sSmartstone->SetCanUseInArena(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInArena", false));
+        sSmartstone->SetCanUseInBG(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInBg", false));
 
         if (sSmartstone->IsSmartstoneEnabled())
         {
@@ -550,11 +545,8 @@ public:
     void OnPlayerBeforeLogout(Player* player) override
     {
         if (sSmartstone->IsSmartstoneEnabled())
-        {
             sSmartstone->removeCurrentAura(player);
-        }
     }
-
 };
 
 void Addmod_cc_smartstoneScripts()

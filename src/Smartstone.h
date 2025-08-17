@@ -168,6 +168,8 @@ class Smartstone
 private:
     uint32 SmartstoneItemID = 0;
     bool IsEnabled{ true };
+    bool CanUseInArena{ false };
+    bool CanUseInBG{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -178,6 +180,12 @@ public:
 
     void SetEnabled(bool enabled) { IsEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneEnabled() const { return IsEnabled; }
+
+    void SetCanUseInArena(bool enabled) { CanUseInArena = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInArena() const { return CanUseInArena; }
+
+    void SetCanUseInBG(bool enabled) { CanUseInBG = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInBG() const { return CanUseInBG; }
 
     void SetBarberDuration(Seconds duration) { BarberDuration = duration; }
     [[nodiscard]] Seconds GetBarberDuration() const { return BarberDuration; }
@@ -190,6 +198,25 @@ public:
 
     void SetCurrentAura(Player* player, uint32 spellId) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_CURR_AURA, spellId); }
     [[nodiscard]] uint32 GetCurrentAura(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_CURR_AURA).value; };
+
+    void ApplyCostume(Player* player, uint32 costumeId)
+    {
+        SmartstoneCostumeData costume = GetCostumeData(costumeId);
+        player->SetDisplayId(costume.DisplayId);
+        player->SetObjectScale(costume.Scale);
+        SetCurrentCostume(player, costume.DisplayId);
+
+        player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+
+        Milliseconds duration = GetCostumeDuration(player, costume.Duration);
+        if (duration > 0s)
+        {
+            player->m_Events.AddEventAtOffset([player] {
+                if (player->GetDisplayId() == Smartstone::instance()->GetCurrentCostume(player))
+                    player->SetDisplayId(player->GetNativeDisplayId());
+            }, duration);
+        }
+    }
 
     [[nodiscard]] constexpr uint32_t GetActionTypeBaseId(ActionType type)
     {

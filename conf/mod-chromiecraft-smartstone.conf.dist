@@ -31,3 +31,21 @@ ModChromiecraftSmartstone.ItemID = 32547
 
 ModChromiecraftSmartstone.Features.BarberDuration = 300
 
+
+#
+#    ModChromiecraftSmartstone.CanUseInArena
+#        Description: Sets whether the SmartStone can be used in arenas.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+
+ModChromiecraftSmartstone.CanUseInArena = 0
+
+#
+#    ModChromiecraftSmartstone.CanUseInBG
+#        Description: Sets whether the SmartStone can be used in battlegrounds.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+
+ModChromiecraftSmartstone.CanUseInBG = 0
