@@ -194,6 +194,13 @@ public:
             }
             case ACTION_TYPE_COSTUME:
             {
+
+                if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+                    (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena())) {
+                    player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                    break;
+                }
+
                 if (player->HasSpellCooldown(90002) && !player->GetCommandStatus(CHEAT_COOLDOWN))
                 {
                     uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
@@ -202,12 +209,6 @@ public:
                     seconds = seconds % 60;
                     std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
                     player->SendSystemMessage(message);
-                    break;
-                }
-
-                if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
-                    (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena())) {
-                    player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
                     break;
                 }
 
