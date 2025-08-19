@@ -196,7 +196,8 @@ public:
             {
 
                 if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
-                    (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena())) {
+                    (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
+                    {
                     player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
                     break;
                 }
