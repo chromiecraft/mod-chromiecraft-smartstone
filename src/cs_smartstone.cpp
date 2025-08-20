@@ -129,6 +129,8 @@ public:
 
                 if (target)
                     target->UpdatePlayerSetting(module, settingId, add);
+                else
+                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, settingId, add);
 
                 sendSuccess(pet.Description);
                 break;
@@ -152,9 +154,7 @@ public:
                 if (target)
                     target->UpdatePlayerSetting(module, id, add);
                 else
-                {
                     PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, id, add);
-                }
 
                 sendSuccess(costume.Description);
                 break;
