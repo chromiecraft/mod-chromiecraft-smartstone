@@ -169,13 +169,17 @@ public:
                     return false;
                 }
 
-                if (target->GetPlayerSetting(module, id).IsEnabled() == add)
+                if (target && target->GetPlayerSetting(module, id).IsEnabled() == add)
                 {
                     sendDupError(aura.Description);
                     return false;
                 }
 
-                target->UpdatePlayerSetting(module, id, add);
+                if (target)
+                    target->UpdatePlayerSetting(module, id, add);
+                else
+                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, id, add);
+
                 sendSuccess(aura.Description);
                 break;
             }
