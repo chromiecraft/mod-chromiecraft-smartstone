@@ -1,6 +1,7 @@
 --
 -- Do not add DROP statements to this file.
 -- It should not be reapplied.
+-- DO NOT ChANGE THE DATABASE STRUCTURE, CHANGE AFTER (in another SQL) after the database is created and before the SQL queries related to that Database are ran.
 --
 
 CREATE TABLE IF NOT EXISTS `smartstone_pets` (
@@ -16,7 +17,6 @@ CREATE TABLE IF NOT EXISTS `smartstone_pets` (
 CREATE TABLE IF NOT EXISTS `smartstone_costumes` (
  `Id` INT UNSIGNED NOT NULL,
  `DisplayId` INT UNSIGNED NOT NULL,
- `Scale` FLOAT NOT NULL DEFAULT 1,
  `Category` TINYINT DEFAULT 0,
  `SubscriptionLevel` TINYINT DEFAULT 0,
  `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
