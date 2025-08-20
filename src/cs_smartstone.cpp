@@ -73,21 +73,19 @@ public:
             return false;
         }
 
-        Player* target = player.GetConnectedPlayer();
-        if (!target)
-        {
-            handler->SendErrorMessage("The player is not online.");
-            return false;
-        }
+        std::string playerName;
+        sCharacterCache->GetCharacterNameByGuid(player.GetGUID(), playerName);
 
         std::string module = sSmartstone->GetModuleStringForService(serviceType);
+
+        Player* target = player.GetConnectedPlayer();
 
         auto sendDupError = [&](std::string_view desc) {
             handler->SendErrorMessage("The {} is already {}.", desc, add ? "unlocked" : "locked");
         };
 
         auto sendSuccess = [&](std::string_view desc) {
-            handler->PSendSysMessage("{} has been {} for {}.", desc, add ? "unlocked" : "removed", target->GetName());
+            handler->PSendSysMessage("{} has been {} for {}.", desc, add ? "unlocked" : "removed", playerName);
         };
 
         switch (serviceType)
@@ -104,13 +102,13 @@ public:
 
                 uint32 settingId = sSmartstone->GetActionTypeId(static_cast<ActionType>(serviceType), pet.CreatureId);
 
-                if (target->GetPlayerSetting(module, settingId).IsEnabled() == add)
+                if (target && target->GetPlayerSetting(module, settingId).IsEnabled() == add)
                 {
                     sendDupError(pet.Description);
                     return false;
                 }
 
-                if (add && pet.Duration)
+                if (target && add && pet.Duration)
                 {
                     uint32 expiration = (pet.Duration > 31556926)
                         ? pet.Duration
@@ -129,7 +127,9 @@ public:
                     sSmartstone->ServiceExpireInfo[target->GetGUID().GetCounter()].push_back(expireInfo);
                 }
 
-                target->UpdatePlayerSetting(module, settingId, add);
+                if (target)
+                    target->UpdatePlayerSetting(module, settingId, add);
+
                 sendSuccess(pet.Description);
                 break;
             }
@@ -143,13 +143,19 @@ public:
                     return false;
                 }
 
-                if (target->GetPlayerSetting(module, id).IsEnabled() == add)
+                if (target && target->GetPlayerSetting(module, id).IsEnabled() == add)
                 {
                     sendDupError(costume.Description);
                     return false;
                 }
 
-                target->UpdatePlayerSetting(module, id, add);
+                if (target)
+                    target->UpdatePlayerSetting(module, id, add);
+                else
+                {
+                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, id, add);
+                }
+
                 sendSuccess(costume.Description);
                 break;
             }
