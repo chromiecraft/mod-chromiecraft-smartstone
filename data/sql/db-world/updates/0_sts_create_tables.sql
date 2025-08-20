@@ -1,7 +1,8 @@
 --
--- Do not add DROP statements to this file.
+-- DO NOT add DROP statements to this file.
 -- It should not be reapplied.
--- DO NOT ChANGE THE DATABASE STRUCTURE, CHANGE AFTER (in another SQL) after the database is created and before the SQL queries related to that Database are ran.
+-- DO NOT change UPDATE/ALTER the database strucutre here, use: 1_sts_update_table_structure.sql
+-- Files are ran in numeric order.
 --
 
 CREATE TABLE IF NOT EXISTS `smartstone_pets` (
