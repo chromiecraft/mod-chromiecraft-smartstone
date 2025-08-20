@@ -100,7 +100,7 @@ public:
                     return false;
                 }
 
-                uint32 settingId = sSmartstone->GetActionTypeId(static_cast<ActionType>(serviceType), pet.CreatureId);
+                uint32 settingId = serviceType == ACTION_TYPE_COMPANION ? id - 80000 : id - 90000;
 
                 if (target && target->GetPlayerSetting(module, settingId).IsEnabled() == add)
                 {
