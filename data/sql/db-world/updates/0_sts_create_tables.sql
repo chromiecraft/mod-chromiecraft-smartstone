@@ -1,6 +1,8 @@
 --
--- Do not add DROP statements to this file.
+-- DO NOT add DROP statements to this file.
 -- It should not be reapplied.
+-- DO NOT change UPDATE/ALTER the database strucutre here, use: 1_sts_update_table_structure.sql
+-- Files are ran in numeric order.
 --
 
 CREATE TABLE IF NOT EXISTS `smartstone_pets` (
@@ -16,7 +18,6 @@ CREATE TABLE IF NOT EXISTS `smartstone_pets` (
 CREATE TABLE IF NOT EXISTS `smartstone_costumes` (
  `Id` INT UNSIGNED NOT NULL,
  `DisplayId` INT UNSIGNED NOT NULL,
- `Scale` FLOAT NOT NULL DEFAULT 1,
  `Category` TINYINT DEFAULT 0,
  `SubscriptionLevel` TINYINT DEFAULT 0,
  `Duration` INT UNSIGNED NOT NULL DEFAULT 0,
