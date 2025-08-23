@@ -408,7 +408,6 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
 
 void Smartstone::ApplyCostume(Player* player, SmartstoneCostumeData const& costume)
 {
-    LOG_ERROR("sql.sql", "display {}", costume.DisplayId);
     player->SetDisplayId(costume.DisplayId);
     player->SetObjectScale(costume.Scale);
     sSmartstone->SetCurrentCostume(player, costume.DisplayId);
