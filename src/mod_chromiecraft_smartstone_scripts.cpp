@@ -194,6 +194,24 @@ public:
             }
             case ACTION_TYPE_COSTUME:
             {
+
+                if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+                    (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
+                    {
+                    player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                    break;
+                }
+
+                if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
+                    player->SendSystemMessage("You cannot use this feature while in combat.");
+                    break;
+                }
+
+                if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP()) {
+                    player->SendSystemMessage("You cannot use this feature while in PvP.");
+                    break;
+                }
+
                 if (player->HasSpellCooldown(90002) && !player->GetCommandStatus(CHEAT_COOLDOWN))
                 {
                     uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
@@ -205,19 +223,8 @@ public:
                     break;
                 }
 
-                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(actionId);
-                sSmartstone->ApplyCostume(player, costume);
+                sSmartstone->ApplyCostume(player, actionId);
 
-                player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
-
-                Milliseconds duration = sSmartstone->GetCostumeDuration(player, costume.Duration);
-                if (duration > 0s)
-                {
-                    player->m_Events.AddEventAtOffset([player] {
-                        if (player->GetDisplayId() == sSmartstone->GetCurrentCostume(player))
-                            player->SetDisplayId(player->GetNativeDisplayId());
-                    }, duration);
-                }
                 break;
             }
             case ACTION_TYPE_AURA:
@@ -547,6 +554,10 @@ public:
         sSmartstone->SetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false));
         sSmartstone->SetBarberDuration(Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300)));
         sSmartstone->SetSmartstoneItemID(sConfigMgr->GetOption<uint32>("ModChromiecraftSmartstone.ItemID", 32547));
+        sSmartstone->SetCanUseInArena(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInArena", false));
+        sSmartstone->SetCanUseInBG(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInBg", false));
+        sSmartstone->SetCanUseInCombat(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInCombat", false));
+        sSmartstone->SetCanUseInPvP(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInPvP", false));
 
         if (sSmartstone->IsSmartstoneEnabled())
         {
@@ -570,17 +581,20 @@ public:
     void OnPlayerBeforeLogout(Player* player) override
     {
         if (sSmartstone->IsSmartstoneEnabled())
-        {
             sSmartstone->removeCurrentAura(player);
-        }
     }
 
-    void OnPlayerMapChanged(Player* player)
+    void OnPlayerMapChanged(Player* player) override
     {
         if (!sSmartstone->IsSmartstoneEnabled())
             return;
 
-        /// @todo: add map restrictions here e.g bg and arena
+        if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+            (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
+        {
+            player->DeMorph();
+            sSmartstone->SetCurrentCostume(player, 0);
+        }
 
         player->m_Events.AddEventAtOffset([player] {
             if (uint32 currentCostume = sSmartstone->GetCurrentCostume(player))

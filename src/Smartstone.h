@@ -168,6 +168,10 @@ class Smartstone
 private:
     uint32 SmartstoneItemID = 0;
     bool IsEnabled{ true };
+    bool CanUseInArena{ false };
+    bool CanUseInBG{ false };
+    bool CanUseInCombat{ false };
+    bool CanUseInPvP{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -178,6 +182,18 @@ public:
 
     void SetEnabled(bool enabled) { IsEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneEnabled() const { return IsEnabled; }
+
+    void SetCanUseInArena(bool enabled) { CanUseInArena = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInArena() const { return CanUseInArena; }
+
+    void SetCanUseInBG(bool enabled) { CanUseInBG = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInBG() const { return CanUseInBG; }
+
+    void SetCanUseInCombat(bool enabled) { CanUseInCombat = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInCombat() const { return CanUseInCombat; }
+
+    void SetCanUseInPvP(bool enabled) { CanUseInPvP = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInPvP() const { return CanUseInPvP; }
 
     void SetBarberDuration(Seconds duration) { BarberDuration = duration; }
     [[nodiscard]] Seconds GetBarberDuration() const { return BarberDuration; }
@@ -190,6 +206,8 @@ public:
 
     void SetCurrentAura(Player* player, uint32 spellId) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_CURR_AURA, spellId); }
     [[nodiscard]] uint32 GetCurrentAura(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_CURR_AURA).value; };
+
+    void ApplyCostume(Player* player, uint32 costumeId);
 
     [[nodiscard]] constexpr uint32_t GetActionTypeBaseId(ActionType type)
     {
