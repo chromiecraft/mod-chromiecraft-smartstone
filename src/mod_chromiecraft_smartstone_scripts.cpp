@@ -361,158 +361,180 @@ public:
             }
 
             auto const& menuItems = sSmartstone->MenuItems[ParentCategoryId];
-
             auto& expireInfo = sSmartstone->ServiceExpireInfo[player->GetGUID().GetCounter()];
 
             std::map<uint32, tm> expireInfoMap;
-
             for (auto const& info : expireInfo)
                 expireInfoMap[info.ServiceId] = Acore::Time::TimeBreakdown(info.ExpirationTime);
 
             int32 menuItemIndex = 0;
-
-            uint32 itemsPerPage = 25; // we need to include the utils buttons too
+            uint32 itemsPerPage = 20;
             uint32 pageNumber = currentPage;
 
             /**
-             * @brief Utility buttons
-             *
+             * Utility buttons
              */
             if (player->GetCompanionPet())
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++ , 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current companion", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_UNSUMMON_COMPANION), "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current companion",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_UNSUMMON_COMPANION), "", 0);
 
             if (player->GetGuardianPet())
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_UNSUMMON_PET), "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_UNSUMMON_PET), "", 0);
 
             if (sSmartstone->GetCurrentCostume(player))
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_COSTUME), "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Remove current costume",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_COSTUME), "", 0);
 
             if (sSmartstone->GetCurrentAura(player))
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, "|TInterface/icons/Spell_Nature_WispSplode:30:30:-18:0|t Remove current aura", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_AURA), "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/icons/Spell_Nature_WispSplode:30:30:-18:0|t Remove current aura",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_AURA), "", 0);
 
-            uint32 totalItems = menuItems.size();
-            uint32 startIndex = pageNumber * itemsPerPage;
-            uint32 endIndex = std::min(startIndex + itemsPerPage, totalItems);
-
-            uint32 i = startIndex;
-
-            auto reduceCounters = [&totalItems, &i]()
-            {
-                totalItems--;
-                i--;
-            };
             /**
-             * @brief Process each menu item
+             * Paginated items
              */
-            for (; i < endIndex; ++i)
+            uint32 shownCount = 0;
+            uint32 skipped = 0;
+            uint32 totalVisible = 0;
+
+            for (uint32 idx = 0; idx < menuItems.size(); ++idx)
             {
-                const auto& menuItem = menuItems[i];
+                const auto& menuItem = menuItems[idx];
+                bool available = false;
 
-                if (menuItem.ServiceType == ACTION_TYPE_PET) {
-                    // Don't clear menus here, it's already cleared above
-                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_PET);
-                    if (pet.CreatureId == 0) {
-                        reduceCounters();
-                        continue; // Skip if pet not found
-                    }
-
-                    std::string expireMsg = "";
-
-                    if (expireInfoMap[pet.CreatureId].tm_year && (expireInfoMap[pet.CreatureId].tm_year != 1900))
-                        expireMsg = Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]);
-
-                    if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, pet.Description + expireMsg, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_PET, pet.CreatureId), "", 0);
-                    else if (totalItems > 0)
-                        reduceCounters();
-                }
-
-                if (menuItem.ServiceType == ACTION_TYPE_COMPANION)
+                // Availability checks
+                if (menuItem.ServiceType == ACTION_TYPE_PET)
                 {
-                    // Don't clear menus here, it's already cleared above
-                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_COMPANION);
-                    if (pet.CreatureId == 0) {
-                        reduceCounters();
-                        continue; // Skip if pet not found
-                    }
-
-                    if (sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0, pet.Description, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_COMPANION, pet.CreatureId), "", 0);
-                    else if (totalItems > 0)
-                        reduceCounters();
+                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_PET);
+                    if (pet.CreatureId && sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
+                        available = true;
                 }
-
-                if (menuItem.ServiceType == ACTION_TYPE_COSTUME)
+                else if (menuItem.ServiceType == ACTION_TYPE_COMPANION)
+                {
+                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_COMPANION);
+                    if (pet.CreatureId && sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
+                        available = true;
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_COSTUME)
                 {
                     if (sSmartstone->IsServiceAvailable(player, "#costume", menuItem.ItemId - 20000)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
-                    {
-                        SmartstoneCostumeData costume = sSmartstone->GetCostumeData(menuItem.ItemId);
-                        if (costume.Id == 0) {
-                            reduceCounters();
-                            continue; // Skip if costume not found
-                        }
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TABARD, costume.Description, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_COSTUME, costume.Id), "", 0);
-                    }
-                    else if (totalItems > 0)
-                        reduceCounters();
+                        available = true;
                 }
-
-                if (menuItem.ServiceType == ACTION_TYPE_AURA)
+                else if (menuItem.ServiceType == ACTION_TYPE_AURA)
                 {
                     if (sSmartstone->IsServiceAvailable(player, "#aura", menuItem.ItemId)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
-                    {
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_AURA, menuItem.ItemId), "", 0);
-                    }
-                    else if (totalItems > 0)
-                        reduceCounters();
+                        available = true;
                 }
-
-                if (menuItem.ServiceType == ACTION_TYPE_CATEGORY)
+                else if (menuItem.ServiceType == ACTION_TYPE_CATEGORY)
                 {
                     if (sSmartstone->IsServiceAvailable(player, "#category", menuItem.ItemId)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
-                    {
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_CATEGORY, menuItem.ItemId), "", 0);
-                    }
-                    else if (totalItems > 0)
-                        reduceCounters();
+                        available = true;
                 }
-
-                if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
+                else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
                     if (subscriptionLevel >= menuItem.SubscriptionLevelRequired)
-                    {
-                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0, sSmartstone->GetActionTypeId(ACTION_TYPE_SERVICE, menuItem.ItemId), "", 0);
-                    }
-                    else if (totalItems > 0)
-                        reduceCounters();
+                        available = true;
                 }
+
+                if (!available)
+                    continue;
+
+                totalVisible++;
+
+                // Skip until correct page start
+                if (skipped < pageNumber * itemsPerPage)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                if (shownCount >= itemsPerPage)
+                    break;
+
+                // Add item to gossip
+                if (menuItem.ServiceType == ACTION_TYPE_PET)
+                {
+                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_PET);
+                    std::string expireMsg;
+                    if (expireInfoMap[pet.CreatureId].tm_year && expireInfoMap[pet.CreatureId].tm_year != 1900)
+                        expireMsg = Acore::StringFormat("\n(Expires: {:%Y-%m-%d %H:%M})", expireInfoMap[pet.CreatureId]);
+
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, 0, pet.Description + expireMsg, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_PET, pet.CreatureId), "", 0);
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_COMPANION)
+                {
+                    auto pet = sSmartstone->GetPetData(menuItem.ItemId, ACTION_TYPE_COMPANION);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, 0, pet.Description, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_COMPANION, pet.CreatureId), "", 0);
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_COSTUME)
+                {
+                    SmartstoneCostumeData costume = sSmartstone->GetCostumeData(menuItem.ItemId);
+                    if (costume.Id)
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                            menuItemIndex++, GOSSIP_ICON_TABARD, costume.Description, 0,
+                            sSmartstone->GetActionTypeId(ACTION_TYPE_COSTUME, costume.Id), "", 0);
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_AURA)
+                {
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_AURA, menuItem.ItemId), "", 0);
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_CATEGORY)
+                {
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_CATEGORY, menuItem.ItemId), "", 0);
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
+                {
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_SERVICE, menuItem.ItemId), "", 0);
+                }
+
+                shownCount++;
             }
 
             /**
-             * @brief Navigation and utility buttons
+             * Navigation buttons
              */
             if (menuItemIndex == 0)
             {
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK, "No actions available.", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_NONE), "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK,
+                    "No actions available.", 0,
+                    sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_NONE), "", 0);
             }
             else
             {
-                if (endIndex < totalItems)
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT, "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Next page", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_NEXT_PAGE), "", 0);
+                if ((pageNumber + 1) * itemsPerPage < totalVisible)
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT,
+                        "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Next page",
+                        0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_NEXT_PAGE), "", 0);
 
                 if (pageNumber > 0)
-                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT, "|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Previous page", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_LAST_PAGE), "", 0);
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT,
+                        "|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Previous page",
+                        0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_LAST_PAGE), "", 0);
             }
 
-            // Add back button
+            // Back button
             if (ParentCategoryId != CATEGORY_MAIN)
-                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT, "Back", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_DOT,
+                    "Back", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
 
             SetLastCategory(player, ParentCategoryId);
-
             player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
         }
     };
