@@ -371,7 +371,7 @@ public:
 
             int32 menuItemIndex = 0;
 
-            uint32 itemsPerPage = 20; // we need to include the utils buttons too
+            uint32 itemsPerPage = 25; // we need to include the utils buttons too
             uint32 pageNumber = currentPage;
 
             /**
@@ -444,7 +444,7 @@ public:
 
                 if (menuItem.ServiceType == ACTION_TYPE_COSTUME)
                 {
-                    if (sSmartstone->IsServiceAvailable(player, "#costume", menuItem.ItemId)
+                    if (sSmartstone->IsServiceAvailable(player, "#costume", menuItem.ItemId - 20000)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                     {
                         SmartstoneCostumeData costume = sSmartstone->GetCostumeData(menuItem.ItemId);

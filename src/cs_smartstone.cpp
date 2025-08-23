@@ -151,10 +151,12 @@ public:
                     return false;
                 }
 
+                uint32 settingId = id - 20000;
+
                 if (target)
-                    target->UpdatePlayerSetting(module, id, add);
+                    target->UpdatePlayerSetting(module, settingId, add);
                 else
-                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, id, add);
+                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, settingId, add);
 
                 sendSuccess(costume.Description);
                 break;
