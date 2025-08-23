@@ -88,6 +88,8 @@ public:
             handler->PSendSysMessage("{} has been {} for {}.", desc, add ? "unlocked" : "removed", playerName);
         };
 
+        uint32 settingId = sSmartstone->GetShortId(id, serviceType);
+
         switch (serviceType)
         {
             case ACTION_TYPE_COMPANION:
@@ -99,8 +101,6 @@ public:
                     handler->SendErrorMessage("The pet {} does not exist.", id);
                     return false;
                 }
-
-                uint32 settingId = serviceType == ACTION_TYPE_COMPANION ? id - 80000 : id - 90000;
 
                 if (target && target->GetPlayerSetting(module, settingId).IsEnabled() == add)
                 {
@@ -150,8 +150,6 @@ public:
                     sendDupError(costume.Description);
                     return false;
                 }
-
-                uint32 settingId = id - 20000;
 
                 if (target)
                     target->UpdatePlayerSetting(module, settingId, add);

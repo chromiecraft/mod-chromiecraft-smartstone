@@ -323,7 +323,7 @@ public:
                 return fullId - 20000;
         }
 
-        return 0;
+        return fullId;
     }
 };
 
