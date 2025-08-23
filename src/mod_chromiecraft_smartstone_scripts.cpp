@@ -582,10 +582,10 @@ public:
 
         /// @todo: add map restrictions here e.g bg and arena
 
-        player->m_Events.AddEventAtOffset([&] {
+        player->m_Events.AddEventAtOffset([player] {
             if (uint32 currentCostume = sSmartstone->GetCurrentCostume(player))
             {
-                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(currentCostume);
+                SmartstoneCostumeData const& costume = sSmartstone->GetCostumeDataByDisplayId(currentCostume);
                 sSmartstone->ApplyCostume(player, costume);
             }
         }, 1s);

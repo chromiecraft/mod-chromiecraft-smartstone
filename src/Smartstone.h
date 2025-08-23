@@ -265,7 +265,8 @@ public:
 
     [[nodiscard]] SmartstoneServiceExpireInfo GetServiceExpireInfo(uint32 playerGUID, uint32 serviceId, uint8 category) const;
     [[nodiscard]] SmartstonePetData GetPetData(uint32 creatureId, uint8 serviceType = ACTION_TYPE_COMPANION) const;
-    [[nodiscard]] SmartstoneCostumeData GetCostumeData(uint32 displayId) const;
+    [[nodiscard]] SmartstoneCostumeData GetCostumeData(uint32 id) const;
+    [[nodiscard]] SmartstoneCostumeData GetCostumeDataByDisplayId(uint32 displayId) const;
     [[nodiscard]] SmartstoneAuraData GetAuraData(uint32 id) const;
 
     std::vector<SmartstonePetData> Pets;
@@ -291,6 +292,21 @@ public:
     }
 
     void ApplyCostume(Player* player, SmartstoneCostumeData const& costume);
+
+    [[nodiscard]] uint32 GetShortId(uint32 fullId, uint8 type) const
+    {
+        switch (type)
+        {
+            case ACTION_TYPE_COMPANION:
+                return fullId - 80000;
+            case ACTION_TYPE_PET:
+                return fullId - 90000;
+            case ACTION_TYPE_COSTUME:
+                return fullId - 20000;
+        }
+
+        return 0;
+    }
 };
 
 #define sSmartstone Smartstone::instance()

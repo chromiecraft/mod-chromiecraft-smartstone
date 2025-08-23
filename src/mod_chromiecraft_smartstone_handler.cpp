@@ -282,6 +282,23 @@ SmartstoneCostumeData Smartstone::GetCostumeData(uint32 id) const
     return defaultCostume;
 }
 
+SmartstoneCostumeData Smartstone::GetCostumeDataByDisplayId(uint32 displayId) const
+{
+    for (auto const& category : Costumes)
+    {
+        for (auto const& costume : category.second)
+        {
+            if (costume.DisplayId == displayId)
+                return costume;
+        }
+    }
+
+    // Return empty/default costume data with Id = 0 to indicate not found
+    SmartstoneCostumeData defaultCostume = {};
+    defaultCostume.Id = 0;
+    return defaultCostume;
+}
+
 SmartstoneAuraData Smartstone::GetAuraData(uint32 id) const
 {
     for (auto const& aura : Auras)
@@ -391,6 +408,7 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
 
 void Smartstone::ApplyCostume(Player* player, SmartstoneCostumeData const& costume)
 {
+    LOG_ERROR("sql.sql", "display {}", costume.DisplayId);
     player->SetDisplayId(costume.DisplayId);
     player->SetObjectScale(costume.Scale);
     sSmartstone->SetCurrentCostume(player, costume.DisplayId);
