@@ -170,6 +170,8 @@ private:
     bool IsEnabled{ true };
     bool CanUseInArena{ false };
     bool CanUseInBG{ false };
+    bool CanUseInCombat{ false };
+    bool CanUseInPvP{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -187,6 +189,12 @@ public:
     void SetCanUseInBG(bool enabled) { CanUseInBG = enabled; }
     [[nodiscard]] bool IsSmartstoneCanUseInBG() const { return CanUseInBG; }
 
+    void SetCanUseInCombat(bool enabled) { CanUseInCombat = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInCombat() const { return CanUseInCombat; }
+
+    void SetCanUseInPvP(bool enabled) { CanUseInPvP = enabled; }
+    [[nodiscard]] bool IsSmartstoneCanUseInPvP() const { return CanUseInPvP; }
+
     void SetBarberDuration(Seconds duration) { BarberDuration = duration; }
     [[nodiscard]] Seconds GetBarberDuration() const { return BarberDuration; }
 
@@ -202,8 +210,7 @@ public:
     void ApplyCostume(Player* player, uint32 costumeId)
     {
         SmartstoneCostumeData costume = GetCostumeData(costumeId);
-        player->SetDisplayId(costume.DisplayId);
-        player->SetObjectScale(costume.Scale);
+        player->SetDisplayId(costume.DisplayId, costume.Scale);
         SetCurrentCostume(player, costume.DisplayId);
 
         player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);

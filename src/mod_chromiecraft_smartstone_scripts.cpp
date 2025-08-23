@@ -202,6 +202,17 @@ public:
                     break;
                 }
 
+                if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
+                    player->SendSystemMessage("You cannot use this feature while in combat.");
+                    break;
+                }
+
+
+                if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP()) {
+                    player->SendSystemMessage("You cannot use this feature while in PvP.");
+                    break;
+                }
+
                 if (player->HasSpellCooldown(90002) && !player->GetCommandStatus(CHEAT_COOLDOWN))
                 {
                     uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
@@ -546,6 +557,8 @@ public:
         sSmartstone->SetSmartstoneItemID(sConfigMgr->GetOption<uint32>("ModChromiecraftSmartstone.ItemID", 32547));
         sSmartstone->SetCanUseInArena(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInArena", false));
         sSmartstone->SetCanUseInBG(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInBg", false));
+        sSmartstone->SetCanUseInCombat(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInCombat", false));
+        sSmartstone->SetCanUseInPvP(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInPvP", false));
 
         if (sSmartstone->IsSmartstoneEnabled())
         {
