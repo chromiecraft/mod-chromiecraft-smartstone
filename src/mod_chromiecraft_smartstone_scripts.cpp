@@ -206,9 +206,7 @@ public:
                 }
 
                 SmartstoneCostumeData costume = sSmartstone->GetCostumeData(actionId);
-                player->SetDisplayId(costume.DisplayId);
-                player->SetObjectScale(costume.Scale);
-                sSmartstone->SetCurrentCostume(player, costume.DisplayId);
+                sSmartstone->ApplyCostume(player, costume);
 
                 player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
 
@@ -575,6 +573,22 @@ public:
         {
             sSmartstone->removeCurrentAura(player);
         }
+    }
+
+    void OnPlayerMapChanged(Player* player)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+            return;
+
+        /// @todo: add map restrictions here e.g bg and arena
+
+        player->m_Events.AddEventAtOffset([&] {
+            if (uint32 currentCostume = sSmartstone->GetCurrentCostume(player))
+            {
+                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(currentCostume);
+                sSmartstone->ApplyCostume(player, costume);
+            }
+        }, 1s);
     }
 
 };
