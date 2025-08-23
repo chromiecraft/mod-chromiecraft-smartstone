@@ -207,7 +207,6 @@ public:
                     break;
                 }
 
-
                 if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP()) {
                     player->SendSystemMessage("You cannot use this feature while in PvP.");
                     break;
