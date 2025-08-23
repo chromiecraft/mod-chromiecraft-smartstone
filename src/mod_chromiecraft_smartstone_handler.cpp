@@ -389,6 +389,13 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
     return 1; // Default NPC text ID if not found
 }
 
+void Smartstone::ApplyCostume(Player* player, SmartstoneCostumeData const& costume)
+{
+    player->SetDisplayId(costume.DisplayId);
+    player->SetObjectScale(costume.Scale);
+    sSmartstone->SetCurrentCostume(player, costume.DisplayId);
+}
+
 std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
 {
     switch (serviceType)

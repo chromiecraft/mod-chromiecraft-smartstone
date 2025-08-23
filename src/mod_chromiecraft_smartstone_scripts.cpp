@@ -583,6 +583,28 @@ public:
         if (sSmartstone->IsSmartstoneEnabled())
             sSmartstone->removeCurrentAura(player);
     }
+
+    void OnPlayerMapChanged(Player* player) override
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+            return;
+
+        if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+            (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
+        {
+            player->DeMorph();
+            sSmartstone->SetCurrentCostume(player, 0);
+        }
+
+        player->m_Events.AddEventAtOffset([&] {
+            if (uint32 currentCostume = sSmartstone->GetCurrentCostume(player))
+            {
+                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(currentCostume);
+                sSmartstone->ApplyCostume(player, costume);
+            }
+        }, 1s);
+    }
+
 };
 
 void Addmod_cc_smartstoneScripts()
