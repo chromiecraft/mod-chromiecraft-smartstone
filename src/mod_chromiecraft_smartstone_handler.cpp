@@ -282,6 +282,23 @@ SmartstoneCostumeData Smartstone::GetCostumeData(uint32 id) const
     return defaultCostume;
 }
 
+SmartstoneCostumeData Smartstone::GetCostumeDataByDisplayId(uint32 displayId) const
+{
+    for (auto const& category : Costumes)
+    {
+        for (auto const& costume : category.second)
+        {
+            if (costume.DisplayId == displayId)
+                return costume;
+        }
+    }
+
+    // Return empty/default costume data with Id = 0 to indicate not found
+    SmartstoneCostumeData defaultCostume = {};
+    defaultCostume.Id = 0;
+    return defaultCostume;
+}
+
 SmartstoneAuraData Smartstone::GetAuraData(uint32 id) const
 {
     for (auto const& aura : Auras)
