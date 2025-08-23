@@ -406,3 +406,20 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
     }
 }
 
+void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
+{
+    SmartstoneCostumeData costume = GetCostumeData(costumeId);
+    player->SetDisplayId(costume.DisplayId, costume.Scale);
+    SetCurrentCostume(player, costume.DisplayId);
+
+    player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+
+    Milliseconds duration = GetCostumeDuration(player, costume.Duration);
+    if (duration > 0s)
+    {
+        player->m_Events.AddEventAtOffset([player] {
+            if (player->GetDisplayId() == Smartstone::instance()->GetCurrentCostume(player))
+                player->SetDisplayId(player->GetNativeDisplayId());
+        }, duration);
+    }
+}
