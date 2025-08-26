@@ -495,3 +495,4 @@ void Smartstone::LoadAccountSettings(uint32 accountId)
         PlayerSettingVector settings = PlayerSettingsStore::ParseSettingsData(data);
         AccountSettings[accountId][settingId] = settings;
     } while (result->NextRow());
+}
