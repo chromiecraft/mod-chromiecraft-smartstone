@@ -145,10 +145,7 @@ public:
                     return false;
                 }
 
-                uint32 accountId = target && target->GetSession() ? target->GetSession()->GetAccountId() : 0;
-
-                if (!accountId)
-                    accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
+                uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
 
                 if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
                 {
