@@ -388,6 +388,9 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
     if (player->IsGameMaster())
         return true;
 
+    if (service == "#costume")
+        return sSmartstone->GetAccountSetting(player->GetSession()->GetAccountId(), ACTION_TYPE_COSTUME, serviceId).IsEnabled();
+
     return player->GetPlayerSetting(ModName + service, serviceId).IsEnabled();
 }
 
