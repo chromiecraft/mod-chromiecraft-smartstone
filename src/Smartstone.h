@@ -299,6 +299,13 @@ public:
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 
     std::vector<SmartstoneMenuState> GetMenuStates(const ObjectGuid& guid) { return MenuStateHolder[guid]; }
+    typedef std::unordered_map<uint32, PlayerSettingVector> AccountSettingsMap;
+    std::unordered_map<uint32, AccountSettingsMap> AccountSettings;
+
+    PlayerSetting GetAccountSetting(uint32 accountId, uint32 service, uint32 index);
+    void UpdateAccountSetting(uint32 accountId, uint32 service, uint32 index, uint32 value);
+    void LoadAccountSettings(uint32 accountId);
+    void ClearAccountSettings(uint32 accountId) { AccountSettings.erase(accountId); }
 
     void removeCurrentAura(Player* player)
     {

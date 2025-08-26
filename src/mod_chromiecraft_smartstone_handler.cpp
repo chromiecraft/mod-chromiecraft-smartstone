@@ -447,3 +447,48 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
         }, duration);
     }
 }
+
+PlayerSetting Smartstone::GetAccountSetting(uint32 accountId, uint32 service, uint32 index)
+{
+    auto accIt = AccountSettings.find(accountId);
+    if (accIt == AccountSettings.end())
+        return PlayerSetting(0);
+
+    auto& serviceMap = accIt->second;
+    auto srvIt = serviceMap.find(service);
+    if (srvIt == serviceMap.end())
+        return PlayerSetting(0);
+
+    auto& vec = srvIt->second;
+    if (index >= vec.size())
+        return PlayerSetting(0);
+
+    return vec[index];
+}
+
+void Smartstone::UpdateAccountSetting(uint32 accountId, uint32 service, uint32 index, uint32 value)
+{
+    auto& vec = AccountSettings[accountId][service];
+
+    if (index >= vec.size())
+        vec.resize(index + 1, PlayerSetting(0));
+
+    vec[index] = PlayerSetting(value);
+
+    LoginDatabase.Query("REPLACE INTO smartstone_account_settings (accountId, settingId, data) VALUES ({}, {}, {})",
+        accountId, service, PlayerSettingsStore::SerializeSettingsData(vec));
+}
+
+void Smartstone::LoadAccountSettings(uint32 accountId)
+{
+    QueryResult result = LoginDatabase.Query("SELECT settingId, data FROM smartstone_account_settings WHERE accountId = {}", accountId);
+    if (!result)
+        return;
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 settingId = fields[0].Get<uint32>();
+        std::string data = fields[1].Get<std::string>();
+        PlayerSettingVector settings = PlayerSettingsStore::ParseSettingsData(data);
+        AccountSettings[accountId][settingId] = settings;
+    } while (result->NextRow());

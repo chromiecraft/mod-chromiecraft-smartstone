@@ -578,10 +578,21 @@ class mod_chromiecraft_smartstone_playerscript : public PlayerScript
 public:
     mod_chromiecraft_smartstone_playerscript() : PlayerScript("mod_chromiecraft_smartstone_playerscript") { }
 
+    void OnPlayerLogin(Player* player) override
+    {
+        if (sSmartstone->IsSmartstoneEnabled())
+        {
+            sSmartstone->LoadAccountSettings(player->GetSession()->GetAccountId());
+        }
+    }
+
     void OnPlayerBeforeLogout(Player* player) override
     {
         if (sSmartstone->IsSmartstoneEnabled())
+        {
             sSmartstone->removeCurrentAura(player);
+            sSmartstone->ClearAccountSettings(player->GetSession()->GetAccountId());
+        }
     }
 
     void OnPlayerMapChanged(Player* player) override
