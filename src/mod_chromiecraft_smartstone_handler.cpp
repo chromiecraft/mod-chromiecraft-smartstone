@@ -478,7 +478,7 @@ void Smartstone::UpdateAccountSetting(uint32 accountId, uint32 service, uint32 i
 
     vec[index] = PlayerSetting(value);
 
-    LoginDatabase.Query("REPLACE INTO smartstone_account_settings (accountId, settingId, data) VALUES ({}, {}, {})",
+    LoginDatabase.Query("REPLACE INTO smartstone_account_settings (accountId, settingId, data) VALUES ({}, {}, '{}')",
         accountId, service, PlayerSettingsStore::SerializeSettingsData(vec));
 }
 
