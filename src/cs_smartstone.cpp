@@ -145,17 +145,18 @@ public:
                     return false;
                 }
 
-                if (target && target->GetPlayerSetting(module, id).IsEnabled() == add)
+                uint32 accountId = target && target->GetSession() ? target->GetSession()->GetAccountId() : 0;
+
+                if (!accountId)
+                    accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
+
+                if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
                 {
                     sendDupError(costume.Description);
                     return false;
                 }
 
-                if (target)
-                    target->UpdatePlayerSetting(module, settingId, add);
-                else
-                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, settingId, add);
-
+                sSmartstone->UpdateAccountSetting(accountId, serviceType, id, add);
                 sendSuccess(costume.Description);
                 break;
             }
