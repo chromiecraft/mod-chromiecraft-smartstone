@@ -453,16 +453,7 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
 
 PlayerSetting Smartstone::GetAccountSetting(uint32 accountId, uint32 service, uint32 index)
 {
-    auto accIt = AccountSettings.find(accountId);
-    if (accIt == AccountSettings.end())
-        return PlayerSetting(0);
-
-    auto& serviceMap = accIt->second;
-    auto srvIt = serviceMap.find(service);
-    if (srvIt == serviceMap.end())
-        return PlayerSetting(0);
-
-    auto& vec = srvIt->second;
+    auto& vec = AccountSettings[accountId][service];
     if (index >= vec.size())
         return PlayerSetting(0);
 
@@ -477,8 +468,6 @@ void Smartstone::UpdateAccountSetting(uint32 accountId, uint32 service, uint32 i
         vec.resize(index + 1, PlayerSetting(0));
 
     vec[index] = PlayerSetting(value);
-
-    AccountSettings[accountId][service] = vec;
 
     LoginDatabase.Query("REPLACE INTO smartstone_account_settings (accountId, settingId, data) VALUES ({}, {}, '{}')",
         accountId, service, PlayerSettingsStore::SerializeSettingsData(vec));

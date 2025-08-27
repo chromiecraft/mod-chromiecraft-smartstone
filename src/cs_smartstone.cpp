@@ -153,7 +153,7 @@ public:
                     return false;
                 }
 
-                sSmartstone->UpdateAccountSetting(accountId, serviceType, id, add);
+                sSmartstone->UpdateAccountSetting(accountId, serviceType, settingId, add);
                 sendSuccess(costume.Description);
                 break;
             }
