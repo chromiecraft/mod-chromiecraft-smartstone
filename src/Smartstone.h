@@ -172,6 +172,7 @@ private:
     bool CanUseInBG{ false };
     bool CanUseInCombat{ false };
     bool CanUseInPvP{ false };
+    bool IsDebugEnabled{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -206,6 +207,9 @@ public:
 
     void SetCurrentAura(Player* player, uint32 spellId) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_CURR_AURA, spellId); }
     [[nodiscard]] uint32 GetCurrentAura(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_CURR_AURA).value; };
+
+    void SetDebugEnabled(bool enabled) { IsDebugEnabled = enabled; }
+    [[nodiscard]] bool IsSmartstoneDebugEnabled() const { return IsDebugEnabled; }
 
     void ApplyCostume(Player* player, uint32 costumeId);
 

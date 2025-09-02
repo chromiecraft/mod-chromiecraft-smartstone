@@ -558,6 +558,7 @@ public:
         sSmartstone->SetCanUseInBG(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInBg", false));
         sSmartstone->SetCanUseInCombat(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInCombat", false));
         sSmartstone->SetCanUseInPvP(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInPvP", false));
+        sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
 
         if (sSmartstone->IsSmartstoneEnabled())
         {

@@ -67,3 +67,12 @@ ModChromiecraftSmartstone.CanUseInCombat = 0
 #
 
 ModChromiecraftSmartstone.CanUseInPvP = 0
+
+# 
+#    ModChromiecraftSmartstone.Debug
+#        Description: Enables all Smartstone features by default.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+
+ModChromiecraftSmartstone.Debug = 0

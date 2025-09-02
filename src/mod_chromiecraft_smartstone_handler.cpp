@@ -346,7 +346,7 @@ Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 costumeDurati
 
 bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 subscriptionLevel) const
 {
-    if (player->IsGameMaster())
+    if (player->IsGameMaster() || sSmartstone->IsSmartstoneDebugEnabled())
         return true;
 
     if (pet.Duration)
@@ -385,7 +385,7 @@ bool Smartstone::IsPetAvailable(Player* player, SmartstonePetData pet, uint8 sub
 
 bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const
 {
-    if (player->IsGameMaster())
+    if (player->IsGameMaster() || sSmartstone->IsSmartstoneDebugEnabled())
         return true;
 
     if (service == "#costume")
