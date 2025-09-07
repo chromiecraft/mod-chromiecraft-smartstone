@@ -4,8 +4,8 @@
 
 DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5);
 INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
-(1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Rare Beasts of Azeroth', 0, 92002, 1),
-(2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Limited Duration Companions', 0, 92003, 1),
+(1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Pets', 0, 92002, 1),
+(2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Combat Pets', 0, 92003, 1),
 (3,0, '|TInterface/icons/Ability_Rogue_Disguise:30:30:-18:0|t Costumes', 0, 92005, 1),
 (4,0, '|TInterface/icons/Spell_Shadow_Charm:30:30:-18:0|t Character', 0, 1, 1),
 (5,3,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0, 92006,1);
