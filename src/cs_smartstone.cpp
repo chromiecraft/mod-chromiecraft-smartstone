@@ -99,12 +99,14 @@ public:
                 if (!pet.CreatureId)
                 {
                     handler->SendErrorMessage("The pet {} does not exist.", id);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The pet {} does not exist.", id);
                     return false;
                 }
 
                 if (target && target->GetPlayerSetting(module, settingId).IsEnabled() == add)
                 {
                     sendDupError(pet.Description);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The pet {} is already {} for player {}.", id, add ? "unlocked" : "locked", playerName);
                     return false;
                 }
 
@@ -142,6 +144,7 @@ public:
                 if (!costume.DisplayId)
                 {
                     handler->SendErrorMessage("The costume {} does not exist.", id);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The costume {} does not exist.", id);
                     return false;
                 }
 
@@ -150,6 +153,7 @@ public:
                 if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
                 {
                     sendDupError(costume.Description);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The costume {} is already {} for player {}.", id, add ? "unlocked" : "locked", playerName);
                     return false;
                 }
 
@@ -164,12 +168,14 @@ public:
                 if (!aura.SpellID)
                 {
                     handler->SendErrorMessage("The aura {} does not exist.", id);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The aura {} does not exist.", id);
                     return false;
                 }
 
                 if (target && target->GetPlayerSetting(module, id).IsEnabled() == add)
                 {
                     sendDupError(aura.Description);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The aura {} is already {} for player {}.", id, add ? "unlocked" : "locked", playerName);
                     return false;
                 }
 
@@ -184,6 +190,7 @@ public:
 
             default:
                 handler->SendErrorMessage("Unknown service type.");
+                LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: Unknown service type {}.", serviceType);
                 return false;
         }
 
