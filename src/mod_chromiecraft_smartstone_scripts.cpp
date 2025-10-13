@@ -168,7 +168,7 @@ public:
                                 barber->AI()->Talk(SAY_BARBER_DESPAWN);
                                 Position pos = barber->GetNearPosition(20.0f, 0.0f);
                                 barber->GetMotionMaster()->MovePoint(0, pos);
-                                barber->DespawnOrUnsummon(4000);
+                                barber->DespawnOrUnsummon(4s);
                             }, sSmartstone->GetBarberDuration());
                         }
                         break;
