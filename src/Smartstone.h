@@ -55,7 +55,8 @@ enum ActionType
     ACTION_TYPE_SERVICE   = 4, // Character services like barber, name change, etc.
     ACTION_TYPE_UTIL      = 5, // Utility actions like next/previous page, back,
     ACTION_TYPE_AURA      = 6,
-    ACTION_TYPE_NONE      = 7, // No action type, used for invalid or uninitialized
+    ACTION_TYPE_VEHICLES  = 7,
+    ACTION_TYPE_NONE      = 8, // No action type, used for invalid or uninitialized
     MAX_ACTION_TYPE,
 };
 
@@ -136,6 +137,14 @@ struct SmartstoneAuraData
 {
     uint32 Id;
     uint32 SpellID;
+    std::string Description;
+    uint8 SubscriptionLevelRequired;
+};
+
+struct SmartstoneVehicleData
+{
+    uint32 Id;
+    uint32 CreatureId;
     std::string Description;
     uint8 SubscriptionLevelRequired;
 };
@@ -246,6 +255,7 @@ public:
             case ACTION_TYPE_CATEGORY: return "Category";
             case ACTION_TYPE_SERVICE: return "Service";
             case ACTION_TYPE_UTIL: return "Utility";
+            case ACTION_TYPE_VEHICLES: return "Vehicles";
             default: return "None";
         }
     }
@@ -260,6 +270,7 @@ public:
             case ACTION_TYPE_CATEGORY: return "Category service.";
             case ACTION_TYPE_SERVICE: return "Character services like barber, name change, etc.";
             case ACTION_TYPE_UTIL: return "Utility actions like next/previous page, back.";
+            case ACTION_TYPE_VEHICLES: return "Vehicles service.";
             default: return "No action type.";
         }
     }
@@ -279,6 +290,7 @@ public:
     void LoadServiceExpirationInfo();
     void LoadCategories();
     void LoadAuras();
+    void LoadVehicles();
 
     void ProcessExpiredServices(Player* player);
 
@@ -295,6 +307,7 @@ public:
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;
     std::vector<SmartstoneAuraData> Auras;
+    std::vector<SmartstoneVehicleData> Vehicles;
 
     std::unordered_map<uint32, std::vector<MenuItem>> MenuItems;
     std::unordered_map<uint32, std::vector<SmartstoneCostumeData>> Costumes;

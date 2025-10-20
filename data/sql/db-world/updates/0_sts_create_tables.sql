@@ -51,3 +51,14 @@ CREATE TABLE IF NOT EXISTS `smartstone_auras` (
  `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
  `Enabled` TINYINT NOT NULL DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS `smartstone_vehicles` (
+  `Id` INT UNSIGNED AUTO_INCREMENT,
+  `CreatureId` int unsigned NOT NULL,
+  `Category` tinyint DEFAULT '0',
+  `SubscriptionLevel` tinyint DEFAULT '0',
+  `Description` text COLLATE utf8mb4_general_ci,
+  `Enabled` tinyint DEFAULT '1',
+  PRIMARY KEY (`Id`)
+);
+

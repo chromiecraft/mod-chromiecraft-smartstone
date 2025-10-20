@@ -3,11 +3,13 @@
  */
 
 #include "Chat.h"
+#include "CombatAI.h"
 #include "GameTime.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Pet.h"
 #include "Player.h"
+#include "Vehicle.h"
 
 enum GameObjectEntry
 {
@@ -243,6 +245,17 @@ public:
                 player->SendSystemMessage(aura.Description + " is now active.");
                 break;
             }
+            case ACTION_TYPE_VEHICLES:
+            {
+                Creature* creature = player->SummonCreature(actionId, *player, TEMPSUMMON_MANUAL_DESPAWN);
+                ObjectGuid vehicleGuid = creature->GetGUID();
+                player->m_Events.AddEventAtOffset([player, actionId, vehicleGuid] {
+                    if (Creature* vehicle = ObjectAccessor::GetCreature(*player, vehicleGuid))
+                        player->CastCustomSpell(60683, SPELLVALUE_BASE_POINT0, 1, vehicle, true);
+                }, 1s);
+
+                break;
+            }
             case ACTION_TYPE_NONE:
             case MAX_ACTION_TYPE:
             default:
@@ -447,6 +460,12 @@ public:
                     if (subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
                 }
+                else if (menuItem.ServiceType == ACTION_TYPE_VEHICLES)
+                {
+                    if (sSmartstone->IsServiceAvailable(player, "#vehicles", menuItem.ItemId)
+                        || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                        available = true;
+                }
 
                 if (!available)
                     continue;
@@ -507,6 +526,12 @@ public:
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
                         menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
                         sSmartstone->GetActionTypeId(ACTION_TYPE_SERVICE, menuItem.ItemId), "", 0);
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_VEHICLES)
+                {
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_VEHICLES, menuItem.ItemId), "", 0);
                 }
 
                 shownCount++;
@@ -607,12 +632,27 @@ public:
             }
         }, 1s);
     }
-
 };
+
+struct npc_smartstone_vehicle : public VehicleAI
+{
+    npc_smartstone_vehicle(Creature* pCreature) : VehicleAI(pCreature) {}
+
+    void PassengerBoarded(Unit*, int8, bool apply) override
+    {
+        if (!apply)
+        {
+            me->SetDisplayId(11686); // prevents nasty falling animation at despawn
+            me->DespawnOrUnsummon(1ms);
+        }
+    }
+};
+
 
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
     new mod_chromiecraft_smartstone_worldscript();
     new mod_chromiecraft_smartstone_playerscript();
+    RegisterCreatureAI(npc_smartstone_vehicle);
 }

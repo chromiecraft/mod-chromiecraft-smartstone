@@ -488,6 +488,33 @@ void Smartstone::LoadAccountSettings(uint32 accountId)
     } while (result->NextRow());
 }
 
+void Smartstone::LoadVehicles()
+{
+    QueryResult result = WorldDatabase.Query("SELECT Id, CreatureId, Description, SubscriptionLevel FROM smartstone_vehicles WHERE Enabled = 1");
+    SmartstoneVehicleData vehicleData;
+    Vehicles.clear();
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            vehicleData.Id = fields[0].Get<uint32>();
+            vehicleData.CreatureId = fields[1].Get<uint32>();
+            vehicleData.Description = fields[2].Get<std::string>();
+            vehicleData.SubscriptionLevelRequired = fields[3].Get<uint8>();
+            Vehicles.push_back(vehicleData);
+            MenuItems[ACTION_TYPE_VEHICLES].push_back(MenuItem{
+                vehicleData.CreatureId,
+                vehicleData.Description,
+                0, // NpcTextId
+                GOSSIP_ICON_TABARD,
+                ACTION_TYPE_VEHICLES,
+                vehicleData.SubscriptionLevelRequired
+                });
+        } while (result->NextRow());
+    }
+}
+
 void Smartstone::LoadSmartstoneData()
 {
     if (sSmartstone->IsSmartstoneEnabled())
