@@ -272,6 +272,7 @@ public:
     [[nodiscard]] uint32 GetNPCTextForCategory(uint32 type, uint8 category) const;
     [[nodiscard]] bool IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const;
 
+    void LoadSmartstoneData();
     void LoadServices();
     void LoadPets();
     void LoadCostumes();

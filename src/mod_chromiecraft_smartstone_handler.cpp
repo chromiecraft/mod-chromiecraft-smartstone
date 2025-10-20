@@ -487,3 +487,19 @@ void Smartstone::LoadAccountSettings(uint32 accountId)
         AccountSettings[accountId][settingId] = settings;
     } while (result->NextRow());
 }
+
+void Smartstone::LoadSmartstoneData()
+{
+    if (sSmartstone->IsSmartstoneEnabled())
+    {
+        sSmartstone->MenuStateHolder.clear();
+        sSmartstone->MenuItems.clear();
+        sSmartstone->LoadServices();
+        sSmartstone->LoadPets();
+        sSmartstone->LoadCostumes();
+        sSmartstone->LoadServiceExpirationInfo();
+        sSmartstone->LoadCategories();
+        sSmartstone->LoadAuras();
+        sSmartstone->LoadVehicles();
+    }
+}

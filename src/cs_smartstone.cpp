@@ -33,7 +33,8 @@ public:
     {
         static ChatCommandTable smartstoneTable =
         {
-            { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR, Console::Yes },
+            { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR,     Console::Yes },
+            { "reload",         HandleSmartstoneReloadCommand,        SEC_ADMINISTRATOR, Console::Yes },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
         };
 
@@ -194,6 +195,13 @@ public:
                 return false;
         }
 
+        return true;
+    }
+
+    static bool HandleSmartstoneReloadCommand(ChatHandler* handler)
+    {
+        sSmartstone->LoadSmartstoneData();
+        handler->SendSysMessage("Smartstone data reloaded.");
         return true;
     }
 };

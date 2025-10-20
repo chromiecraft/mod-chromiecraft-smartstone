@@ -549,7 +549,7 @@ class mod_chromiecraft_smartstone_worldscript : public WorldScript
 public:
     mod_chromiecraft_smartstone_worldscript() : WorldScript("mod_chromiecraft_smartstone_worldscript") { }
 
-    void OnAfterConfigLoad(bool /*reload*/) override
+    void OnAfterConfigLoad(bool reload) override
     {
         sSmartstone->SetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.Enable", false));
         sSmartstone->SetBarberDuration(Seconds(sConfigMgr->GetOption<int32>("ModChromiecraftSmartstone.Features.BarberDuration", 300)));
@@ -560,17 +560,8 @@ public:
         sSmartstone->SetCanUseInPvP(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInPvP", false));
         sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
 
-        if (sSmartstone->IsSmartstoneEnabled())
-        {
-            sSmartstone->MenuStateHolder.clear();
-            sSmartstone->MenuItems.clear();
-            sSmartstone->LoadServices();
-            sSmartstone->LoadPets();
-            sSmartstone->LoadCostumes();
-            sSmartstone->LoadServiceExpirationInfo();
-            sSmartstone->LoadCategories();
-            sSmartstone->LoadAuras();
-        }
+        if (!reload)
+            sSmartstone->LoadSmartstoneData();
     }
 };
 
