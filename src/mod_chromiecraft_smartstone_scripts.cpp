@@ -251,8 +251,16 @@ public:
                 ObjectGuid vehicleGuid = creature->GetGUID();
                 player->m_Events.AddEventAtOffset([player, actionId, vehicleGuid] {
                     if (Creature* vehicle = ObjectAccessor::GetCreature(*player, vehicleGuid))
+                    {
                         player->CastCustomSpell(60683, SPELLVALUE_BASE_POINT0, 1, vehicle, true);
-                }, 1s);
+                        if (vehicle->CanFly())
+                        {
+                            vehicle->GetMotionMaster()->MoveTakeoff(0, *player);
+                            vehicle->SetDisableGravity(true);
+                            vehicle->SetCanFly(true);
+                        }
+                    }
+                }, 500ms);
 
                 break;
             }
