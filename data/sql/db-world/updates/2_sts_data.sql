@@ -43,7 +43,8 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92003, 'Whispered through the ages, these rare companions hail from Azeroth’s most elusive corners—be it deep jungles, ancient ruins, or shadowed realms. Each carries a spark of their origin’s mystery, offering unique abilities to amuse and amaze. But beware, their bond with mortals is fleeting, and their return to legend is inevitable. Claim them while their tale lingers!'),
 (92004, 'Hey there, chum! Winter Veil enthusiast and purveyor of holiday cheer—Goblin-style at your service, if ya catch my drift. Ya look like someone who could use a little festive mischief. What d’ya say? Care to join ol’ Snizzlefizz for some presents, punch, and maybe a harmless boom or two? Ho, ho... ha-HA!"'),
 (92005, 'Bound within this stone lies the magic of transformation, a power to reshape one’s form into that of legends and beasts alike. With but a touch, the enchantment takes hold, weaving illusion and essence together, granting the guise of heroes, monsters, and all manner of fabled beings. Whether to inspire awe or sow fear, the choice is yours — the veil of reality is but a whisper away'),
-(92006, 'The line between myth and mortal blurs. This relic bends that line, allowing you to wear the shape of Azeroth’s darkest names. Appearances deceive — let yours terrify.');
+(92006, 'The line between myth and mortal blurs. This relic bends that line, allowing you to wear the shape of Azeroth’s darkest names. Appearances deceive — let yours terrify.'),
+(92007, 'Harness the power of the Smartstone to call forth mighty vessels of magic and steel! From draconic guardians to enchanted constructs, these are no mere mounts—they are extensions of your will. Choose your vehicle and command the skies, the seas, or the very earth itself.');
 
 DELETE FROM `gossip_menu` WHERE `MenuID` IN (92000, 92001, 92004);
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES

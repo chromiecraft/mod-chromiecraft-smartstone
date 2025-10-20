@@ -396,6 +396,9 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
 
 uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
 {
+    if (category == CATEGORY_MAIN)
+        return 92000;
+
     auto categoryIt = Categories.find(type);
     if (categoryIt == Categories.end()) {
         return 1; // Default NPC text ID if category type not found

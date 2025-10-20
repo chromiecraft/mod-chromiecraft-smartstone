@@ -573,7 +573,7 @@ public:
                     "Back", 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
 
             SetLastCategory(player, ParentCategoryId);
-            player->PlayerTalkClass->SendGossipMenu(92000, item->GetGUID());
+            player->PlayerTalkClass->SendGossipMenu(sSmartstone->GetNPCTextForCategory(0, ParentCategoryId), item->GetGUID());
         }
     };
 
