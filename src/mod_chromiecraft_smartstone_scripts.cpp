@@ -470,7 +470,7 @@ public:
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_VEHICLES)
                 {
-                    if (sSmartstone->IsServiceAvailable(player, "#vehicles", menuItem.ItemId)
+                    if (sSmartstone->IsServiceAvailable(player, "#vehicle", menuItem.ItemId)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
                 }

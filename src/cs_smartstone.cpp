@@ -188,6 +188,31 @@ public:
                 sendSuccess(aura.Description);
                 break;
             }
+            case ACTION_TYPE_VEHICLES:
+            {
+                SmartstoneVehicleData vehicleData = sSmartstone->GetVehicleData(id);
+                if (!vehicleData.CreatureId)
+                {
+                    handler->SendErrorMessage("The vehicle {} does not exist.", id);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The vehicle {} does not exist.", id);
+                    return false;
+                }
+
+                if (target && target->GetPlayerSetting(module, settingId).IsEnabled() == add)
+                {
+                    sendDupError(vehicleData.Description);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The vehicleData {} is already {} for player {}.", id, add ? "unlocked" : "locked", playerName);
+                    return false;
+                }
+
+                if (target)
+                    target->UpdatePlayerSetting(module, settingId, add);
+                else
+                    PlayerSettingsStore::UpdateSetting(player.GetGUID().GetCounter(), module, settingId, add);
+
+                sendSuccess(vehicleData.Description);
+                break;
+            }
 
             default:
                 handler->SendErrorMessage("Unknown service type.");

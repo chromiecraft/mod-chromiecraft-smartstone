@@ -303,6 +303,7 @@ public:
     [[nodiscard]] SmartstoneCostumeData GetCostumeData(uint32 id) const;
     [[nodiscard]] SmartstoneCostumeData GetCostumeDataByDisplayId(uint32 displayId) const;
     [[nodiscard]] SmartstoneAuraData GetAuraData(uint32 id) const;
+    [[nodiscard]] SmartstoneVehicleData GetVehicleData(uint32 id) const;
 
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;
@@ -346,6 +347,8 @@ public:
                 return fullId - 90000;
             case ACTION_TYPE_COSTUME:
                 return fullId - 20000;
+            case ACTION_TYPE_VEHICLES:
+                return fullId - 70000;
         }
 
         return fullId;

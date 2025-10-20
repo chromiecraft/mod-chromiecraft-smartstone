@@ -313,6 +313,20 @@ SmartstoneAuraData Smartstone::GetAuraData(uint32 id) const
     return defaultCostume;
 }
 
+SmartstoneVehicleData Smartstone::GetVehicleData(uint32 id) const
+{
+    for (auto const& vehicle : Vehicles)
+    {
+        if (vehicle.Id == id)
+            return vehicle;
+    }
+
+    // Return empty/default vehicle data with Id = 0 to indicate not found
+    SmartstoneVehicleData defaultVehicle = {};
+    defaultVehicle.Id = 0;
+    return defaultVehicle;
+}
+
 Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 costumeDuration) const
 {
     // If the costume has a duration override set in database, use it instead
@@ -431,6 +445,8 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
             return ModName + "#costume";
         case ACTION_TYPE_AURA:
             return ModName + "#aura";
+        case ACTION_TYPE_VEHICLES:
+            return ModName + "#vehicle";
         default:
             return "";
     }
