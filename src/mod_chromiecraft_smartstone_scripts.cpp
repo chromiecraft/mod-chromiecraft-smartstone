@@ -247,6 +247,12 @@ public:
             }
             case ACTION_TYPE_VEHICLES:
             {
+                if (!sSmartstone->CanUseSmartstone(player))
+                {
+                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    break;
+                }
+
                 Creature* creature = player->SummonCreature(actionId, *player, TEMPSUMMON_MANUAL_DESPAWN);
                 ObjectGuid vehicleGuid = creature->GetGUID();
                 player->m_Events.AddEventAtOffset([player, actionId, vehicleGuid] {
