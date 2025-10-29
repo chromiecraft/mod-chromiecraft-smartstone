@@ -327,6 +327,20 @@ SmartstoneVehicleData Smartstone::GetVehicleData(uint32 id) const
     return defaultVehicle;
 }
 
+SmartstoneMountData Smartstone::GetMountData(uint32 id) const
+{
+    for (auto const& mount : Mounts)
+    {
+        if (mount.Id == id)
+            return mount;
+    }
+
+    // Return empty/default mount data with Id = 0 to indicate not found
+    SmartstoneMountData defaultMount = {};
+    defaultMount.Id = 0;
+    return defaultMount;
+}
+
 Milliseconds Smartstone::GetCostumeDuration(Player* player, uint32 costumeDuration) const
 {
     // If the costume has a duration override set in database, use it instead
@@ -445,8 +459,10 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
             return ModName + "#costume";
         case ACTION_TYPE_AURA:
             return ModName + "#aura";
-        case ACTION_TYPE_VEHICLES:
+        case ACTION_TYPE_VEHICLE:
             return ModName + "#vehicle";
+        case ACTION_TYPE_MOUNT:
+            return ModName + "#mount";
         default:
             return "";
     }
@@ -522,13 +538,41 @@ void Smartstone::LoadVehicles()
             vehicleData.Description = fields[2].Get<std::string>();
             vehicleData.SubscriptionLevelRequired = fields[3].Get<uint8>();
             Vehicles.push_back(vehicleData);
-            MenuItems[ACTION_TYPE_VEHICLES].push_back(MenuItem{
+            MenuItems[ACTION_TYPE_VEHICLE].push_back(MenuItem{
                 vehicleData.CreatureId,
                 vehicleData.Description,
                 0, // NpcTextId
                 GOSSIP_ICON_TABARD,
-                ACTION_TYPE_VEHICLES,
+                ACTION_TYPE_VEHICLE,
                 vehicleData.SubscriptionLevelRequired
+                });
+        } while (result->NextRow());
+    }
+}
+
+void Smartstone::LoadMounts()
+{
+    // Load mounts from the database
+    QueryResult result = WorldDatabase.Query("SELECT Id, ModelId, Description, SubscriptionLevel FROM smartstone_mounts WHERE Enabled = 1");
+    SmartstoneMountData mountData;
+    Mounts.clear();
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            mountData.Id = fields[0].Get<uint32>();
+            mountData.ModelID = fields[1].Get<uint32>();
+            mountData.Description = fields[2].Get<std::string>();
+            mountData.SubscriptionLevelRequired = fields[3].Get<uint8>();
+            Mounts.push_back(mountData);
+            MenuItems[ACTION_TYPE_MOUNT].push_back(MenuItem{
+                mountData.Id,
+                mountData.Description,
+                0, // NpcTextId
+                GOSSIP_ICON_TABARD,
+                ACTION_TYPE_MOUNT,
+                mountData.SubscriptionLevelRequired
                 });
         } while (result->NextRow());
     }
@@ -547,5 +591,6 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadCategories();
         sSmartstone->LoadAuras();
         sSmartstone->LoadVehicles();
+        sSmartstone->LoadMounts();
     }
 }

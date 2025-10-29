@@ -62,3 +62,12 @@ CREATE TABLE IF NOT EXISTS `smartstone_vehicles` (
   PRIMARY KEY (`Id`)
 );
 
+CREATE TABLE IF NOT EXISTS `smartstone_mounts` (
+  `Id` INT UNSIGNED AUTO_INCREMENT,
+  `ModelId` int unsigned NOT NULL,
+  `Category` tinyint DEFAULT '0',
+  `SubscriptionLevel` tinyint DEFAULT '0',
+  `Description` text COLLATE utf8mb4_general_ci,
+  `Enabled` tinyint DEFAULT '1',
+  PRIMARY KEY (`Id`)
+);

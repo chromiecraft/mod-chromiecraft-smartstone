@@ -188,7 +188,7 @@ public:
                 sendSuccess(aura.Description);
                 break;
             }
-            case ACTION_TYPE_VEHICLES:
+            case ACTION_TYPE_VEHICLE:
             {
                 SmartstoneVehicleData vehicleData = sSmartstone->GetVehicleData(id);
                 if (!vehicleData.CreatureId)

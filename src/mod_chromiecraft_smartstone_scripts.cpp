@@ -245,7 +245,7 @@ public:
                 player->SendSystemMessage(aura.Description + " is now active.");
                 break;
             }
-            case ACTION_TYPE_VEHICLES:
+            case ACTION_TYPE_VEHICLE:
             {
                 if (!sSmartstone->CanUseSmartstone(player))
                 {
@@ -267,6 +267,23 @@ public:
                         }
                     }
                 }, 500ms);
+
+                break;
+            }
+            case ACTION_TYPE_MOUNT:
+            {
+                if (!sSmartstone->CanUseSmartstone(player))
+                {
+                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    break;
+                }
+
+                SmartstoneMountData mount = sSmartstone->GetMountData(actionId);
+
+                if (!player->GetAuraEffectsByType(SPELL_AURA_MOUNTED).empty())
+                    player->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, mount.ModelID);
+                else
+                    player->SendSystemMessage("You must be mounted to use this feature.");
 
                 break;
             }
@@ -474,9 +491,14 @@ public:
                     if (subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
                 }
-                else if (menuItem.ServiceType == ACTION_TYPE_VEHICLES)
+                else if (menuItem.ServiceType == ACTION_TYPE_VEHICLE)
                 {
                     if (sSmartstone->IsServiceAvailable(player, "#vehicle", menuItem.ItemId)
+                        || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                        available = true;
+                } else if (menuItem.ServiceType == ACTION_TYPE_MOUNT)
+                {
+                    if (sSmartstone->IsServiceAvailable(player, "#mount", menuItem.ItemId)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
                 }
@@ -541,11 +563,16 @@ public:
                         menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
                         sSmartstone->GetActionTypeId(ACTION_TYPE_SERVICE, menuItem.ItemId), "", 0);
                 }
-                else if (menuItem.ServiceType == ACTION_TYPE_VEHICLES)
+                else if (menuItem.ServiceType == ACTION_TYPE_VEHICLE)
                 {
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
                         menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
-                        sSmartstone->GetActionTypeId(ACTION_TYPE_VEHICLES, menuItem.ItemId), "", 0);
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_VEHICLE, menuItem.ItemId), "", 0);
+                } else if (menuItem.ServiceType == ACTION_TYPE_MOUNT)
+                {
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_MOUNT, menuItem.ItemId), "", 0);
                 }
 
                 shownCount++;

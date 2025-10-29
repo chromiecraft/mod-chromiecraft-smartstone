@@ -55,8 +55,9 @@ enum ActionType
     ACTION_TYPE_SERVICE   = 4, // Character services like barber, name change, etc.
     ACTION_TYPE_UTIL      = 5, // Utility actions like next/previous page, back,
     ACTION_TYPE_AURA      = 6,
-    ACTION_TYPE_VEHICLES  = 7,
-    ACTION_TYPE_NONE      = 8, // No action type, used for invalid or uninitialized
+    ACTION_TYPE_VEHICLE   = 7,
+    ACTION_TYPE_MOUNT     = 8,
+    ACTION_TYPE_NONE      = 9, // No action type, used for invalid or uninitialized
     MAX_ACTION_TYPE,
 };
 
@@ -145,6 +146,14 @@ struct SmartstoneVehicleData
 {
     uint32 Id;
     uint32 CreatureId;
+    std::string Description;
+    uint8 SubscriptionLevelRequired;
+};
+
+struct SmartstoneMountData
+{
+    uint32 Id;
+    uint32 ModelID;
     std::string Description;
     uint8 SubscriptionLevelRequired;
 };
@@ -255,7 +264,8 @@ public:
             case ACTION_TYPE_CATEGORY: return "Category";
             case ACTION_TYPE_SERVICE: return "Service";
             case ACTION_TYPE_UTIL: return "Utility";
-            case ACTION_TYPE_VEHICLES: return "Vehicles";
+            case ACTION_TYPE_VEHICLE: return "Vehicles";
+            case ACTION_TYPE_MOUNT: return "Mounts";
             default: return "None";
         }
     }
@@ -270,7 +280,8 @@ public:
             case ACTION_TYPE_CATEGORY: return "Category service.";
             case ACTION_TYPE_SERVICE: return "Character services like barber, name change, etc.";
             case ACTION_TYPE_UTIL: return "Utility actions like next/previous page, back.";
-            case ACTION_TYPE_VEHICLES: return "Vehicles service.";
+            case ACTION_TYPE_VEHICLE: return "Vehicles service.";
+            case ACTION_TYPE_MOUNT: return "Mounts service.";
             default: return "No action type.";
         }
     }
@@ -291,6 +302,7 @@ public:
     void LoadCategories();
     void LoadAuras();
     void LoadVehicles();
+    void LoadMounts();
 
     void ProcessExpiredServices(Player* player);
 
@@ -304,11 +316,13 @@ public:
     [[nodiscard]] SmartstoneCostumeData GetCostumeDataByDisplayId(uint32 displayId) const;
     [[nodiscard]] SmartstoneAuraData GetAuraData(uint32 id) const;
     [[nodiscard]] SmartstoneVehicleData GetVehicleData(uint32 id) const;
+    [[nodiscard]] SmartstoneMountData GetMountData(uint32 id) const;
 
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;
     std::vector<SmartstoneAuraData> Auras;
     std::vector<SmartstoneVehicleData> Vehicles;
+    std::vector<SmartstoneMountData> Mounts;
 
     std::unordered_map<uint32, std::vector<MenuItem>> MenuItems;
     std::unordered_map<uint32, std::vector<SmartstoneCostumeData>> Costumes;
@@ -347,7 +361,7 @@ public:
                 return fullId - 90000;
             case ACTION_TYPE_COSTUME:
                 return fullId - 20000;
-            case ACTION_TYPE_VEHICLES:
+            case ACTION_TYPE_VEHICLE:
                 return fullId - 70000;
         }
 
