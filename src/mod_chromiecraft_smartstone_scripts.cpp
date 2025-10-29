@@ -264,6 +264,7 @@ public:
                             vehicle->GetMotionMaster()->MoveTakeoff(0, *player);
                             vehicle->SetDisableGravity(true);
                             vehicle->SetCanFly(true);
+                            player->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
                         }
                     }
                 }, 500ms);
