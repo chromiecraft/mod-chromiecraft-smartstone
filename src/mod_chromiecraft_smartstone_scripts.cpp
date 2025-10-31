@@ -254,20 +254,34 @@ public:
                     break;
                 }
 
+                if (player->IsInCombat())
+                {
+                    player->SendSystemMessage("You cannot summon a vehicle while in combat.");
+                    break;
+                }
+
                 SmartstoneVehicleData vehicleData = sSmartstone->GetVehicleData(actionId);
 
                 if (vehicleData.HasFlag(SMARTSTONE_VEHICLE_FLAG_FLY))
                 {
+                    if (!player->GetSkillValue(SKILL_RIDING) < 225)
+                    {
+                        player->SendSystemMessage("You need Expert Riding skill to fly this vehicle.");
+                        break;
+                    }
+
+                    uint32 mapId = player->GetMapId();
                     Battlefield* Bf = sBattlefieldMgr->GetBattlefieldToZoneId(player->GetZoneId());
                     if (AreaTableEntry const* pArea = sAreaTableStore.LookupEntry(player->GetAreaId()))
-                        if ((pArea->flags & AREA_FLAG_NO_FLY_ZONE) || (Bf && !Bf->CanFlyIn()))
+                        if ((pArea->flags & AREA_FLAG_NO_FLY_ZONE) || (Bf && !Bf->CanFlyIn()) ||
+                            (mapId == MAP_KALIMDOR || mapId == MAP_EASTERN_KINGDOMS))
                         {
                             player->SendSystemMessage("You may not fly here.");
                             break;
                         }
                 }
 
-                Creature* creature = player->SummonCreature(actionId, *player, TEMPSUMMON_MANUAL_DESPAWN);
+                Creature* creature = player->SummonCreature(vehicleData.CreatureId, *player, TEMPSUMMON_MANUAL_DESPAWN);
 
                 if (!creature)
                     break;
@@ -275,7 +289,7 @@ public:
                 if (!vehicleData.HasFlag(SMARTSTONE_VEHICLE_FLAG_FOLLOW))
                 {
                     ObjectGuid vehicleGuid = creature->GetGUID();
-                    player->m_Events.AddEventAtOffset([player, actionId, vehicleGuid] {
+                    player->m_Events.AddEventAtOffset([player, vehicleGuid] {
                         if (Creature* vehicle = ObjectAccessor::GetCreature(*player, vehicleGuid))
                         {
                             player->CastCustomSpell(60683, SPELLVALUE_BASE_POINT0, 1, vehicle, true);

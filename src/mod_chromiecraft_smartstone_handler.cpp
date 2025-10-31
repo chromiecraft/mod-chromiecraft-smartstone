@@ -540,7 +540,7 @@ void Smartstone::LoadVehicles()
             vehicleData.Flags = fields[4].Get<uint32>();
             Vehicles.push_back(vehicleData);
             MenuItems[ACTION_TYPE_VEHICLE].push_back(MenuItem{
-                vehicleData.CreatureId,
+                vehicleData.Id,
                 vehicleData.Description,
                 0, // NpcTextId
                 GOSSIP_ICON_TABARD,
