@@ -2,6 +2,7 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU AGPL v3 license: https://github.com/azerothcore/azerothcore-wotlk/blob/master/LICENSE-AGPL3
  */
 
+#include "BattlefieldMgr.h"
 #include "Chat.h"
 #include "CombatAI.h"
 #include "GameTime.h"
@@ -253,21 +254,45 @@ public:
                     break;
                 }
 
-                Creature* creature = player->SummonCreature(actionId, *player, TEMPSUMMON_MANUAL_DESPAWN);
-                ObjectGuid vehicleGuid = creature->GetGUID();
-                player->m_Events.AddEventAtOffset([player, actionId, vehicleGuid] {
-                    if (Creature* vehicle = ObjectAccessor::GetCreature(*player, vehicleGuid))
-                    {
-                        player->CastCustomSpell(60683, SPELLVALUE_BASE_POINT0, 1, vehicle, true);
-                        if (vehicle->CanFly())
+                SmartstoneVehicleData vehicleData = sSmartstone->GetVehicleData(actionId);
+
+                if (vehicleData.HasFlag(SMARTSTONE_VEHICLE_FLAG_FLY))
+                {
+                    Battlefield* Bf = sBattlefieldMgr->GetBattlefieldToZoneId(player->GetZoneId());
+                    if (AreaTableEntry const* pArea = sAreaTableStore.LookupEntry(player->GetAreaId()))
+                        if ((pArea->flags & AREA_FLAG_NO_FLY_ZONE) || (Bf && !Bf->CanFlyIn()))
                         {
-                            vehicle->GetMotionMaster()->MoveTakeoff(0, *player);
-                            vehicle->SetDisableGravity(true);
-                            vehicle->SetCanFly(true);
-                            player->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
+                            player->SendSystemMessage("You may not fly here.");
+                            break;
                         }
-                    }
-                }, 500ms);
+                }
+
+                Creature* creature = player->SummonCreature(actionId, *player, TEMPSUMMON_MANUAL_DESPAWN);
+
+                if (!creature)
+                    break;
+
+                if (!vehicleData.HasFlag(SMARTSTONE_VEHICLE_FLAG_FOLLOW))
+                {
+                    ObjectGuid vehicleGuid = creature->GetGUID();
+                    player->m_Events.AddEventAtOffset([player, actionId, vehicleGuid] {
+                        if (Creature* vehicle = ObjectAccessor::GetCreature(*player, vehicleGuid))
+                        {
+                            player->CastCustomSpell(60683, SPELLVALUE_BASE_POINT0, 1, vehicle, true);
+                            if (vehicle->CanFly())
+                            {
+                                vehicle->GetMotionMaster()->MoveTakeoff(0, *player);
+                                vehicle->SetDisableGravity(true);
+                                vehicle->SetCanFly(true);
+                                player->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
+                            }
+                        }
+                    }, 500ms);
+                }
+                else
+                {
+                    creature->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+                }
 
                 break;
             }

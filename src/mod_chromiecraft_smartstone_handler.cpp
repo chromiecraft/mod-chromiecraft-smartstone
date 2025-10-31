@@ -525,7 +525,7 @@ void Smartstone::LoadAccountSettings(uint32 accountId)
 
 void Smartstone::LoadVehicles()
 {
-    QueryResult result = WorldDatabase.Query("SELECT Id, CreatureId, Description, SubscriptionLevel FROM smartstone_vehicles WHERE Enabled = 1");
+    QueryResult result = WorldDatabase.Query("SELECT Id, CreatureId, Description, SubscriptionLevel, Flags FROM smartstone_vehicles WHERE Enabled = 1");
     SmartstoneVehicleData vehicleData;
     Vehicles.clear();
     if (result)
@@ -537,6 +537,7 @@ void Smartstone::LoadVehicles()
             vehicleData.CreatureId = fields[1].Get<uint32>();
             vehicleData.Description = fields[2].Get<std::string>();
             vehicleData.SubscriptionLevelRequired = fields[3].Get<uint8>();
+            vehicleData.Flags = fields[4].Get<uint32>();
             Vehicles.push_back(vehicleData);
             MenuItems[ACTION_TYPE_VEHICLE].push_back(MenuItem{
                 vehicleData.CreatureId,

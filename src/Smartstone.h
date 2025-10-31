@@ -73,6 +73,13 @@ enum STSPetType
     PET_TYPE_COMBAT     = ACTION_TYPE_PET,
 };
 
+enum SmartstoneVehicleFlags
+{
+    SMARTSTONE_VEHICLE_FLAG_NONE   = 0x0,
+    SMARTSTONE_VEHICLE_FLAG_FLY    = 0x1,
+    SMARTSTONE_VEHICLE_FLAG_FOLLOW = 0x2,
+};
+
 struct MenuItem
 {
     uint32 ItemId;
@@ -146,8 +153,11 @@ struct SmartstoneVehicleData
 {
     uint32 Id;
     uint32 CreatureId;
+    uint32 Flags;
     std::string Description;
     uint8 SubscriptionLevelRequired;
+
+    [[nodiscard]] bool HasFlag(uint32 flag) const { return (Flags & flag) != 0; };
 };
 
 struct SmartstoneMountData
