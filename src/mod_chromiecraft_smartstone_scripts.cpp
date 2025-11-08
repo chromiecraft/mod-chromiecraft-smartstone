@@ -264,7 +264,7 @@ public:
 
                 if (vehicleData.HasFlag(SMARTSTONE_VEHICLE_FLAG_FLY))
                 {
-                    if (!player->GetSkillValue(SKILL_RIDING) < 225)
+                    if (player->GetSkillValue(SKILL_RIDING) < 225)
                     {
                         player->SendSystemMessage("You need Expert Riding skill to fly this vehicle.");
                         break;
