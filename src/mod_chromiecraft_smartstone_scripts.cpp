@@ -109,12 +109,48 @@ public:
                     }
                     case SMARTSTONE_ACTION_UNSUMMON_COMPANION:
                     {
+                        if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+                            (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
+                        {
+                            player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                            break;
+                        }
+
+                        if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
+                            player->SendSystemMessage("You cannot use this feature while in combat.");
+                            break;
+                        }
+
+                        if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
+                        {
+                            player->SendSystemMessage("You cannot use this feature while in PvP.");
+                            break;
+                        }
+
                         if (Creature* cr = player->GetCompanionPet())
                             cr->DespawnOrUnsummon();
                         break;
                     }
                     case SMARTSTONE_ACTION_UNSUMMON_PET:
                     {
+                        if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
+                            (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
+                        {
+                            player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                            break;
+                        }
+
+                        if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
+                            player->SendSystemMessage("You cannot use this feature while in combat.");
+                            break;
+                        }
+
+                        if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
+                        {
+                            player->SendSystemMessage("You cannot use this feature while in PvP.");
+                            break;
+                        }
+
                         if (Guardian* cr = player->GetGuardianPet())
                             cr->DespawnOrUnsummon();
                         break;
