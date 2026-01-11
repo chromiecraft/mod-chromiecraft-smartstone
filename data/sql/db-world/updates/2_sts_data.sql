@@ -35,7 +35,7 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (80000, 0, 0, 'Looking for a change, ay? I got just what you need! Come, take a seat.', 12, 0, 'Smartstone - Barber - Spawn'),
 (80000, 1, 0, 'Time is up, pal! Off we go!', 12, 0, 'Smartstone - Barber - Despawn');
 
-DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006);
+DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007);
 INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike.'),
 (92001, 'Hey there, pal! Welcome to the finest chop shop in Azeroth! Need a trim, a shave, or a whole new look? We’ve got styles to make your enemies quake in fear—or at least wonder where you got such a snazzy do! Sit down, relax, and let’s get you looking spectacular!'),
