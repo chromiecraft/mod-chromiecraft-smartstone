@@ -46,3 +46,4 @@ local.properties
 .loadpath
 .project
 .cproject
+_codeql_detected_source_root
