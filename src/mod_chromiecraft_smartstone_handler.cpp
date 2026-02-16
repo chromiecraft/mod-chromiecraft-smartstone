@@ -474,7 +474,7 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
     player->SetDisplayId(costume.DisplayId, costume.Scale);
     SetCurrentCostume(player, costume.DisplayId);
 
-    player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+    player->AddSpellCooldown(GetCostumeCooldownSpellId(costumeId), 0, 30 * MINUTE * IN_MILLISECONDS);
 
     Milliseconds duration = GetCostumeDuration(player, costume.Duration);
     if (duration > 0s)

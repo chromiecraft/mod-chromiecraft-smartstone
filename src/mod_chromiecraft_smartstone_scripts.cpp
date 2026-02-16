@@ -251,9 +251,10 @@ public:
                     break;
                 }
 
-                if (player->HasSpellCooldown(90002) && !player->GetCommandStatus(CHEAT_COOLDOWN))
+                uint32 costumeCdSpell = sSmartstone->GetCostumeCooldownSpellId(actionId);
+                if (player->HasSpellCooldown(costumeCdSpell) && !player->GetCommandStatus(CHEAT_COOLDOWN))
                 {
-                    uint32 remaining = player->GetSpellCooldownDelay(90002); // in milliseconds
+                    uint32 remaining = player->GetSpellCooldownDelay(costumeCdSpell); // in milliseconds
                     uint32 seconds = remaining / 1000;
                     uint32 minutes = seconds / 60;
                     seconds = seconds % 60;
@@ -701,6 +702,7 @@ public:
         sSmartstone->SetCanUseInCombat(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInCombat", false));
         sSmartstone->SetCanUseInPvP(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInPvP", false));
         sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
+        sSmartstone->SetIndividualCostumeCooldowns(sConfigMgr->GetOption("ModChromiecraftSmartstone.IndividualCostumeCooldowns", false));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();

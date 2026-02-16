@@ -68,6 +68,15 @@ ModChromiecraftSmartstone.CanUseInCombat = 0
 
 ModChromiecraftSmartstone.CanUseInPvP = 0
 
+#
+#    ModChromiecraftSmartstone.IndividualCostumeCooldowns
+#        Description: When enabled, each costume has its own cooldown instead of sharing a global cooldown.
+#        Default:     0 - Disabled (all costumes share the same cooldown)
+#                     1 - Enabled (each costume has its own independent cooldown)
+#
+
+ModChromiecraftSmartstone.IndividualCostumeCooldowns = 0
+
 # 
 #    ModChromiecraftSmartstone.Debug
 #        Description: Enables all Smartstone features by default.
