@@ -251,13 +251,11 @@ public:
                     break;
                 }
 
-                uint32 costumeCdSpell = sSmartstone->GetCostumeCooldownSpellId(actionId);
-                if (player->HasSpellCooldown(costumeCdSpell) && !player->GetCommandStatus(CHEAT_COOLDOWN))
+                if (sSmartstone->HasCostumeCooldown(player, actionId) && !player->GetCommandStatus(CHEAT_COOLDOWN))
                 {
-                    uint32 remaining = player->GetSpellCooldownDelay(costumeCdSpell); // in milliseconds
-                    uint32 seconds = remaining / 1000;
-                    uint32 minutes = seconds / 60;
-                    seconds = seconds % 60;
+                    uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, actionId);
+                    uint32 minutes = remaining / 60;
+                    uint32 seconds = remaining % 60;
                     std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
                     player->SendSystemMessage(message);
                     break;

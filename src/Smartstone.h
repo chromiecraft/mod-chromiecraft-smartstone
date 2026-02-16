@@ -242,7 +242,10 @@ public:
 
     void SetIndividualCostumeCooldowns(bool enabled) { IndividualCostumeCooldowns = enabled; }
     [[nodiscard]] bool HasIndividualCostumeCooldowns() const { return IndividualCostumeCooldowns; }
-    [[nodiscard]] uint32 GetCostumeCooldownSpellId(uint32 costumeId) const { return IndividualCostumeCooldowns ? 90002 + costumeId : 90002; }
+
+    void SetCostumeCooldown(Player* player, uint32 costumeId);
+    [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
+    [[nodiscard]] uint32 GetCostumeCooldownRemaining(Player* player, uint32 costumeId) const;
 
     void ApplyCostume(Player* player, uint32 costumeId);
 
