@@ -201,6 +201,7 @@ private:
     bool CanUseInCombat{ false };
     bool CanUseInPvP{ false };
     bool IsDebugEnabled{ false };
+    bool IndividualCostumeCooldowns{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -238,6 +239,13 @@ public:
 
     void SetDebugEnabled(bool enabled) { IsDebugEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneDebugEnabled() const { return IsDebugEnabled; }
+
+    void SetIndividualCostumeCooldowns(bool enabled) { IndividualCostumeCooldowns = enabled; }
+    [[nodiscard]] bool HasIndividualCostumeCooldowns() const { return IndividualCostumeCooldowns; }
+
+    void SetCostumeCooldown(Player* player, uint32 costumeId);
+    [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
+    [[nodiscard]] uint32 GetCostumeCooldownRemaining(Player* player, uint32 costumeId) const;
 
     void ApplyCostume(Player* player, uint32 costumeId);
 

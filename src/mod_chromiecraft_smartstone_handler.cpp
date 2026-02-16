@@ -474,7 +474,7 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
     player->SetDisplayId(costume.DisplayId, costume.Scale);
     SetCurrentCostume(player, costume.DisplayId);
 
-    player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+    SetCostumeCooldown(player, costumeId);
 
     Milliseconds duration = GetCostumeDuration(player, costume.Duration);
     if (duration > 0s)
@@ -484,6 +484,44 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
                 player->SetDisplayId(player->GetNativeDisplayId());
         }, duration);
     }
+}
+
+void Smartstone::SetCostumeCooldown(Player* player, uint32 costumeId)
+{
+    if (IndividualCostumeCooldowns)
+    {
+        SmartstoneCostumeData costume = GetCostumeData(costumeId);
+        uint32 cooldownMinutes = costume.Duration ? costume.Duration : 30;
+        uint32 expireTime = GameTime::GetGameTime().count() + cooldownMinutes * MINUTE;
+        player->UpdatePlayerSetting(ModName + "#ccd", costumeId, expireTime);
+    }
+    else
+    {
+        player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+    }
+}
+
+bool Smartstone::HasCostumeCooldown(Player* player, uint32 costumeId) const
+{
+    if (IndividualCostumeCooldowns)
+    {
+        uint32 expireTime = player->GetPlayerSetting(ModName + "#ccd", costumeId).value;
+        return expireTime > GameTime::GetGameTime().count();
+    }
+
+    return player->HasSpellCooldown(90002);
+}
+
+uint32 Smartstone::GetCostumeCooldownRemaining(Player* player, uint32 costumeId) const
+{
+    if (IndividualCostumeCooldowns)
+    {
+        uint32 expireTime = player->GetPlayerSetting(ModName + "#ccd", costumeId).value;
+        uint32 now = GameTime::GetGameTime().count();
+        return expireTime > now ? expireTime - now : 0;
+    }
+
+    return player->GetSpellCooldownDelay(90002) / 1000;
 }
 
 PlayerSetting Smartstone::GetAccountSetting(uint32 accountId, uint32 service, uint32 index)
