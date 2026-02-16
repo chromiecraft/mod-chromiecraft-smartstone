@@ -492,8 +492,13 @@ void Smartstone::SetCostumeCooldown(Player* player, uint32 costumeId)
     if (IndividualCostumeCooldowns)
     {
         SmartstoneCostumeData costume = GetCostumeData(costumeId);
-        uint32 cooldownSeconds = costume.Cooldown ? costume.Cooldown : 30 * MINUTE * IN_MILLISECONDS;
+
+        uint32 cooldownSeconds = costume.Cooldown
+            ? costume.Cooldown
+            : std::chrono::duration_cast<std::chrono::seconds>(30min).count();
+
         uint32 expireTime = GameTime::GetGameTime().count() + cooldownSeconds;
+
         player->UpdatePlayerSetting(ModName + "#ccd", costumeId, expireTime);
     }
     else
