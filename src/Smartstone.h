@@ -111,6 +111,7 @@ struct SmartstoneCostumeData
     float Scale;
     std::string Description;
     uint32 Duration;
+    uint32 Cooldown;
     uint8 SubscriptionLevelRequired;
 };
 
