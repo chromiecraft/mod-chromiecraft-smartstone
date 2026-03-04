@@ -765,7 +765,6 @@ struct npc_smartstone_vehicle : public VehicleAI
     }
 };
 
-
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
