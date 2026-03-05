@@ -274,6 +274,8 @@ public:
             return false;
         }
 
+        uint8 subscriptionLevel = player->IsGameMaster() ? 3 : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
         bool found = false;
 
         if (sSmartstone->HasIndividualCostumeCooldowns())
@@ -282,6 +284,10 @@ public:
             {
                 for (auto const& costume : costumeList)
                 {
+                    if (!sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - 20000)
+                        && subscriptionLevel < costume.SubscriptionLevelRequired)
+                        continue;
+
                     if (sSmartstone->HasCostumeCooldown(player, costume.Id))
                     {
                         uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, costume.Id);
