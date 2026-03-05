@@ -287,9 +287,6 @@ public:
             target = PlayerIdentifier::FromSelf(handler);
         }
 
-        if (!target)
-            return false;
-
         Player* player = target->GetConnectedPlayer();
 
         std::string playerName;
@@ -327,8 +324,8 @@ public:
             else
             {
                 QueryResult result = CharacterDatabase.Query(
-                    "SELECT `data` FROM `character_settings` WHERE `guid` = {} AND `source` = '{}'",
-                    target->GetGUID().GetCounter(), ModName + "#ccd");
+                    "SELECT `data` FROM `character_settings` WHERE `guid` = {} AND `source` = 'mod-cc-smartstone#ccd'",
+                    target->GetGUID().GetCounter());
 
                 if (result)
                 {
