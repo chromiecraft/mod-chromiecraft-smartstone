@@ -49,6 +49,7 @@ public:
         {
             { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR,     Console::Yes },
             { "reload",         HandleSmartstoneReloadCommand,        SEC_ADMINISTRATOR, Console::Yes },
+            { "cooldowns",      HandleSmartstoneCooldownsCommand,     SEC_PLAYER,        Console::No  },
             { "lookup",         smartstoneLookupTable },
             { "use",            smartstoneUseTable },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
@@ -254,6 +255,54 @@ public:
             else
                 handler->PSendSysMessage("No costumes found matching '{}'.", filterStr);
         }
+
+        return true;
+    }
+
+    static bool HandleSmartstoneCooldownsCommand(ChatHandler* handler)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+        {
+            handler->SendErrorMessage("The smartstone is disabled.");
+            return false;
+        }
+
+        Player* player = handler->GetPlayer();
+        if (!player)
+        {
+            handler->SendErrorMessage("This command can only be used in-game.");
+            return false;
+        }
+
+        bool found = false;
+
+        if (sSmartstone->HasIndividualCostumeCooldowns())
+        {
+            for (auto const& [category, costumeList] : sSmartstone->Costumes)
+            {
+                for (auto const& costume : costumeList)
+                {
+                    if (sSmartstone->HasCostumeCooldown(player, costume.Id))
+                    {
+                        uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, costume.Id);
+                        handler->PSendSysMessage("[{}] '{}' - {}m {}s remaining.", costume.Id, costume.Description, remaining / 60, remaining % 60);
+                        found = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (player->HasSpellCooldown(90002))
+            {
+                uint32 remaining = player->GetSpellCooldownDelay(90002) / 1000;
+                handler->PSendSysMessage("All costumes - {}m {}s remaining.", remaining / 60, remaining % 60);
+                found = true;
+            }
+        }
+
+        if (!found)
+            handler->SendSysMessage("You have no active costume cooldowns.");
 
         return true;
     }
