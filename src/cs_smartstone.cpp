@@ -49,7 +49,7 @@ public:
         {
             { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR,     Console::Yes },
             { "reload",         HandleSmartstoneReloadCommand,        SEC_ADMINISTRATOR, Console::Yes },
-            { "cooldowns",      HandleSmartstoneCooldownsCommand,     SEC_PLAYER,        Console::No  },
+            { "cooldowns",      HandleSmartstoneCooldownsCommand,     SEC_PLAYER,        Console::Yes },
             { "lookup",         smartstoneLookupTable },
             { "use",            smartstoneUseTable },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
@@ -259,7 +259,7 @@ public:
         return true;
     }
 
-    static bool HandleSmartstoneCooldownsCommand(ChatHandler* handler)
+    static bool HandleSmartstoneCooldownsCommand(ChatHandler* handler, Optional<PlayerIdentifier> target)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
@@ -267,48 +267,111 @@ public:
             return false;
         }
 
-        Player* player = handler->GetPlayer();
-        if (!player)
+        Player* self = handler->GetPlayer();
+        bool isGM = self && self->GetSession()->GetSecurity() >= SEC_GAMEMASTER;
+
+        if (!self)
         {
-            handler->SendErrorMessage("This command can only be used in-game.");
-            return false;
+            if (!target)
+            {
+                handler->SendErrorMessage("Console usage requires a player name.");
+                return false;
+            }
+        }
+        else if (!isGM)
+        {
+            target = PlayerIdentifier::FromSelf(handler);
+        }
+        else if (!target)
+        {
+            target = PlayerIdentifier::FromSelf(handler);
         }
 
-        uint8 subscriptionLevel = player->IsGameMaster() ? 3 : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+        Player* player = target->GetConnectedPlayer();
+
+        std::string playerName;
+        sCharacterCache->GetCharacterNameByGuid(target->GetGUID(), playerName);
 
         bool found = false;
 
         if (sSmartstone->HasIndividualCostumeCooldowns())
         {
-            for (auto const& [category, costumeList] : sSmartstone->Costumes)
+            if (player)
             {
-                for (auto const& costume : costumeList)
-                {
-                    if (!sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - 20000)
-                        && subscriptionLevel < costume.SubscriptionLevelRequired)
-                        continue;
+                bool filterByAccess = !isGM && self;
+                uint8 subscriptionLevel = 0;
+                if (filterByAccess)
+                    subscriptionLevel = player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
 
-                    if (sSmartstone->HasCostumeCooldown(player, costume.Id))
+                for (auto const& [category, costumeList] : sSmartstone->Costumes)
+                {
+                    for (auto const& costume : costumeList)
                     {
-                        uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, costume.Id);
-                        handler->PSendSysMessage("[{}] '{}' - {}m {}s remaining.", costume.Id, costume.Description, remaining / 60, remaining % 60);
-                        found = true;
+                        if (filterByAccess
+                            && !sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - 20000)
+                            && subscriptionLevel < costume.SubscriptionLevelRequired)
+                            continue;
+
+                        if (sSmartstone->HasCostumeCooldown(player, costume.Id))
+                        {
+                            uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, costume.Id);
+                            handler->PSendSysMessage("[{}] '{}' - {}m {}s remaining.", costume.Id, costume.Description, remaining / 60, remaining % 60);
+                            found = true;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                QueryResult result = CharacterDatabase.Query(
+                    "SELECT `data` FROM `character_settings` WHERE `guid` = {} AND `source` = 'mod-cc-smartstone#ccd'",
+                    target->GetGUID().GetCounter());
+
+                if (result)
+                {
+                    std::string data = result->Fetch()[0].Get<std::string>();
+                    PlayerSettingVector settings = PlayerSettingsStore::ParseSettingsData(data);
+                    uint32 now = GameTime::GetGameTime().count();
+
+                    for (auto const& [category, costumeList] : sSmartstone->Costumes)
+                    {
+                        for (auto const& costume : costumeList)
+                        {
+                            if (costume.Id < settings.size())
+                            {
+                                uint32 expireTime = settings[costume.Id].value;
+                                if (expireTime > now)
+                                {
+                                    uint32 remaining = expireTime - now;
+                                    handler->PSendSysMessage("[{}] '{}' - {}m {}s remaining.", costume.Id, costume.Description, remaining / 60, remaining % 60);
+                                    found = true;
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
         else
         {
-            if (player->HasSpellCooldown(90002))
+            if (player)
             {
-                uint32 remaining = player->GetSpellCooldownDelay(90002) / 1000;
-                handler->PSendSysMessage("All costumes - {}m {}s remaining.", remaining / 60, remaining % 60);
-                found = true;
+                if (player->HasSpellCooldown(90002))
+                {
+                    uint32 remaining = player->GetSpellCooldownDelay(90002) / 1000;
+                    handler->PSendSysMessage("All costumes - {}m {}s remaining.", remaining / 60, remaining % 60);
+                    found = true;
+                }
+            }
+            else
+            {
+                handler->PSendSysMessage("Global cooldowns are not available for offline players.");
+                return true;
             }
         }
 
         if (!found)
-            handler->SendSysMessage("You have no active costume cooldowns.");
+            handler->PSendSysMessage("{} has no active costume cooldowns.", playerName);
 
         return true;
     }
