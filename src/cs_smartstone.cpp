@@ -22,6 +22,7 @@
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include <algorithm>
+#include <unordered_set>
 
 using namespace Acore::ChatCommands;
 
@@ -34,9 +35,11 @@ public:
     {
         static ChatCommandTable smartstoneLookupTable =
         {
-            { "pets",     HandleSmartstoneLookupPetsCommand,     SEC_PLAYER,     Console::No  },
-            { "costumes", HandleSmartstoneLookupCostumesCommand, SEC_PLAYER,     Console::No  },
-            { "allpets",  HandleSmartstoneLookupAllPetsCommand,  SEC_GAMEMASTER, Console::Yes },
+            { "pets",         HandleSmartstoneLookupPetsCommand,         SEC_PLAYER,     Console::No  },
+            { "costumes",     HandleSmartstoneLookupCostumesCommand,     SEC_PLAYER,     Console::No  },
+            { "allpets",      HandleSmartstoneLookupAllPetsCommand,      SEC_GAMEMASTER, Console::Yes },
+            { "charpets",     HandleSmartstoneLookupCharPetsCommand,     SEC_GAMEMASTER, Console::Yes },
+            { "charcostumes", HandleSmartstoneLookupCharCostumesCommand, SEC_GAMEMASTER, Console::Yes },
         };
 
         static ChatCommandTable smartstoneUseTable =
@@ -407,6 +410,269 @@ public:
                 handler->SendSysMessage("No pets are loaded.");
             else
                 handler->PSendSysMessage("No pets found matching '{}'.", filterStr);
+        }
+
+        return true;
+    }
+
+    static bool HandleSmartstoneLookupCharPetsCommand(ChatHandler* handler, PlayerIdentifier target, Optional<std::string_view> filter)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+        {
+            handler->SendErrorMessage("The smartstone is disabled.");
+            return false;
+        }
+
+        std::string playerName;
+        sCharacterCache->GetCharacterNameByGuid(target.GetGUID(), playerName);
+
+        std::string filterStr = filter ? std::string(*filter) : "";
+        std::transform(filterStr.begin(), filterStr.end(), filterStr.begin(), ::tolower);
+
+        bool found = false;
+        Player* player = target.GetConnectedPlayer();
+
+        if (player)
+        {
+            uint8 subscriptionLevel = player->IsGameMaster() ? 3 : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
+            auto checkAndPrint = [&](SmartstonePetData const& pet, std::string_view typeStr)
+            {
+                if (!sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
+                    return;
+
+                std::string descLower = pet.Description;
+                std::transform(descLower.begin(), descLower.end(), descLower.begin(), ::tolower);
+
+                if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
+                    return;
+
+                handler->PSendSysMessage("[{}] {} ({})", pet.CreatureId, pet.Description, typeStr);
+                found = true;
+            };
+
+            for (auto const& pet : sSmartstone->Pets)
+                checkAndPrint(pet, "Companion");
+
+            for (auto const& pet : sSmartstone->CombatPets)
+                checkAndPrint(pet, "Combat Pet");
+        }
+        else
+        {
+            uint32 guidLow = target.GetGUID().GetCounter();
+
+            // Batch load all needed character_settings for this player
+            uint8 subscriptionLevel = 0;
+            PlayerSettingVector petSettings;
+            PlayerSettingVector combatPetSettings;
+            PlayerSettingVector zoneDifficultySettings;
+
+            QueryResult settingsResult = CharacterDatabase.Query(
+                "SELECT `source`, `data` FROM `character_settings` WHERE `guid` = {} AND `source` IN ('{}', '{}', '{}', '{}')",
+                guidLow,
+                SubsModName,
+                ModName + "#pet",
+                ModName + "#combatpet",
+                "mod-zone-difficulty#ct");
+
+            if (settingsResult)
+            {
+                do
+                {
+                    Field* fields = settingsResult->Fetch();
+                    std::string source = fields[0].Get<std::string>();
+                    std::string data = fields[1].Get<std::string>();
+                    PlayerSettingVector settings = PlayerSettingsStore::ParseSettingsData(data);
+
+                    if (source == SubsModName)
+                    {
+                        if (SETTING_MEMBERSHIP_LEVEL < settings.size())
+                            subscriptionLevel = settings[SETTING_MEMBERSHIP_LEVEL].value;
+                    }
+                    else if (source == ModName + "#pet")
+                        petSettings = settings;
+                    else if (source == ModName + "#combatpet")
+                        combatPetSettings = settings;
+                    else if (source == "mod-zone-difficulty#ct")
+                        zoneDifficultySettings = settings;
+                } while (settingsResult->NextRow());
+            }
+
+            // Load active temp services
+            std::unordered_set<uint32> activeTempServices;
+            QueryResult tempResult = CharacterDatabase.Query(
+                "SELECT `ServiceId` FROM `smartstone_char_temp_services` WHERE `PlayerGUID` = {} AND `ExpirationTime` >= {}",
+                guidLow, GameTime::GetGameTime().count());
+
+            if (tempResult)
+            {
+                do
+                {
+                    activeTempServices.insert(tempResult->Fetch()[0].Get<uint32>());
+                } while (tempResult->NextRow());
+            }
+
+            auto checkAndPrintOffline = [&](SmartstonePetData const& pet, std::string_view typeStr)
+            {
+                bool available = false;
+
+                // Check temporary service access
+                if (pet.Duration && activeTempServices.count(pet.CreatureId))
+                    available = true;
+
+                // Check subscription level
+                if (!available && pet.SubscriptionLevelRequired && subscriptionLevel >= pet.SubscriptionLevelRequired)
+                    available = true;
+
+                // Check zone difficulty companions
+                if (!available && pet.Type == PET_TYPE_COMPANION)
+                {
+                    switch (pet.CreatureId)
+                    {
+                        case 80002: // Hyjal Wisp
+                            available = (SETTING_HYJAL < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_HYJAL].IsEnabled());
+                            break;
+                        case 80003: // Serpentshrine Waterspawn
+                            available = (SETTING_SSC < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SSC].IsEnabled());
+                            break;
+                        case 80006: // Thunderwing (Zul'Aman)
+                            available = (SETTING_ZULAMAN < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_ZULAMAN].IsEnabled());
+                            break;
+                        case 80010: // Alythessa
+                            available = (SETTING_SWP < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SWP].IsEnabled());
+                            break;
+                        case 80011: // Scorchling of Azzinoth
+                            available = (SETTING_BLACK_TEMPLE < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_BLACK_TEMPLE].IsEnabled());
+                            break;
+                    }
+                }
+
+                // Check player settings (per-player unlocks)
+                if (!available)
+                {
+                    uint32 shortId = pet.GetId();
+                    PlayerSettingVector const& settings = (pet.Type == PET_TYPE_COMBAT) ? combatPetSettings : petSettings;
+                    if (shortId < settings.size() && settings[shortId].IsEnabled())
+                        available = true;
+                }
+
+                if (!available)
+                    return;
+
+                std::string descLower = pet.Description;
+                std::transform(descLower.begin(), descLower.end(), descLower.begin(), ::tolower);
+
+                if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
+                    return;
+
+                handler->PSendSysMessage("[{}] {} ({})", pet.CreatureId, pet.Description, typeStr);
+                found = true;
+            };
+
+            for (auto const& pet : sSmartstone->Pets)
+                checkAndPrintOffline(pet, "Companion");
+
+            for (auto const& pet : sSmartstone->CombatPets)
+                checkAndPrintOffline(pet, "Combat Pet");
+        }
+
+        if (!found)
+        {
+            if (filterStr.empty())
+                handler->PSendSysMessage("{} has no pets available.", playerName);
+            else
+                handler->PSendSysMessage("No pets found matching '{}' for {}.", filterStr, playerName);
+        }
+
+        return true;
+    }
+
+    static bool HandleSmartstoneLookupCharCostumesCommand(ChatHandler* handler, PlayerIdentifier target, Optional<std::string_view> filter)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+        {
+            handler->SendErrorMessage("The smartstone is disabled.");
+            return false;
+        }
+
+        std::string playerName;
+        sCharacterCache->GetCharacterNameByGuid(target.GetGUID(), playerName);
+
+        std::string filterStr = filter ? std::string(*filter) : "";
+        std::transform(filterStr.begin(), filterStr.end(), filterStr.begin(), ::tolower);
+
+        bool found = false;
+        Player* player = target.GetConnectedPlayer();
+
+        if (player)
+        {
+            uint8 subscriptionLevel = player->IsGameMaster() ? 3 : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
+            for (auto const& [category, costumeList] : sSmartstone->Costumes)
+            {
+                for (auto const& costume : costumeList)
+                {
+                    if (!sSmartstone->IsServiceAvailable(player, "#costume", costume.Id - 20000)
+                        && subscriptionLevel < costume.SubscriptionLevelRequired)
+                        continue;
+
+                    std::string descLower = costume.Description;
+                    std::transform(descLower.begin(), descLower.end(), descLower.begin(), ::tolower);
+
+                    if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
+                        continue;
+
+                    handler->PSendSysMessage("[{}] {}", costume.Id, costume.Description);
+                    found = true;
+                }
+            }
+        }
+        else
+        {
+            uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(target.GetGUID());
+
+            // Ensure account settings are loaded from DB
+            sSmartstone->LoadAccountSettings(accountId);
+
+            // Get subscription level from character_settings
+            uint8 subscriptionLevel = 0;
+            QueryResult subResult = CharacterDatabase.Query(
+                "SELECT `data` FROM `character_settings` WHERE `guid` = {} AND `source` = '{}'",
+                target.GetGUID().GetCounter(), SubsModName);
+
+            if (subResult)
+            {
+                PlayerSettingVector subSettings = PlayerSettingsStore::ParseSettingsData(subResult->Fetch()[0].Get<std::string>());
+                if (SETTING_MEMBERSHIP_LEVEL < subSettings.size())
+                    subscriptionLevel = subSettings[SETTING_MEMBERSHIP_LEVEL].value;
+            }
+
+            for (auto const& [category, costumeList] : sSmartstone->Costumes)
+            {
+                for (auto const& costume : costumeList)
+                {
+                    if (!sSmartstone->GetAccountSetting(accountId, ACTION_TYPE_COSTUME, costume.Id - 20000).IsEnabled()
+                        && subscriptionLevel < costume.SubscriptionLevelRequired)
+                        continue;
+
+                    std::string descLower = costume.Description;
+                    std::transform(descLower.begin(), descLower.end(), descLower.begin(), ::tolower);
+
+                    if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
+                        continue;
+
+                    handler->PSendSysMessage("[{}] {}", costume.Id, costume.Description);
+                    found = true;
+                }
+            }
+        }
+
+        if (!found)
+        {
+            if (filterStr.empty())
+                handler->PSendSysMessage("{} has no costumes available.", playerName);
+            else
+                handler->PSendSysMessage("No costumes found matching '{}' for {}.", filterStr, playerName);
         }
 
         return true;
