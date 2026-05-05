@@ -707,6 +707,8 @@ public:
 
                 uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
 
+                sSmartstone->LoadAccountSettings(accountId);
+
                 if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
                 {
                     sendDupError(costume.Description);
@@ -716,6 +718,7 @@ public:
 
                 sSmartstone->UpdateAccountSetting(accountId, serviceType, settingId, add);
                 sendSuccess(costume.Description);
+                sSmartstone->ClearAccountSettings(accountId);
                 break;
             }
 
