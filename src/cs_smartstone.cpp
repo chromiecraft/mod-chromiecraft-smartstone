@@ -718,7 +718,9 @@ public:
 
                 sSmartstone->UpdateAccountSetting(accountId, serviceType, settingId, add);
                 sendSuccess(costume.Description);
-                sSmartstone->ClearAccountSettings(accountId);
+
+                if (!target)
+                    sSmartstone->ClearAccountSettings(accountId);
                 break;
             }
 
