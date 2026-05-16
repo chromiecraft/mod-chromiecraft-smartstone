@@ -275,20 +275,20 @@ public:
                         combatPetSettings = settings;
                     else if (source == "mod-zone-difficulty#ct")
                         zoneDifficultySettings = settings;
-                } while (settingsResult->NextRow();
+                } while (settingsResult->NextRow());
             }
 
             std::unordered_set<uint32> activeTempServices;
             QueryResult tempResult = CharacterDatabase.Query(
                 "SELECT `ServiceId` FROM `smartstone_char_temp_services` WHERE `PlayerGUID` = {} AND `ExpirationTime` >= {}",
-                guidLow, GameTime::GetGameTime().count();
+                guidLow, GameTime::GetGameTime().count());
 
             if (tempResult)
             {
                 do
                 {
-                    activeTempServices.insert(tempResult->Fetch()[0].Get<uint32>();
-                } while (tempResult->NextRow();
+                    activeTempServices.insert(tempResult->Fetch()[0].Get<uint32>());
+                } while (tempResult->NextRow());
             }
 
             auto checkAndPrintOffline = [&](SmartstonePetData const& pet, std::string_view typeStr)
@@ -306,19 +306,19 @@ public:
                     switch (pet.CreatureId)
                     {
                         case 80002:
-                            available = (SETTING_HYJAL < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_HYJAL].IsEnabled();
+                            available = (SETTING_HYJAL < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_HYJAL].IsEnabled());
                             break;
                         case 80003:
-                            available = (SETTING_SSC < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SSC].IsEnabled();
+                            available = (SETTING_SSC < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SSC].IsEnabled());
                             break;
                         case 80006:
-                            available = (SETTING_ZULAMAN < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_ZULAMAN].IsEnabled();
+                            available = (SETTING_ZULAMAN < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_ZULAMAN].IsEnabled());
                             break;
                         case 80010:
-                            available = (SETTING_SWP < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SWP].IsEnabled();
+                            available = (SETTING_SWP < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SWP].IsEnabled());
                             break;
                         case 80011:
-                            available = (SETTING_BLACK_TEMPLE < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_BLACK_TEMPLE].IsEnabled();
+                            available = (SETTING_BLACK_TEMPLE < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_BLACK_TEMPLE].IsEnabled());
                             break;
                     }
                 }
@@ -419,7 +419,7 @@ public:
         }
         else
         {
-            uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(target->GetGUID();
+            uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(target->GetGUID());
 
             sSmartstone->LoadAccountSettings(accountId);
 
@@ -430,7 +430,7 @@ public:
 
             if (subResult)
             {
-                PlayerSettingVector subSettings = PlayerSettingsStore::ParseSettingsData(subResult->Fetch()[0].Get<std::string>();
+                PlayerSettingVector subSettings = PlayerSettingsStore::ParseSettingsData(subResult->Fetch()[0].Get<std::string>());
                 if (SETTING_MEMBERSHIP_LEVEL < subSettings.size())
                     subscriptionLevel = subSettings[SETTING_MEMBERSHIP_LEVEL].value;
             }
@@ -534,7 +534,7 @@ public:
             {
                 QueryResult result = CharacterDatabase.Query(
                     "SELECT `data` FROM `character_settings` WHERE `guid` = {} AND `source` = 'mod-cc-smartstone#ccd'",
-                    target->GetGUID().GetCounter();
+                    target->GetGUID().GetCounter());
 
                 if (result)
                 {
@@ -802,7 +802,7 @@ public:
                     return false;
                 }
 
-                uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID();
+                uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
 
                 sSmartstone->LoadAccountSettings(accountId);
 
