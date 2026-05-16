@@ -395,6 +395,72 @@ public:
     }
 };
 
+enum SmartstoneStringId : uint32
+{
+    // Item / gossip / player action messages
+    LANG_MOD_INVALID_ACTION             = 1,
+    LANG_MOD_NO_BG_ARENA               = 2,
+    LANG_MOD_NO_COMBAT                 = 3,
+    LANG_MOD_NO_PVP                    = 4,
+    LANG_MOD_BARBER_UNAVAILABLE        = 5,
+    LANG_MOD_NO_INSTANCE_BG            = 6,
+    LANG_MOD_BARBER_ALREADY_SUMMONED   = 7,
+    LANG_MOD_COSTUME_COOLDOWN_MINS     = 8,
+    LANG_MOD_AURA_ALREADY_ACTIVE       = 9,
+    LANG_MOD_AURA_NOW_ACTIVE           = 10,
+    LANG_MOD_NO_VEHICLE_COMBAT         = 11,
+    LANG_MOD_NEED_RIDING_SKILL         = 12,
+    LANG_MOD_NO_FLY_HERE               = 13,
+    LANG_MOD_MUST_BE_MOUNTED           = 14,
+    LANG_MOD_INVALID_ACTION_TYPE       = 15,
+    LANG_MOD_NOT_CONFIGURED            = 16,
+    LANG_MOD_CATEGORY_NOT_FOUND        = 17,
+    LANG_MOD_NO_ACTIONS                = 18,
+    // Singleton system messages
+    LANG_MOD_PET_WANES                 = 19,
+    // Command messages
+    LANG_MOD_DISABLED                  = 20,
+    LANG_MOD_COSTUME_NOT_EXIST         = 21,
+    LANG_MOD_NO_ACCESS                 = 22,
+    LANG_MOD_COSTUME_NO_BG_ARENA       = 23,
+    LANG_MOD_COSTUME_NO_COMBAT         = 24,
+    LANG_MOD_COSTUME_NO_PVP            = 25,
+    LANG_MOD_COSTUME_ON_COOLDOWN       = 26,
+    LANG_MOD_COSTUME_APPLIED           = 27,
+    LANG_MOD_PET_NOT_EXIST             = 28,
+    LANG_MOD_NO_COMBAT_PET_INSTANCE    = 29,
+    LANG_MOD_CONSOLE_NEEDS_PLAYER      = 30,
+    LANG_MOD_LOOKUP_PET_FORMAT         = 31,
+    LANG_MOD_NO_PETS_AVAILABLE         = 32,
+    LANG_MOD_NO_PETS_MATCHING_FOR      = 33,
+    LANG_MOD_LOOKUP_COSTUME_FORMAT     = 34,
+    LANG_MOD_NO_COSTUMES_AVAILABLE     = 35,
+    LANG_MOD_NO_COSTUMES_MATCHING_FOR  = 36,
+    LANG_MOD_COOLDOWN_REMAINING        = 37,
+    LANG_MOD_ALL_COOLDOWN_REMAINING    = 38,
+    LANG_MOD_GLOBAL_CD_OFFLINE         = 39,
+    LANG_MOD_NO_COSTUME_COOLDOWNS      = 40,
+    LANG_MOD_NO_PETS_LOADED            = 41,
+    LANG_MOD_NO_PETS_MATCHING          = 42,
+    LANG_MOD_CONVERT_UNAVAILABLE       = 43,
+    LANG_MOD_NO_LEGACY_COSTUMES        = 44,
+    LANG_MOD_NO_MATCHING_COSTUME       = 45,
+    LANG_MOD_ITEM_ALREADY_UNLOCKED     = 46,
+    LANG_MOD_CONVERTED                 = 47,
+    LANG_MOD_NO_CONVERTIBLE            = 48,
+    LANG_MOD_ALREADY_HAVE_STONE        = 49,
+    LANG_MOD_SERVICE_ALREADY_UNLOCKED  = 50,
+    LANG_MOD_SERVICE_ALREADY_LOCKED    = 51,
+    LANG_MOD_SERVICE_BEEN_UNLOCKED     = 52,
+    LANG_MOD_SERVICE_BEEN_REMOVED      = 53,
+    LANG_MOD_PET_SERVICE_NOT_EXIST     = 54,
+    LANG_MOD_COSTUME_SERVICE_NOT_EXIST = 55,
+    LANG_MOD_AURA_NOT_EXIST            = 56,
+    LANG_MOD_VEHICLE_NOT_EXIST         = 57,
+    LANG_MOD_UNKNOWN_SERVICE_TYPE      = 58,
+    LANG_MOD_DATA_RELOADED             = 59,
+};
+
 #define sSmartstone Smartstone::instance()
 
 #endif

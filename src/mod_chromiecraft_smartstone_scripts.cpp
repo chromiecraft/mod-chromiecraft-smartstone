@@ -51,7 +51,7 @@ public:
         const auto actionKey = sSmartstone->DecodeActionId(action);
         if (!actionKey.has_value())
         {
-            player->SendSystemMessage("Invalid action selected.");
+            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_INVALID_ACTION);
             return;
         }
         const auto actionId = actionKey->actionId;
@@ -112,18 +112,18 @@ public:
                         if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
                             (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
                         {
-                            player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_BG_ARENA);
                             break;
                         }
 
                         if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
-                            player->SendSystemMessage("You cannot use this feature while in combat.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_COMBAT);
                             break;
                         }
 
                         if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
                         {
-                            player->SendSystemMessage("You cannot use this feature while in PvP.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_PVP);
                             break;
                         }
 
@@ -136,18 +136,18 @@ public:
                         if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
                             (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
                         {
-                            player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_BG_ARENA);
                             break;
                         }
 
                         if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
-                            player->SendSystemMessage("You cannot use this feature while in combat.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_COMBAT);
                             break;
                         }
 
                         if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
                         {
-                            player->SendSystemMessage("You cannot use this feature while in PvP.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_PVP);
                             break;
                         }
 
@@ -180,19 +180,19 @@ public:
                     {
                         if (sSmartstone->GetBarberDuration() == Seconds::zero())
                         {
-                            player->SendSystemMessage("Barbershop service is currently unavailable.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_BARBER_UNAVAILABLE);
                             break;
                         }
 
                         if (!sSmartstone->CanUseSmartstone(player))
                         {
-                            player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_INSTANCE_BG);
                             break;
                         }
 
                         if (player->FindNearestCreature(NPC_BARBER, 100.0f))
                         {
-                            player->SendSystemMessage("The barber is already summoned.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_BARBER_ALREADY_SUMMONED);
                             break;
                         }
 
@@ -219,7 +219,7 @@ public:
             {
                 if (!sSmartstone->CanUseSmartstone(player))
                 {
-                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_INSTANCE_BG);
                     break;
                 }
 
@@ -237,17 +237,17 @@ public:
                 if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
                     (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
                     {
-                    player->SendSystemMessage("You cannot use this feature in battlegrounds or arenas.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_BG_ARENA);
                     break;
                 }
 
                 if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat()) {
-                    player->SendSystemMessage("You cannot use this feature while in combat.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_COMBAT);
                     break;
                 }
 
                 if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP()) {
-                    player->SendSystemMessage("You cannot use this feature while in PvP.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_PVP);
                     break;
                 }
 
@@ -256,8 +256,7 @@ public:
                     uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, actionId);
                     uint32 minutes = remaining / 60;
                     uint32 seconds = remaining % 60;
-                    std::string message = Acore::StringFormat("You cannot use this feature for another {} minute(s) and {} second(s).", minutes, seconds);
-                    player->SendSystemMessage(message);
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_COOLDOWN_MINS, minutes, seconds);
                     break;
                 }
 
@@ -270,7 +269,7 @@ public:
                 SmartstoneAuraData aura = sSmartstone->GetAuraData(actionId);
                 if (player->HasAura(aura.SpellID))
                 {
-                    player->SendSystemMessage("You already have this aura active.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_AURA_ALREADY_ACTIVE);
                     break;
                 }
 
@@ -278,20 +277,20 @@ public:
 
                 sSmartstone->SetCurrentAura(player, aura.SpellID);
                 player->AddAura(aura.SpellID, player);
-                player->SendSystemMessage(aura.Description + " is now active.");
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_AURA_NOW_ACTIVE, aura.Description);
                 break;
             }
             case ACTION_TYPE_VEHICLE:
             {
                 if (!sSmartstone->CanUseSmartstone(player))
                 {
-                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_INSTANCE_BG);
                     break;
                 }
 
                 if (player->IsInCombat())
                 {
-                    player->SendSystemMessage("You cannot summon a vehicle while in combat.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_VEHICLE_COMBAT);
                     break;
                 }
 
@@ -301,7 +300,7 @@ public:
                 {
                     if (player->GetSkillValue(SKILL_RIDING) < 225)
                     {
-                        player->SendSystemMessage("You need Expert Riding skill to fly this vehicle.");
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NEED_RIDING_SKILL);
                         break;
                     }
 
@@ -311,7 +310,7 @@ public:
                         if ((pArea->flags & AREA_FLAG_NO_FLY_ZONE) || (Bf && !Bf->CanFlyIn()) ||
                             (mapId == MAP_KALIMDOR || mapId == MAP_EASTERN_KINGDOMS))
                         {
-                            player->SendSystemMessage("You may not fly here.");
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_FLY_HERE);
                             break;
                         }
                 }
@@ -349,7 +348,7 @@ public:
             {
                 if (!sSmartstone->CanUseSmartstone(player))
                 {
-                    player->SendSystemMessage("You cannot use this feature inside instances or battlegrounds.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_INSTANCE_BG);
                     break;
                 }
 
@@ -358,7 +357,7 @@ public:
                 if (!player->GetAuraEffectsByType(SPELL_AURA_MOUNTED).empty())
                     player->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, mount.ModelID);
                 else
-                    player->SendSystemMessage("You must be mounted to use this feature.");
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_MUST_BE_MOUNTED);
 
                 break;
             }
@@ -367,7 +366,7 @@ public:
             default:
             {
                 // Invalid action type, show an error message
-                player->SendSystemMessage("Invalid action type selected.");
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_INVALID_ACTION_TYPE);
                 break;
             }
         }
@@ -384,7 +383,7 @@ public:
         // Check if smartstone data is properly initialized
         if (sSmartstone->MenuItems.empty())
         {
-            player->SendSystemMessage("Smartstone is not properly configured. Please contact an administrator.");
+            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NOT_CONFIGURED);
             return false;
         }
 
@@ -477,7 +476,7 @@ public:
             // Check if category exists
             if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end())
             {
-                player->SendSystemMessage("Category not found.");
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_CATEGORY_NOT_FOUND);
 
                 ClearMenuHistory(player);
                 ShowMainMenu(player, item, GetPlayerSubscriptionLevel(player));
@@ -659,7 +658,7 @@ public:
             if (menuItemIndex == 0)
             {
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, GOSSIP_ICON_TALK,
-                    "No actions available.", 0,
+                    *ChatHandler(player->GetSession()).GetModuleString(ModName, LANG_MOD_NO_ACTIONS), 0,
                     sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_NONE), "", 0);
             }
             else

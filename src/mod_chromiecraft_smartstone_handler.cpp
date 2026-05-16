@@ -233,7 +233,7 @@ void Smartstone::ProcessExpiredServices(Player* player)
                 {
                     case ACTION_TYPE_PET:
                         player->UpdatePlayerSetting(ModName + "#combatpet", info.ServiceId, false);
-                        ChatHandler(player->GetSession()).PSendSysMessage("Your grasp on {} wanes, you can no longer summon that pet.", GetPetData(info.ServiceId, ACTION_TYPE_PET).Description);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PET_WANES, GetPetData(info.ServiceId, ACTION_TYPE_PET).Description);
                         toRemove.push_back(info);
                         CharacterDatabase.Execute("DELETE FROM smartstone_char_temp_services WHERE PlayerGUID = {} AND ServiceId = {} AND Category = {}", playerGUID, info.ServiceId, info.ServiceType);
                         break;

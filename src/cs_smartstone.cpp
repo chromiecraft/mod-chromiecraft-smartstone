@@ -17,7 +17,6 @@
 
 #include "Chat.h"
 #include "GameTime.h"
-#include "ObjectMgr.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
@@ -74,7 +73,8 @@ public:
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->SendErrorMessage("The smartstone is disabled.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -83,7 +83,8 @@ public:
         SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
         if (!costume.DisplayId)
         {
-            handler->SendErrorMessage("Costume {} does not exist.", id);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_NOT_EXIST, id);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -92,39 +93,43 @@ public:
         if (!sSmartstone->IsServiceAvailable(player, "#costume", id - 20000)
             && subscriptionLevel < costume.SubscriptionLevelRequired)
         {
-            handler->SendErrorMessage("You do not have access to '{}'.", costume.Description);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_ACCESS, costume.Description);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
             (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
         {
-            handler->SendErrorMessage("You cannot use costumes in battlegrounds or arenas.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_NO_BG_ARENA);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if (!sSmartstone->IsSmartstoneCanUseInCombat() && player->IsInCombat())
         {
-            handler->SendErrorMessage("You cannot use costumes while in combat.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_NO_COMBAT);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
         {
-            handler->SendErrorMessage("You cannot use costumes while in PvP.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_NO_PVP);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if (sSmartstone->HasCostumeCooldown(player, id) && !player->GetCommandStatus(CHEAT_COOLDOWN))
         {
             uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, id);
-            handler->PSendSysMessage("'{}' is on cooldown for {}m {}s.", costume.Description, remaining / 60, remaining % 60);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_ON_COOLDOWN, costume.Description, remaining / 60, remaining % 60);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
         sSmartstone->ApplyCostume(player, id);
-        handler->PSendSysMessage("Costume '{}' applied.", costume.Description);
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_APPLIED, costume.Description);
         return true;
     }
 
@@ -132,7 +137,8 @@ public:
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->SendErrorMessage("The smartstone is disabled.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -150,7 +156,8 @@ public:
 
         if (!pet.CreatureId)
         {
-            handler->SendErrorMessage("Pet {} does not exist.", id);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_PET_NOT_EXIST, id);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -158,13 +165,15 @@ public:
 
         if (!sSmartstone->IsPetAvailable(player, pet, subscriptionLevel))
         {
-            handler->SendErrorMessage("You do not have access to '{}'.", pet.Description);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_ACCESS, pet.Description);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if (isCombat && !sSmartstone->CanUseSmartstone(player))
         {
-            handler->SendErrorMessage("You cannot use combat pets inside instances or battlegrounds.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_COMBAT_PET_INSTANCE);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -181,7 +190,8 @@ public:
         {
             if (!target)
             {
-                handler->SendErrorMessage("Console usage requires a player name.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_CONSOLE_NEEDS_PLAYER);
+                handler->SetSentErrorMessage(true);
                 return false;
             }
         }
@@ -218,7 +228,7 @@ public:
                 if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
                     return;
 
-                handler->PSendSysMessage("[{}] {} ({})", pet.CreatureId, pet.Description, typeStr);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_LOOKUP_PET_FORMAT, pet.CreatureId, pet.Description, typeStr);
                 found = true;
             };
 
@@ -265,20 +275,20 @@ public:
                         combatPetSettings = settings;
                     else if (source == "mod-zone-difficulty#ct")
                         zoneDifficultySettings = settings;
-                } while (settingsResult->NextRow());
+                } while (settingsResult->NextRow();
             }
 
             std::unordered_set<uint32> activeTempServices;
             QueryResult tempResult = CharacterDatabase.Query(
                 "SELECT `ServiceId` FROM `smartstone_char_temp_services` WHERE `PlayerGUID` = {} AND `ExpirationTime` >= {}",
-                guidLow, GameTime::GetGameTime().count());
+                guidLow, GameTime::GetGameTime().count();
 
             if (tempResult)
             {
                 do
                 {
-                    activeTempServices.insert(tempResult->Fetch()[0].Get<uint32>());
-                } while (tempResult->NextRow());
+                    activeTempServices.insert(tempResult->Fetch()[0].Get<uint32>();
+                } while (tempResult->NextRow();
             }
 
             auto checkAndPrintOffline = [&](SmartstonePetData const& pet, std::string_view typeStr)
@@ -296,19 +306,19 @@ public:
                     switch (pet.CreatureId)
                     {
                         case 80002:
-                            available = (SETTING_HYJAL < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_HYJAL].IsEnabled());
+                            available = (SETTING_HYJAL < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_HYJAL].IsEnabled();
                             break;
                         case 80003:
-                            available = (SETTING_SSC < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SSC].IsEnabled());
+                            available = (SETTING_SSC < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SSC].IsEnabled();
                             break;
                         case 80006:
-                            available = (SETTING_ZULAMAN < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_ZULAMAN].IsEnabled());
+                            available = (SETTING_ZULAMAN < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_ZULAMAN].IsEnabled();
                             break;
                         case 80010:
-                            available = (SETTING_SWP < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SWP].IsEnabled());
+                            available = (SETTING_SWP < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_SWP].IsEnabled();
                             break;
                         case 80011:
-                            available = (SETTING_BLACK_TEMPLE < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_BLACK_TEMPLE].IsEnabled());
+                            available = (SETTING_BLACK_TEMPLE < zoneDifficultySettings.size() && zoneDifficultySettings[SETTING_BLACK_TEMPLE].IsEnabled();
                             break;
                     }
                 }
@@ -330,7 +340,7 @@ public:
                 if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
                     return;
 
-                handler->PSendSysMessage("[{}] {} ({})", pet.CreatureId, pet.Description, typeStr);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_LOOKUP_PET_FORMAT, pet.CreatureId, pet.Description, typeStr);
                 found = true;
             };
 
@@ -344,9 +354,9 @@ public:
         if (!found)
         {
             if (filterStr.empty())
-                handler->PSendSysMessage("{} has no pets available.", playerName);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_PETS_AVAILABLE, playerName);
             else
-                handler->PSendSysMessage("No pets found matching '{}' for {}.", filterStr, playerName);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_PETS_MATCHING_FOR, filterStr, playerName);
         }
 
         return true;
@@ -361,7 +371,8 @@ public:
         {
             if (!target)
             {
-                handler->SendErrorMessage("Console usage requires a player name.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_CONSOLE_NEEDS_PLAYER);
+                handler->SetSentErrorMessage(true);
                 return false;
             }
         }
@@ -401,14 +412,14 @@ public:
                     if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
                         continue;
 
-                    handler->PSendSysMessage("[{}] {}", costume.Id, costume.Description);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_LOOKUP_COSTUME_FORMAT, costume.Id, costume.Description);
                     found = true;
                 }
             }
         }
         else
         {
-            uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(target->GetGUID());
+            uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(target->GetGUID();
 
             sSmartstone->LoadAccountSettings(accountId);
 
@@ -419,7 +430,7 @@ public:
 
             if (subResult)
             {
-                PlayerSettingVector subSettings = PlayerSettingsStore::ParseSettingsData(subResult->Fetch()[0].Get<std::string>());
+                PlayerSettingVector subSettings = PlayerSettingsStore::ParseSettingsData(subResult->Fetch()[0].Get<std::string>();
                 if (SETTING_MEMBERSHIP_LEVEL < subSettings.size())
                     subscriptionLevel = subSettings[SETTING_MEMBERSHIP_LEVEL].value;
             }
@@ -438,7 +449,7 @@ public:
                     if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
                         continue;
 
-                    handler->PSendSysMessage("[{}] {}", costume.Id, costume.Description);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_LOOKUP_COSTUME_FORMAT, costume.Id, costume.Description);
                     found = true;
                 }
             }
@@ -447,9 +458,9 @@ public:
         if (!found)
         {
             if (filterStr.empty())
-                handler->PSendSysMessage("{} has no costumes available.", playerName);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_COSTUMES_AVAILABLE, playerName);
             else
-                handler->PSendSysMessage("No costumes found matching '{}' for {}.", filterStr, playerName);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_COSTUMES_MATCHING_FOR, filterStr, playerName);
         }
 
         return true;
@@ -459,7 +470,8 @@ public:
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->SendErrorMessage("The smartstone is disabled.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -470,7 +482,8 @@ public:
         {
             if (!target)
             {
-                handler->SendErrorMessage("Console usage requires a player name.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_CONSOLE_NEEDS_PLAYER);
+                handler->SetSentErrorMessage(true);
                 return false;
             }
         }
@@ -511,7 +524,7 @@ public:
                         if (sSmartstone->HasCostumeCooldown(player, costume.Id))
                         {
                             uint32 remaining = sSmartstone->GetCostumeCooldownRemaining(player, costume.Id);
-                            handler->PSendSysMessage("[{}] '{}' - {}m {}s remaining.", costume.Id, costume.Description, remaining / 60, remaining % 60);
+                            handler->PSendModuleSysMessage(ModName, LANG_MOD_COOLDOWN_REMAINING, costume.Id, costume.Description, remaining / 60, remaining % 60);
                             found = true;
                         }
                     }
@@ -521,7 +534,7 @@ public:
             {
                 QueryResult result = CharacterDatabase.Query(
                     "SELECT `data` FROM `character_settings` WHERE `guid` = {} AND `source` = 'mod-cc-smartstone#ccd'",
-                    target->GetGUID().GetCounter());
+                    target->GetGUID().GetCounter();
 
                 if (result)
                 {
@@ -539,7 +552,7 @@ public:
                                 if (expireTime > now)
                                 {
                                     uint32 remaining = expireTime - now;
-                                    handler->PSendSysMessage("[{}] '{}' - {}m {}s remaining.", costume.Id, costume.Description, remaining / 60, remaining % 60);
+                                    handler->PSendModuleSysMessage(ModName, LANG_MOD_COOLDOWN_REMAINING, costume.Id, costume.Description, remaining / 60, remaining % 60);
                                     found = true;
                                 }
                             }
@@ -555,19 +568,19 @@ public:
                 if (player->HasSpellCooldown(90002))
                 {
                     uint32 remaining = player->GetSpellCooldownDelay(90002) / 1000;
-                    handler->PSendSysMessage("All costumes - {}m {}s remaining.", remaining / 60, remaining % 60);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_ALL_COOLDOWN_REMAINING, remaining / 60, remaining % 60);
                     found = true;
                 }
             }
             else
             {
-                handler->PSendSysMessage("Global cooldowns are not available for offline players.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_GLOBAL_CD_OFFLINE);
                 return true;
             }
         }
 
         if (!found)
-            handler->PSendSysMessage("{} has no active costume cooldowns.", playerName);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_COSTUME_COOLDOWNS, playerName);
 
         return true;
     }
@@ -587,7 +600,7 @@ public:
             if (!filterStr.empty() && descLower.find(filterStr) == std::string::npos)
                 return;
 
-            handler->PSendSysMessage("[{}] {} ({})", pet.CreatureId, pet.Description, typeStr);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_LOOKUP_PET_FORMAT, pet.CreatureId, pet.Description, typeStr);
             found = true;
         };
 
@@ -600,9 +613,9 @@ public:
         if (!found)
         {
             if (filterStr.empty())
-                handler->SendSysMessage("No pets are loaded.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_PETS_LOADED);
             else
-                handler->PSendSysMessage("No pets found matching '{}'.", filterStr);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_PETS_MATCHING, filterStr);
         }
 
         return true;
@@ -612,19 +625,22 @@ public:
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->SendErrorMessage("The smartstone is disabled.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if (!sSmartstone->IsCostumeConvertEnabled())
         {
-            handler->SendErrorMessage("Costume conversion is not available.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_CONVERT_UNAVAILABLE);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
         if (sSmartstone->LegacyCostumeItemToDisplayId.empty())
         {
-            handler->SendErrorMessage("No legacy costume data is loaded.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_LEGACY_COSTUMES);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -648,7 +664,7 @@ public:
             SmartstoneCostumeData newCostume = sSmartstone->GetCostumeDataByDisplayId(displayId);
             if (!newCostume.Id)
             {
-                handler->PSendSysMessage("Could not find a matching costume for '{}' (display ID: {}).", itemName, displayId);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_MATCHING_COSTUME, itemName, displayId);
                 continue;
             }
 
@@ -658,17 +674,17 @@ public:
 
             if (sSmartstone->GetAccountSetting(accountId, ACTION_TYPE_COSTUME, settingId).IsEnabled())
             {
-                handler->PSendSysMessage("'{}' was already unlocked — item removed.", newCostume.Description);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_ITEM_ALREADY_UNLOCKED, newCostume.Description);
                 continue;
             }
 
             sSmartstone->UpdateAccountSetting(accountId, ACTION_TYPE_COSTUME, settingId, 1);
-            handler->PSendSysMessage("Converted '{}' into '{}'.", itemName, newCostume.Description);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_CONVERTED, itemName, newCostume.Description);
         }
 
         if (!foundAny)
         {
-            handler->SendSysMessage("No convertible costumes found in your inventory.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_CONVERTIBLE);
             return true;
         }
 
@@ -679,7 +695,7 @@ public:
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->GetPlayer()->SendSystemMessage("The smartstone is disabled.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
             handler->SetSentErrorMessage(true);
             return true;
         }
@@ -689,7 +705,7 @@ public:
             if (!player->HasItemCount(sSmartstone->GetSmartstoneItemID(), 1))
                 player->AddItem(sSmartstone->GetSmartstoneItemID(), 1);
             else
-                player->SendSystemMessage("You already have a smartstone.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_ALREADY_HAVE_STONE);
         }
 
         return true;
@@ -699,7 +715,8 @@ public:
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
-            handler->SendErrorMessage("The smartstone is disabled.");
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
             return false;
         }
 
@@ -711,11 +728,16 @@ public:
         Player* target = player.GetConnectedPlayer();
 
         auto sendDupError = [&](std::string_view desc) {
-            handler->SendErrorMessage("The {} is already {}.", desc, add ? "unlocked" : "locked");
+            handler->PSendModuleSysMessage(ModName,
+                add ? LANG_MOD_SERVICE_ALREADY_UNLOCKED : LANG_MOD_SERVICE_ALREADY_LOCKED,
+                desc);
+            handler->SetSentErrorMessage(true);
         };
 
         auto sendSuccess = [&](std::string_view desc) {
-            handler->PSendSysMessage("{} has been {} for {}.", desc, add ? "unlocked" : "removed", playerName);
+            handler->PSendModuleSysMessage(ModName,
+                add ? LANG_MOD_SERVICE_BEEN_UNLOCKED : LANG_MOD_SERVICE_BEEN_REMOVED,
+                desc, playerName);
         };
 
         uint32 settingId = sSmartstone->GetShortId(id, serviceType);
@@ -728,7 +750,8 @@ public:
                 SmartstonePetData pet = sSmartstone->GetPetData(id, serviceType);
                 if (!pet.CreatureId)
                 {
-                    handler->SendErrorMessage("The pet {} does not exist.", id);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_PET_SERVICE_NOT_EXIST, id);
+                    handler->SetSentErrorMessage(true);
                     LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The pet {} does not exist.", id);
                     return false;
                 }
@@ -773,12 +796,13 @@ public:
                 SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
                 if (!costume.DisplayId)
                 {
-                    handler->SendErrorMessage("The costume {} does not exist.", id);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_SERVICE_NOT_EXIST, id);
+                    handler->SetSentErrorMessage(true);
                     LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The costume {} does not exist.", id);
                     return false;
                 }
 
-                uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
+                uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID();
 
                 sSmartstone->LoadAccountSettings(accountId);
 
@@ -802,7 +826,8 @@ public:
                 SmartstoneAuraData aura = sSmartstone->GetAuraData(id);
                 if (!aura.SpellID)
                 {
-                    handler->SendErrorMessage("The aura {} does not exist.", id);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_AURA_NOT_EXIST, id);
+                    handler->SetSentErrorMessage(true);
                     LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The aura {} does not exist.", id);
                     return false;
                 }
@@ -827,7 +852,8 @@ public:
                 SmartstoneVehicleData vehicleData = sSmartstone->GetVehicleData(id);
                 if (!vehicleData.CreatureId)
                 {
-                    handler->SendErrorMessage("The vehicle {} does not exist.", id);
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_VEHICLE_NOT_EXIST, id);
+                    handler->SetSentErrorMessage(true);
                     LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The vehicle {} does not exist.", id);
                     return false;
                 }
@@ -849,7 +875,8 @@ public:
             }
 
             default:
-                handler->SendErrorMessage("Unknown service type.");
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
+                handler->SetSentErrorMessage(true);
                 LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: Unknown service type {}.", serviceType);
                 return false;
         }
@@ -860,7 +887,7 @@ public:
     static bool HandleSmartstoneReloadCommand(ChatHandler* handler)
     {
         sSmartstone->LoadSmartstoneData();
-        handler->SendSysMessage("Smartstone data reloaded.");
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_DATA_RELOADED);
         return true;
     }
 };
