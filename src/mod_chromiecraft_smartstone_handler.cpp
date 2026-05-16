@@ -623,6 +623,31 @@ void Smartstone::LoadMounts()
     }
 }
 
+void Smartstone::LoadLegacyCostumes()
+{
+    LegacyCostumeItemToDisplayId.clear();
+
+    if (!IsCostumeConvertEnabled())
+        return;
+
+    QueryResult result = WorldDatabase.Query("SELECT item_entry, display_id FROM costume");
+    if (!result)
+    {
+        LOG_WARN("smartstone", "Legacy costume table 'costume' is empty. No costumes available for conversion.");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 entry = fields[0].Get<uint32>();
+        uint32 displayId = fields[1].Get<uint32>();
+        LegacyCostumeItemToDisplayId[entry] = displayId;
+    } while (result->NextRow());
+
+    LOG_INFO("smartstone", "Loaded {} legacy costume entries for conversion.", LegacyCostumeItemToDisplayId.size());
+}
+
 void Smartstone::LoadSmartstoneData()
 {
     if (sSmartstone->IsSmartstoneEnabled())
@@ -637,5 +662,6 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadAuras();
         sSmartstone->LoadVehicles();
         sSmartstone->LoadMounts();
+        sSmartstone->LoadLegacyCostumes();
     }
 }

@@ -701,6 +701,7 @@ public:
         sSmartstone->SetCanUseInPvP(sConfigMgr->GetOption("ModChromiecraftSmartstone.CanUseInPvP", false));
         sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
         sSmartstone->SetIndividualCostumeCooldowns(sConfigMgr->GetOption("ModChromiecraftSmartstone.IndividualCostumeCooldowns", false));
+        sSmartstone->SetCostumeConvertEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.CostumeConvert.Enable", false));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();

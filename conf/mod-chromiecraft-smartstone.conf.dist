@@ -85,3 +85,14 @@ ModChromiecraftSmartstone.IndividualCostumeCooldowns = 0
 #
 
 ModChromiecraftSmartstone.Debug = 0
+
+#
+#    ModChromiecraftSmartstone.CostumeConvert.Enable
+#        Description: Enables the .smartstone costume convert command, which lets players convert
+#                     legacy costume items (from the ac_world.costume table) into new Smartstone
+#                     costume account unlocks. Requires the 'costume' table to exist in the world database.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+
+ModChromiecraftSmartstone.CostumeConvert.Enable = 0

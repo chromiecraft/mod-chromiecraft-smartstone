@@ -203,6 +203,7 @@ private:
     bool CanUseInPvP{ false };
     bool IsDebugEnabled{ false };
     bool IndividualCostumeCooldowns{ false };
+    bool CostumeConvertEnabled{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -243,6 +244,9 @@ public:
 
     void SetIndividualCostumeCooldowns(bool enabled) { IndividualCostumeCooldowns = enabled; }
     [[nodiscard]] bool HasIndividualCostumeCooldowns() const { return IndividualCostumeCooldowns; }
+
+    void SetCostumeConvertEnabled(bool enabled) { CostumeConvertEnabled = enabled; }
+    [[nodiscard]] bool IsCostumeConvertEnabled() const { return CostumeConvertEnabled; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
@@ -322,6 +326,7 @@ public:
     void LoadAuras();
     void LoadVehicles();
     void LoadMounts();
+    void LoadLegacyCostumes();
 
     void ProcessExpiredServices(Player* player);
 
@@ -336,6 +341,8 @@ public:
     [[nodiscard]] SmartstoneAuraData GetAuraData(uint32 id) const;
     [[nodiscard]] SmartstoneVehicleData GetVehicleData(uint32 id) const;
     [[nodiscard]] SmartstoneMountData GetMountData(uint32 id) const;
+
+    std::unordered_map<uint32, uint32> LegacyCostumeItemToDisplayId;
 
     std::vector<SmartstonePetData> Pets;
     std::vector<SmartstonePetData> CombatPets;

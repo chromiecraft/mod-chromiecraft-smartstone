@@ -46,6 +46,11 @@ public:
             { "pet",     HandleSmartStoneUsePetCommand,     SEC_PLAYER, Console::No },
         };
 
+        static ChatCommandTable smartstoneCostumeTable =
+        {
+            { "convert", HandleSmartstoneCostumeConvertCommand, SEC_PLAYER, Console::No },
+        };
+
         static ChatCommandTable smartstoneTable =
         {
             { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR,     Console::Yes },
@@ -53,6 +58,7 @@ public:
             { "cooldowns",      HandleSmartstoneCooldownsCommand,     SEC_PLAYER,        Console::Yes },
             { "lookup",         smartstoneLookupTable },
             { "use",            smartstoneUseTable },
+            { "costume",        smartstoneCostumeTable },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
         };
 
@@ -597,6 +603,73 @@ public:
                 handler->SendSysMessage("No pets are loaded.");
             else
                 handler->PSendSysMessage("No pets found matching '{}'.", filterStr);
+        }
+
+        return true;
+    }
+
+    static bool HandleSmartstoneCostumeConvertCommand(ChatHandler* handler)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+        {
+            handler->SendErrorMessage("The smartstone is disabled.");
+            return false;
+        }
+
+        if (!sSmartstone->IsCostumeConvertEnabled())
+        {
+            handler->SendErrorMessage("Costume conversion is not available.");
+            return false;
+        }
+
+        if (sSmartstone->LegacyCostumeItemToDisplayId.empty())
+        {
+            handler->SendErrorMessage("No legacy costume data is loaded.");
+            return false;
+        }
+
+        Player* player = handler->GetPlayer();
+        uint32 accountId = player->GetSession()->GetAccountId();
+
+        sSmartstone->LoadAccountSettings(accountId);
+
+        bool foundAny = false;
+
+        for (auto const& [itemEntry, displayId] : sSmartstone->LegacyCostumeItemToDisplayId)
+        {
+            if (!player->HasItemCount(itemEntry, 1))
+                continue;
+
+            foundAny = true;
+
+            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemEntry);
+            std::string itemName = itemTemplate ? itemTemplate->Name1 : std::to_string(itemEntry);
+
+            SmartstoneCostumeData newCostume = sSmartstone->GetCostumeDataByDisplayId(displayId);
+            if (!newCostume.Id)
+            {
+                handler->PSendSysMessage("Could not find a matching costume for '{}' (display ID: {}).", itemName, displayId);
+                continue;
+            }
+
+            uint32 settingId = newCostume.Id - 20000;
+
+            player->DestroyItemCount(itemEntry, 1, true);
+
+            if (sSmartstone->GetAccountSetting(accountId, ACTION_TYPE_COSTUME, settingId).IsEnabled())
+            {
+                handler->PSendSysMessage("'{}' was already unlocked — item removed.", newCostume.Description);
+                continue;
+            }
+
+            sSmartstone->UpdateAccountSetting(accountId, ACTION_TYPE_COSTUME, settingId, 1);
+            handler->PSendSysMessage("Converted '{}' into '{}'.", itemName, newCostume.Description);
+        }
+
+        if (!foundAny)
+        {
+            handler->SendSysMessage("No convertible costumes found in your inventory.");
+            return true;
         }
 
         return true;
