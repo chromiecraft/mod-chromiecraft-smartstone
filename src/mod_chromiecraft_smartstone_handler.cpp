@@ -441,11 +441,25 @@ uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
     return 1; // Default NPC text ID if not found
 }
 
+void Smartstone::PlayCostumeSound(Player* player, uint32 displayId)
+{
+    auto it = CostumeSounds.find(displayId);
+    if (it == CostumeSounds.end())
+        return;
+
+    SmartstoneCostumeSoundData const& soundData = it->second;
+    if (soundData.Mode == 2)
+        player->PlayDirectSound(soundData.Sound);
+    else
+        player->PlayDirectSound(soundData.Sound, player);
+}
+
 void Smartstone::ApplyCostume(Player* player, SmartstoneCostumeData const& costume)
 {
     player->SetDisplayId(costume.DisplayId);
     player->SetObjectScale(costume.Scale);
     sSmartstone->SetCurrentCostume(player, costume.DisplayId);
+    PlayCostumeSound(player, costume.DisplayId);
 }
 
 std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
@@ -474,6 +488,7 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
     SmartstoneCostumeData costume = GetCostumeData(costumeId);
     player->SetDisplayId(costume.DisplayId, costume.Scale);
     SetCurrentCostume(player, costume.DisplayId);
+    PlayCostumeSound(player, costume.DisplayId);
 
     SetCostumeCooldown(player, costumeId);
 
@@ -653,6 +668,24 @@ void Smartstone::LoadLegacyCostumes()
     LOG_INFO("smartstone", "Loaded {} legacy costume entries for conversion.", LegacyCostumeItemToDisplayId.size());
 }
 
+void Smartstone::LoadCostumeSounds()
+{
+    CostumeSounds.clear();
+    QueryResult result = WorldDatabase.Query("SELECT DisplayId, Sound, Mode FROM smartstone_costume_sound");
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 displayId = fields[0].Get<uint32>();
+        CostumeSounds[displayId] = SmartstoneCostumeSoundData{
+            fields[1].Get<uint32>(),
+            fields[2].Get<uint8>()
+        };
+    } while (result->NextRow());
+}
+
 void Smartstone::LoadSmartstoneData()
 {
     if (sSmartstone->IsSmartstoneEnabled())
@@ -662,6 +695,7 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadServices();
         sSmartstone->LoadPets();
         sSmartstone->LoadCostumes();
+        sSmartstone->LoadCostumeSounds();
         sSmartstone->LoadServiceExpirationInfo();
         sSmartstone->LoadCategories();
         sSmartstone->LoadAuras();

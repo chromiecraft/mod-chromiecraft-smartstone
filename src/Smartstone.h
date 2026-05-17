@@ -169,6 +169,12 @@ struct SmartstoneMountData
     uint8 SubscriptionLevelRequired;
 };
 
+struct SmartstoneCostumeSoundData
+{
+    uint32 Sound;
+    uint8 Mode; // 1 = self only, 2 = surround
+};
+
 struct SmartstoneMenuState
 {
     uint16 currentPage;
@@ -327,6 +333,7 @@ public:
     void LoadVehicles();
     void LoadMounts();
     void LoadLegacyCostumes();
+    void LoadCostumeSounds();
 
     void ProcessExpiredServices(Player* player);
 
@@ -352,6 +359,7 @@ public:
 
     std::unordered_map<uint32, std::vector<MenuItem>> MenuItems;
     std::unordered_map<uint32, std::vector<SmartstoneCostumeData>> Costumes;
+    std::unordered_map<uint32, SmartstoneCostumeSoundData> CostumeSounds; // keyed by DisplayId
     std::unordered_map<uint32, std::vector<SmartstoneCategoryData>> Categories;
     std::unordered_map<uint32, std::vector<SmartstoneService>> Services;
     std::unordered_map<ObjectGuid, std::vector<SmartstoneMenuState>> MenuStateHolder;
@@ -376,6 +384,7 @@ public:
     }
 
     void ApplyCostume(Player* player, SmartstoneCostumeData const& costume);
+    void PlayCostumeSound(Player* player, uint32 displayId);
 
     [[nodiscard]] uint32 GetShortId(uint32 fullId, uint8 type) const
     {
