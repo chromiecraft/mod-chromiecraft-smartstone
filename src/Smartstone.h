@@ -459,6 +459,9 @@ enum SmartstoneStringId : uint32
     LANG_MOD_VEHICLE_NOT_EXIST         = 57,
     LANG_MOD_UNKNOWN_SERVICE_TYPE      = 58,
     LANG_MOD_DATA_RELOADED             = 59,
+    // Costume removal notifications
+    LANG_MOD_COSTUME_EXPIRED           = 60,
+    LANG_MOD_COSTUME_REMOVED_BG_ARENA  = 61,
 };
 
 #define sSmartstone Smartstone::instance()

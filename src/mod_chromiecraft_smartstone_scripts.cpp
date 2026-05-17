@@ -737,6 +737,8 @@ public:
         if ((!sSmartstone->IsSmartstoneCanUseInBG() && player->InBattleground()) ||
             (!sSmartstone->IsSmartstoneCanUseInArena() && player->InArena()))
         {
+            if (sSmartstone->GetCurrentCostume(player))
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_REMOVED_BG_ARENA);
             player->DeMorph();
             sSmartstone->SetCurrentCostume(player, 0);
         }

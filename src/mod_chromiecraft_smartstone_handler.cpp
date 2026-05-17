@@ -480,9 +480,14 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
     Milliseconds duration = GetCostumeDuration(player, costume.Duration);
     if (duration > 0s)
     {
-        player->m_Events.AddEventAtOffset([player] {
+        std::string description = costume.Description;
+        player->m_Events.AddEventAtOffset([player, description] {
             if (player->GetDisplayId() == Smartstone::instance()->GetCurrentCostume(player))
+            {
                 player->SetDisplayId(player->GetNativeDisplayId());
+                Smartstone::instance()->SetCurrentCostume(player, 0);
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_EXPIRED, description);
+            }
         }, duration);
     }
 }
