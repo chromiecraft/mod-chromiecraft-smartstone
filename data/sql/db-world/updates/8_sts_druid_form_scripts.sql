@@ -16,4 +16,5 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (  783, 'spell_dru_form_display_override'),  -- Travel Form
 (33943, 'spell_dru_form_display_override'),  -- Flight Form
 (40120, 'spell_dru_form_display_override'),  -- Swift Flight Form
-( 1066, 'spell_dru_form_display_override');  -- Aquatic Form
+( 1066, 'spell_dru_form_display_override'),  -- Aquatic Form
+(33891, 'spell_dru_form_display_override');  -- Tree of Life Form

@@ -16,6 +16,7 @@
  *     2 - Travel            (spell id   783)
  *     3 - Flight / Swift    (spell ids 33943, 40120)
  *     4 - Aquatic           (spell id  1066)
+ *     5 - Tree of Life      (spell id 33891)
  */
 
 #include "ScriptMgr.h"
@@ -46,6 +47,7 @@ class spell_dru_form_display_override : public AuraScript
             case 783:               return DRUID_FORM_TRAVEL;
             case 33943: case 40120: return DRUID_FORM_FLIGHT;
             case 1066:              return DRUID_FORM_AQUATIC;
+            case 33891:             return DRUID_FORM_TREE;
             default:                return -1;
         }
     }

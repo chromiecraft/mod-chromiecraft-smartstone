@@ -199,6 +199,12 @@ public:
                         sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_AQUATIC);
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_TREE_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_TREE, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_TREE);
+                        break;
+                    }
                 }
                 break;
             }
@@ -426,6 +432,9 @@ public:
                     case PERK_EFFECT_DRUID_FORM_AQUATIC:
                         sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_AQUATIC, perk.Value);
                         break;
+                    case PERK_EFFECT_DRUID_FORM_TREE:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_TREE, perk.Value);
+                        break;
                     default:
                         handled = false;
                         break;
@@ -617,6 +626,11 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Aquatic Form display",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_AQUATIC_FORM), "", 0);
+
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_TREE))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Tree of Life display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_TREE_FORM), "", 0);
 
             /**
              * Paginated items

@@ -48,6 +48,7 @@ enum DruidFormSlot
     DRUID_FORM_TRAVEL  = 2,
     DRUID_FORM_FLIGHT  = 3,
     DRUID_FORM_AQUATIC = 4,
+    DRUID_FORM_TREE    = 5,
     MAX_DRUID_FORM_SLOTS
 };
 
@@ -84,6 +85,7 @@ enum UtilActions
     SMARTSTONE_ACTION_RESET_TRAVEL_FORM      = 10,
     SMARTSTONE_ACTION_RESET_FLIGHT_FORM      = 11,
     SMARTSTONE_ACTION_RESET_AQUATIC_FORM     = 12,
+    SMARTSTONE_ACTION_RESET_TREE_FORM        = 13,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -230,6 +232,7 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_DRUID_FORM_TRAVEL   = 3,
     PERK_EFFECT_DRUID_FORM_FLIGHT   = 4,
     PERK_EFFECT_DRUID_FORM_AQUATIC  = 5,
+    PERK_EFFECT_DRUID_FORM_TREE     = 6,
 };
 
 struct SmartstonePerkData
@@ -467,6 +470,7 @@ public:
             case FORM_FLIGHT:      currentSlot = DRUID_FORM_FLIGHT; spellId = 33943; break;
             case FORM_FLIGHT_EPIC: currentSlot = DRUID_FORM_FLIGHT; spellId = 40120; break;
             case FORM_AQUA:        currentSlot = DRUID_FORM_AQUATIC; spellId = 1066; break;
+            case FORM_TREE:        currentSlot = DRUID_FORM_TREE;    spellId = 33891; break;
             default:               return;
         }
 
@@ -498,6 +502,7 @@ public:
             case FORM_FLIGHT:      slot = DRUID_FORM_FLIGHT; spellId = 33943; break;
             case FORM_FLIGHT_EPIC: slot = DRUID_FORM_FLIGHT; spellId = 40120; break;
             case FORM_AQUA:        slot = DRUID_FORM_AQUATIC; spellId = 1066; break;
+            case FORM_TREE:        slot = DRUID_FORM_TREE;    spellId = 33891; break;
             default:               return;
         }
 
