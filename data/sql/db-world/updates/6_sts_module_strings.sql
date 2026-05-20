@@ -66,7 +66,11 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'Smartstone data reloaded.'),
 -- Costume removal notifications (60-61)
 ('mod-cc-smartstone', 60, 'Your ''{}'' costume has expired.'),
-('mod-cc-smartstone', 61, 'Your costume has been removed. Costumes are not allowed in battlegrounds or arenas.');
+('mod-cc-smartstone', 61, 'Your costume has been removed. Costumes are not allowed in battlegrounds or arenas.'),
+-- Perk messages (62-63). Title-first so the icon embedded at the start
+-- of `perk.Title` lands at the leftmost position in the chat line.
+('mod-cc-smartstone', 62, '{} — perk applied.'),
+('mod-cc-smartstone', 63, '{} has no implementation for effect {}.');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 
@@ -132,6 +136,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'deDE', 'Smartstone-Daten neu geladen.'),
 ('mod-cc-smartstone', 60, 'deDE', 'Dein ''{}'' Kostüm ist abgelaufen.'),
 ('mod-cc-smartstone', 61, 'deDE', 'Dein Kostüm wurde entfernt. Kostüme sind in Schlachtfeldern oder Arenen nicht erlaubt.'),
+('mod-cc-smartstone', 62, 'deDE', '{} — Perk angewendet.'),
+('mod-cc-smartstone', 63, 'deDE', '{} hat keine Implementierung für Effekt {}.'),
 
 
 -- frFR
@@ -196,6 +202,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'frFR', 'Données de la smartstone rechargées.'),
 ('mod-cc-smartstone', 60, 'frFR', 'Votre costume ''{}'' a expiré.'),
 ('mod-cc-smartstone', 61, 'frFR', 'Votre costume a été retiré. Les costumes ne sont pas autorisés dans les champs de bataille ou les arènes.'),
+('mod-cc-smartstone', 62, 'frFR', '{} — perk appliqué.'),
+('mod-cc-smartstone', 63, 'frFR', '{} n''a pas d''implémentation pour l''effet {}.'),
 
 
 -- esES
@@ -260,6 +268,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'esES', 'Datos de la smartstone recargados.'),
 ('mod-cc-smartstone', 60, 'esES', 'Tu disfraz ''{}'' ha expirado.'),
 ('mod-cc-smartstone', 61, 'esES', 'Tu disfraz ha sido eliminado. Los disfraces no están permitidos en campos de batalla o arenas.'),
+('mod-cc-smartstone', 62, 'esES', '{} — perk aplicado.'),
+('mod-cc-smartstone', 63, 'esES', '{} no tiene implementación para el efecto {}.'),
 
 
 -- esMX
@@ -324,6 +334,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'esMX', 'Datos de la smartstone recargados.'),
 ('mod-cc-smartstone', 60, 'esMX', 'Tu disfraz ''{}'' ha expirado.'),
 ('mod-cc-smartstone', 61, 'esMX', 'Tu disfraz ha sido eliminado. Los disfraces no están permitidos en campos de batalla o arenas.'),
+('mod-cc-smartstone', 62, 'esMX', '{} — perk aplicado.'),
+('mod-cc-smartstone', 63, 'esMX', '{} no tiene implementación para el efecto {}.'),
 
 
 -- ruRU
@@ -388,6 +400,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'ruRU', 'Данные смартстоуна перезагружены.'),
 ('mod-cc-smartstone', 60, 'ruRU', 'Срок действия вашего костюма ''{}'' истёк.'),
 ('mod-cc-smartstone', 61, 'ruRU', 'Ваш костюм был снят. Костюмы не разрешены на полях сражений или в аренах.'),
+('mod-cc-smartstone', 62, 'ruRU', '{} — перк применён.'),
+('mod-cc-smartstone', 63, 'ruRU', 'У {} нет реализации для эффекта {}.'),
 
 
 -- koKR
@@ -452,6 +466,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'koKR', 'Smartstone 데이터가 다시 로드되었습니다.'),
 ('mod-cc-smartstone', 60, 'koKR', '''{}'' 코스튬이 만료되었습니다.'),
 ('mod-cc-smartstone', 61, 'koKR', '코스튬이 제거되었습니다. 전장이나 투기장에서는 코스튬을 사용할 수 없습니다.'),
+('mod-cc-smartstone', 62, 'koKR', '{} — 특전 적용됨.'),
+('mod-cc-smartstone', 63, 'koKR', '{} 특전에는 효과 {}에 대한 구현이 없습니다.'),
 
 
 -- zhCN
@@ -516,6 +532,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 59, 'zhCN', 'Smartstone 数据已重新加载。'),
 ('mod-cc-smartstone', 60, 'zhCN', '您的''{}''服装已过期。'),
 ('mod-cc-smartstone', 61, 'zhCN', '您的服装已被移除。服装不允许在战场或竞技场中使用。'),
+('mod-cc-smartstone', 62, 'zhCN', '{} — 已应用特技。'),
+('mod-cc-smartstone', 63, 'zhCN', '{}没有效果 {} 的实现。'),
 
 
 -- zhTW
@@ -579,4 +597,6 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 58, 'zhTW', '未知的服務類型。'),
 ('mod-cc-smartstone', 59, 'zhTW', 'Smartstone 資料已重新載入。'),
 ('mod-cc-smartstone', 60, 'zhTW', '您的''{}''服裝已過期。'),
-('mod-cc-smartstone', 61, 'zhTW', '您的服裝已被移除。服裝不允許在戰場或競技場中使用。');
+('mod-cc-smartstone', 61, 'zhTW', '您的服裝已被移除。服裝不允許在戰場或競技場中使用。'),
+('mod-cc-smartstone', 62, 'zhTW', '{} — 已套用特技。'),
+('mod-cc-smartstone', 63, 'zhTW', '{}沒有效果 {} 的實作。');

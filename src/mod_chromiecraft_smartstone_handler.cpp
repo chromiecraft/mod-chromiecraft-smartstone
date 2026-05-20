@@ -111,6 +111,43 @@ void Smartstone::LoadServices()
     }
 }
 
+void Smartstone::LoadPerks()
+{
+    // Load class perks from the database. Each perk belongs to one of the
+    // hardcoded class subcategories (1001-1010); class-gating is applied
+    // again in ShowCategoryItems for defense in depth.
+    QueryResult result = WorldDatabase.Query("SELECT Id, Title, Description, ClassId, Category, Effect, Value, SubscriptionLevel FROM smartstone_perks WHERE Enabled = 1");
+    SmartstonePerkData perkData;
+
+    Perks.clear();
+
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            perkData.Id = fields[0].Get<uint32>();
+            perkData.Title = fields[1].Get<std::string>();
+            perkData.Description = fields[2].Get<std::string>();
+            perkData.ClassId = fields[3].Get<uint8>();
+            perkData.Category = fields[4].Get<uint32>();
+            perkData.Effect = fields[5].Get<uint8>();
+            perkData.Value = fields[6].Get<uint32>();
+            perkData.SubscriptionLevelRequired = fields[7].Get<uint8>();
+            Perks[perkData.Category].push_back(perkData);
+
+            MenuItems[perkData.Category].push_back(MenuItem{
+                perkData.Id,
+                perkData.Title,
+                0, // NpcTextId
+                GOSSIP_ICON_TABARD,
+                ACTION_TYPE_PERK,
+                perkData.SubscriptionLevelRequired
+            });
+        } while (result->NextRow());
+    }
+}
+
 void Smartstone::LoadServiceExpirationInfo()
 {
     // Load service expiration info from the database
@@ -328,6 +365,22 @@ SmartstoneVehicleData Smartstone::GetVehicleData(uint32 id) const
     return defaultVehicle;
 }
 
+SmartstonePerkData Smartstone::GetPerkData(uint32 id) const
+{
+    for (auto const& [category, perks] : Perks)
+    {
+        for (auto const& perk : perks)
+        {
+            if (perk.Id == id)
+                return perk;
+        }
+    }
+
+    SmartstonePerkData defaultPerk = {};
+    defaultPerk.Id = 0;
+    return defaultPerk;
+}
+
 SmartstoneMountData Smartstone::GetMountData(uint32 id) const
 {
     for (auto const& mount : Mounts)
@@ -420,23 +473,32 @@ bool Smartstone::IsServiceAvailable(Player* player, std::string service, uint32 
     if (service == "#costume")
         return sSmartstone->GetAccountSetting(player->GetSession()->GetAccountId(), ACTION_TYPE_COSTUME, serviceId).IsEnabled();
 
+    if (service == "#perk")
+    {
+        uint32 slot = Smartstone::GetPerkAccountSettingForClass(player->getClass());
+        if (!slot)
+            return false;
+        return sSmartstone->GetAccountSetting(player->GetSession()->GetAccountId(), slot, serviceId).IsEnabled();
+    }
+
     return player->GetPlayerSetting(ModName + service, serviceId).IsEnabled();
 }
 
-uint32 Smartstone::GetNPCTextForCategory(uint32 type, uint8 category) const
+uint32 Smartstone::GetNPCTextForCategory(uint32 /*type*/, uint32 category) const
 {
     if (category == CATEGORY_MAIN)
         return 92000;
 
-    auto categoryIt = Categories.find(type);
-    if (categoryIt == Categories.end()) {
-        return 1; // Default NPC text ID if category type not found
-    }
-
-    for (auto const& categoryData : categoryIt->second)
+    // Categories map is keyed by ParentId, so a category at any depth
+    // can sit in any bucket. Scan all buckets — `type` (always 0 at the
+    // call site) was unreliable for non-top-level categories.
+    for (auto const& [parentId, list] : Categories)
     {
-        if (categoryData.Id == category && categoryData.NpcTextId != 0)
-            return categoryData.NpcTextId;
+        for (auto const& categoryData : list)
+        {
+            if (categoryData.Id == category && categoryData.NpcTextId != 0)
+                return categoryData.NpcTextId;
+        }
     }
     return 1; // Default NPC text ID if not found
 }
@@ -478,6 +540,8 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
             return ModName + "#vehicle";
         case ACTION_TYPE_MOUNT:
             return ModName + "#mount";
+        case ACTION_TYPE_PERK:
+            return ModName + "#perk";
         default:
             return "";
     }
@@ -702,5 +766,6 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadVehicles();
         sSmartstone->LoadMounts();
         sSmartstone->LoadLegacyCostumes();
+        sSmartstone->LoadPerks();
     }
 }

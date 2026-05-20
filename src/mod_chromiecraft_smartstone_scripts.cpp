@@ -169,6 +169,36 @@ public:
                         sSmartstone->removeCurrentAura(player);
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_BEAR_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_BEAR, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_BEAR);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_CAT_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_CAT, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_CAT);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_TRAVEL_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_TRAVEL, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_TRAVEL);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_FLIGHT_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_FLIGHT, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_FLIGHT);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_AQUATIC_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_AQUATIC, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_AQUATIC);
+                        break;
+                    }
                 }
                 break;
             }
@@ -361,6 +391,52 @@ public:
 
                 break;
             }
+            case ACTION_TYPE_PERK:
+            {
+                SmartstonePerkData perk = sSmartstone->GetPerkData(actionId);
+                if (!perk.Id)
+                {
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_INVALID_ACTION);
+                    break;
+                }
+
+                // Gate by unlock (account-setting) unless GM/debug.
+                if (!sSmartstone->IsServiceAvailable(player, "#perk", perk.Id))
+                {
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_ACCESS, perk.Title);
+                    break;
+                }
+
+                // Route on Effect. Add new SmartstonePerkEffect entries here as perks grow.
+                bool handled = true;
+                switch (perk.Effect)
+                {
+                    case PERK_EFFECT_DRUID_FORM_BEAR:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_BEAR, perk.Value);
+                        break;
+                    case PERK_EFFECT_DRUID_FORM_CAT:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_CAT, perk.Value);
+                        break;
+                    case PERK_EFFECT_DRUID_FORM_TRAVEL:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_TRAVEL, perk.Value);
+                        break;
+                    case PERK_EFFECT_DRUID_FORM_FLIGHT:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_FLIGHT, perk.Value);
+                        break;
+                    case PERK_EFFECT_DRUID_FORM_AQUATIC:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_AQUATIC, perk.Value);
+                        break;
+                    default:
+                        handled = false;
+                        break;
+                }
+
+                if (handled)
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_APPLIED, perk.Title);
+                else
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_NO_IMPL, perk.Title, perk.Effect);
+                break;
+            }
             case ACTION_TYPE_NONE:
             case MAX_ACTION_TYPE:
             default:
@@ -517,6 +593,31 @@ public:
                     "|TInterface/icons/Spell_Nature_WispSplode:30:30:-18:0|t Remove current aura",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_REMOVE_AURA), "", 0);
 
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_BEAR))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Bear Form display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_BEAR_FORM), "", 0);
+
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_CAT))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Cat Form display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_CAT_FORM), "", 0);
+
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_TRAVEL))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Travel Form display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_TRAVEL_FORM), "", 0);
+
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_FLIGHT))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Flight Form display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_FLIGHT_FORM), "", 0);
+
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_AQUATIC))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Aquatic Form display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_AQUATIC_FORM), "", 0);
+
             /**
              * Paginated items
              */
@@ -559,6 +660,14 @@ public:
                     if (sSmartstone->IsServiceAvailable(player, "#category", menuItem.ItemId)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
+
+                    // Class-gating for class-perk subcategories: only the
+                    // subcategory matching the player's class is visible.
+                    if (available && Smartstone::IsClassPerkSubcategory(menuItem.ItemId))
+                    {
+                        if (menuItem.ItemId != Smartstone::GetClassPerkCategoryForClass(player->getClass()))
+                            available = false;
+                    }
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
@@ -574,6 +683,17 @@ public:
                 {
                     if (sSmartstone->IsServiceAvailable(player, "#mount", menuItem.ItemId)
                         || subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                        available = true;
+                }
+                else if (menuItem.ServiceType == ACTION_TYPE_PERK)
+                {
+                    // Perks are strictly unlock-gated — no subscription-level
+                    // fallback. GM / debug still bypass via IsServiceAvailable.
+                    // Belt-and-braces: the loader already places perks under
+                    // a class subcategory, but check the player's class too.
+                    uint32 perkCat = Smartstone::GetClassPerkCategoryForClass(player->getClass());
+                    if (ParentCategoryId == perkCat
+                        && sSmartstone->IsServiceAvailable(player, "#perk", menuItem.ItemId))
                         available = true;
                 }
 
@@ -648,6 +768,12 @@ public:
                         menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
                         sSmartstone->GetActionTypeId(ACTION_TYPE_MOUNT, menuItem.ItemId), "", 0);
                 }
+                else if (menuItem.ServiceType == ACTION_TYPE_PERK)
+                {
+                    player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
+                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        sSmartstone->GetActionTypeId(ACTION_TYPE_PERK, menuItem.ItemId), "", 0);
+                }
 
                 shownCount++;
             }
@@ -717,6 +843,12 @@ public:
         if (sSmartstone->IsSmartstoneEnabled())
         {
             sSmartstone->LoadAccountSettings(player->GetSession()->GetAccountId());
+
+            // Re-apply druid form display override after engine finishes
+            // restoring auras / display id from saved character data.
+            player->m_Events.AddEventAtOffset([player] {
+                sSmartstone->ReapplyActiveDruidFormDisplay(player);
+            }, 1s);
         }
     }
 
@@ -749,6 +881,10 @@ public:
                 SmartstoneCostumeData const& costume = sSmartstone->GetCostumeDataByDisplayId(currentCostume);
                 sSmartstone->ApplyCostume(player, costume);
             }
+
+            // Map change reapplies form auras the same way login does;
+            // re-stamp the druid form display override.
+            sSmartstone->ReapplyActiveDruidFormDisplay(player);
         }, 1s);
     }
 };

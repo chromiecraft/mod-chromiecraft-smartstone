@@ -874,6 +874,44 @@ public:
                 break;
             }
 
+            case ACTION_TYPE_PERK:
+            {
+                SmartstonePerkData perk = sSmartstone->GetPerkData(id);
+                if (!perk.Id)
+                {
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
+                    handler->SetSentErrorMessage(true);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The perk {} does not exist.", id);
+                    return false;
+                }
+
+                uint32 perkSlot = Smartstone::GetPerkAccountSettingForClass(perk.ClassId);
+                if (!perkSlot)
+                {
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
+                    handler->SetSentErrorMessage(true);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: Perk {} has unsupported ClassId {}.", id, perk.ClassId);
+                    return false;
+                }
+
+                uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID());
+                sSmartstone->LoadAccountSettings(accountId);
+
+                if (sSmartstone->GetAccountSetting(accountId, perkSlot, perk.Id).IsEnabled() == add)
+                {
+                    sendDupError(perk.Title);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The perk {} is already {} for player {}.", id, add ? "unlocked" : "locked", playerName);
+                    return false;
+                }
+
+                sSmartstone->UpdateAccountSetting(accountId, perkSlot, perk.Id, add);
+                sendSuccess(perk.Title);
+
+                if (!target)
+                    sSmartstone->ClearAccountSettings(accountId);
+                break;
+            }
+
             default:
                 handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
                 handler->SetSentErrorMessage(true);

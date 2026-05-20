@@ -13,6 +13,20 @@ enum Misc
 
     CATEGORY_MAIN = 0,
 
+    // Class Perks: parent category + 10 hardcoded per-class child IDs.
+    // Class-gating is enforced in C++ (see GetClassPerkCategoryForClass).
+    CATEGORY_CLASS_PERKS         = 1000,
+    CATEGORY_CLASS_PERKS_WARRIOR = 1001,
+    CATEGORY_CLASS_PERKS_PALADIN = 1002,
+    CATEGORY_CLASS_PERKS_HUNTER  = 1003,
+    CATEGORY_CLASS_PERKS_ROGUE   = 1004,
+    CATEGORY_CLASS_PERKS_PRIEST  = 1005,
+    CATEGORY_CLASS_PERKS_DK      = 1006,
+    CATEGORY_CLASS_PERKS_SHAMAN  = 1007,
+    CATEGORY_CLASS_PERKS_MAGE    = 1008,
+    CATEGORY_CLASS_PERKS_WARLOCK = 1009,
+    CATEGORY_CLASS_PERKS_DRUID   = 1010,
+
     // Completed tiers settings
     SETTING_BLACK_TEMPLE = 0,
     SETTING_ZULAMAN      = 1,
@@ -22,6 +36,37 @@ enum Misc
 
     SETTING_CURR_COSTUME = 0,
     SETTING_CURR_AURA    = 1
+};
+
+// Per-player setting indices for the "#druid_form" namespace.
+// Value at each slot is the displayId to apply when the form is taken,
+// or 0 to leave the default model.
+enum DruidFormSlot
+{
+    DRUID_FORM_BEAR    = 0,
+    DRUID_FORM_CAT     = 1,
+    DRUID_FORM_TRAVEL  = 2,
+    DRUID_FORM_FLIGHT  = 3,
+    DRUID_FORM_AQUATIC = 4,
+    MAX_DRUID_FORM_SLOTS
+};
+
+// Account-setting slot range for class perks. One slot per class so
+// each class's unlocks live in their own PlayerSettingVector. Chosen
+// above the ACTION_TYPE_* range (0-10) to avoid collision.
+enum SmartstonePerkAccountSetting
+{
+    SETTING_PERK_BASE    = 100,
+    SETTING_PERK_WARRIOR = SETTING_PERK_BASE + 1,
+    SETTING_PERK_PALADIN = SETTING_PERK_BASE + 2,
+    SETTING_PERK_HUNTER  = SETTING_PERK_BASE + 3,
+    SETTING_PERK_ROGUE   = SETTING_PERK_BASE + 4,
+    SETTING_PERK_PRIEST  = SETTING_PERK_BASE + 5,
+    SETTING_PERK_DK      = SETTING_PERK_BASE + 6,
+    SETTING_PERK_SHAMAN  = SETTING_PERK_BASE + 7,
+    SETTING_PERK_MAGE    = SETTING_PERK_BASE + 8,
+    SETTING_PERK_WARLOCK = SETTING_PERK_BASE + 9,
+    SETTING_PERK_DRUID   = SETTING_PERK_BASE + 11,
 };
 
 enum UtilActions
@@ -34,6 +79,11 @@ enum UtilActions
     SMARTSTONE_ACTION_NEXT_PAGE              = 5,
     SMARTSTONE_ACTION_BACK                   = 6,
     SMARTSTONE_ACTION_REMOVE_AURA            = 7,
+    SMARTSTONE_ACTION_RESET_CAT_FORM         = 8,
+    SMARTSTONE_ACTION_RESET_BEAR_FORM        = 9,
+    SMARTSTONE_ACTION_RESET_TRAVEL_FORM      = 10,
+    SMARTSTONE_ACTION_RESET_FLIGHT_FORM      = 11,
+    SMARTSTONE_ACTION_RESET_AQUATIC_FORM     = 12,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -57,7 +107,8 @@ enum ActionType
     ACTION_TYPE_AURA      = 6,
     ACTION_TYPE_VEHICLE   = 7,
     ACTION_TYPE_MOUNT     = 8,
-    ACTION_TYPE_NONE      = 9, // No action type, used for invalid or uninitialized
+    ACTION_TYPE_PERK      = 9, // Class-gated perks (placeholder action for now)
+    ACTION_TYPE_NONE      = 10, // No action type, used for invalid or uninitialized
     MAX_ACTION_TYPE,
 };
 
@@ -166,6 +217,30 @@ struct SmartstoneMountData
     uint32 Id;
     uint32 ModelID;
     std::string Description;
+    uint8 SubscriptionLevelRequired;
+};
+
+// Numeric discriminator for perk dispatch. Keep in sync with the
+// `Effect` column of smartstone_perks and the switch in OnGossipSelect.
+enum SmartstonePerkEffect : uint8
+{
+    PERK_EFFECT_NONE                = 0,
+    PERK_EFFECT_DRUID_FORM_BEAR     = 1,
+    PERK_EFFECT_DRUID_FORM_CAT      = 2,
+    PERK_EFFECT_DRUID_FORM_TRAVEL   = 3,
+    PERK_EFFECT_DRUID_FORM_FLIGHT   = 4,
+    PERK_EFFECT_DRUID_FORM_AQUATIC  = 5,
+};
+
+struct SmartstonePerkData
+{
+    uint32 Id;
+    std::string Title;
+    std::string Description;
+    uint8 ClassId; // matches Player::getClass() (Classes enum); 0 = any
+    uint32 Category;
+    uint8 Effect;  // SmartstonePerkEffect
+    uint32 Value;  // effect-specific payload (e.g. a displayId)
     uint8 SubscriptionLevelRequired;
 };
 
@@ -295,6 +370,7 @@ public:
             case ACTION_TYPE_UTIL: return "Utility";
             case ACTION_TYPE_VEHICLE: return "Vehicles";
             case ACTION_TYPE_MOUNT: return "Mounts";
+            case ACTION_TYPE_PERK: return "Perk";
             default: return "None";
         }
     }
@@ -311,8 +387,131 @@ public:
             case ACTION_TYPE_UTIL: return "Utility actions like next/previous page, back.";
             case ACTION_TYPE_VEHICLE: return "Vehicles service.";
             case ACTION_TYPE_MOUNT: return "Mounts service.";
+            case ACTION_TYPE_PERK: return "Class-gated perk.";
             default: return "No action type.";
         }
+    }
+
+    [[nodiscard]] static uint32 GetClassPerkCategoryForClass(uint8 cls)
+    {
+        switch (cls)
+        {
+            case 1:  return CATEGORY_CLASS_PERKS_WARRIOR;
+            case 2:  return CATEGORY_CLASS_PERKS_PALADIN;
+            case 3:  return CATEGORY_CLASS_PERKS_HUNTER;
+            case 4:  return CATEGORY_CLASS_PERKS_ROGUE;
+            case 5:  return CATEGORY_CLASS_PERKS_PRIEST;
+            case 6:  return CATEGORY_CLASS_PERKS_DK;
+            case 7:  return CATEGORY_CLASS_PERKS_SHAMAN;
+            case 8:  return CATEGORY_CLASS_PERKS_MAGE;
+            case 9:  return CATEGORY_CLASS_PERKS_WARLOCK;
+            case 11: return CATEGORY_CLASS_PERKS_DRUID;
+            default: return 0;
+        }
+    }
+
+    [[nodiscard]] static bool IsClassPerkSubcategory(uint32 categoryId)
+    {
+        return categoryId >= CATEGORY_CLASS_PERKS_WARRIOR
+            && categoryId <= CATEGORY_CLASS_PERKS_DRUID;
+    }
+
+    // Account-setting slot for a given player class (Classes enum values).
+    // Returns 0 for unsupported classes (shouldn't happen in WotLK).
+    [[nodiscard]] static uint32 GetPerkAccountSettingForClass(uint8 cls)
+    {
+        switch (cls)
+        {
+            case 1:  return SETTING_PERK_WARRIOR;
+            case 2:  return SETTING_PERK_PALADIN;
+            case 3:  return SETTING_PERK_HUNTER;
+            case 4:  return SETTING_PERK_ROGUE;
+            case 5:  return SETTING_PERK_PRIEST;
+            case 6:  return SETTING_PERK_DK;
+            case 7:  return SETTING_PERK_SHAMAN;
+            case 8:  return SETTING_PERK_MAGE;
+            case 9:  return SETTING_PERK_WARLOCK;
+            case 11: return SETTING_PERK_DRUID;
+            default: return 0;
+        }
+    }
+
+    // Druid form display overrides (per-character).
+    void SetDruidFormDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#druid_form", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetDruidFormDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#druid_form", slot).value;
+    }
+
+    // If the player is currently shapeshifted into the form matching
+    // `slot`, restore the canonical model for that form/race/gender so
+    // a freshly cleared override is reflected immediately (otherwise
+    // the visual update only happens on the next form change).
+    void RestoreDefaultFormDisplay(Player* player, uint8 slot)
+    {
+        if (!player)
+            return;
+
+        ShapeshiftForm form = player->GetShapeshiftForm();
+        uint8 currentSlot;
+        uint32 spellId;
+        switch (form)
+        {
+            case FORM_BEAR:        currentSlot = DRUID_FORM_BEAR;   spellId =  5487; break;
+            case FORM_DIREBEAR:    currentSlot = DRUID_FORM_BEAR;   spellId =  9634; break;
+            case FORM_CAT:         currentSlot = DRUID_FORM_CAT;    spellId =   768; break;
+            case FORM_TRAVEL:      currentSlot = DRUID_FORM_TRAVEL; spellId =   783; break;
+            case FORM_FLIGHT:      currentSlot = DRUID_FORM_FLIGHT; spellId = 33943; break;
+            case FORM_FLIGHT_EPIC: currentSlot = DRUID_FORM_FLIGHT; spellId = 40120; break;
+            case FORM_AQUA:        currentSlot = DRUID_FORM_AQUATIC; spellId = 1066; break;
+            default:               return;
+        }
+
+        if (currentSlot != slot)
+            return;
+
+        if (uint32 model = player->GetModelForForm(form, spellId))
+            player->SetDisplayId(model);
+    }
+
+    // Re-apply the player's saved druid-form displayId override if they
+    // are currently shapeshifted. Used on login / map change, where the
+    // engine reapplies the form aura after our AuraScript would normally
+    // fire — causing the default model to overwrite our override.
+    void ReapplyActiveDruidFormDisplay(Player* player)
+    {
+        if (!player)
+            return;
+
+        ShapeshiftForm form = player->GetShapeshiftForm();
+        uint8 slot;
+        uint32 spellId;
+        switch (form)
+        {
+            case FORM_BEAR:        slot = DRUID_FORM_BEAR;   spellId =  5487; break;
+            case FORM_DIREBEAR:    slot = DRUID_FORM_BEAR;   spellId =  9634; break;
+            case FORM_CAT:         slot = DRUID_FORM_CAT;    spellId =   768; break;
+            case FORM_TRAVEL:      slot = DRUID_FORM_TRAVEL; spellId =   783; break;
+            case FORM_FLIGHT:      slot = DRUID_FORM_FLIGHT; spellId = 33943; break;
+            case FORM_FLIGHT_EPIC: slot = DRUID_FORM_FLIGHT; spellId = 40120; break;
+            case FORM_AQUA:        slot = DRUID_FORM_AQUATIC; spellId = 1066; break;
+            default:               return;
+        }
+
+        // Inside BG / arena: force the canonical model regardless of
+        // any stored override (matches the spell-script gate).
+        if (player->InBattleground() || player->InArena())
+        {
+            if (uint32 model = player->GetModelForForm(form, spellId))
+                player->SetDisplayId(model);
+            return;
+        }
+
+        if (uint32 displayId = GetDruidFormDisplay(player, slot))
+            player->SetDisplayId(displayId);
     }
 
     [[nodiscard]] std::string GetServiceName(uint8 serviceType) const;
@@ -320,7 +519,7 @@ public:
 
     [[nodiscard]] uint32 GetNPCTextForService(uint32 type, uint8 subscriptionLevel) const;
 
-    [[nodiscard]] uint32 GetNPCTextForCategory(uint32 type, uint8 category) const;
+    [[nodiscard]] uint32 GetNPCTextForCategory(uint32 type, uint32 category) const;
     [[nodiscard]] bool IsServiceAvailable(Player* player, std::string service, uint32 serviceId) const;
 
     void LoadSmartstoneData();
@@ -334,6 +533,7 @@ public:
     void LoadMounts();
     void LoadLegacyCostumes();
     void LoadCostumeSounds();
+    void LoadPerks();
 
     void ProcessExpiredServices(Player* player);
 
@@ -348,6 +548,7 @@ public:
     [[nodiscard]] SmartstoneAuraData GetAuraData(uint32 id) const;
     [[nodiscard]] SmartstoneVehicleData GetVehicleData(uint32 id) const;
     [[nodiscard]] SmartstoneMountData GetMountData(uint32 id) const;
+    [[nodiscard]] SmartstonePerkData GetPerkData(uint32 id) const;
 
     std::unordered_map<uint32, uint32> LegacyCostumeItemToDisplayId;
 
@@ -362,6 +563,7 @@ public:
     std::unordered_map<uint32, SmartstoneCostumeSoundData> CostumeSounds; // keyed by DisplayId
     std::unordered_map<uint32, std::vector<SmartstoneCategoryData>> Categories;
     std::unordered_map<uint32, std::vector<SmartstoneService>> Services;
+    std::unordered_map<uint32, std::vector<SmartstonePerkData>> Perks;
     std::unordered_map<ObjectGuid, std::vector<SmartstoneMenuState>> MenuStateHolder;
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 
@@ -471,6 +673,9 @@ enum SmartstoneStringId : uint32
     // Costume removal notifications
     LANG_MOD_COSTUME_EXPIRED           = 60,
     LANG_MOD_COSTUME_REMOVED_BG_ARENA  = 61,
+    // Perk messages (62-63)
+    LANG_MOD_PERK_APPLIED              = 62,
+    LANG_MOD_PERK_NO_IMPL              = 63,
 };
 
 #define sSmartstone Smartstone::instance()
