@@ -1,6 +1,7 @@
 DELETE FROM `command` WHERE `name` IN (
     'smartstone',
     'smartstone unlock service',
+    'smartstone unlock account',
     'smartstone reload',
     'smartstone cooldowns',
     'smartstone lookup',
@@ -15,6 +16,7 @@ DELETE FROM `command` WHERE `name` IN (
 INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone',                 0, 'Syntax: .smartstone\nAdds the Smartstone item to your inventory if you do not already have one.'),
 ('smartstone unlock service',  1, 'Syntax: .smartstone unlock service $player $serviceType $id $add\nGrants or revokes access to a smartstone service for a player.\n$serviceType: 0=Companion, 1=Combat Pet, 2=Costume, 6=Aura, 7=Vehicle.\n$id: The service ID (CreatureId for pets, costume Id for costumes).\n$add: 1 to grant, 0 to revoke.'),
+('smartstone unlock account',  1, 'Syntax: .smartstone unlock account $account $serviceType $id $add\nGrants or revokes an account-wide smartstone service for an account, without needing to select a character.\n$serviceType: 2=Costume, 9=Perk.\n$id: The service ID (costume Id for costumes, perk Id for perks).\n$add: 1 to grant, 0 to revoke.\nFor per-character services (pets, auras, vehicles) use .smartstone unlock service instead.'),
 ('smartstone reload',          3, 'Syntax: .smartstone reload\nReloads all smartstone data from the database.'),
 ('smartstone cooldowns',       0, 'Syntax: .smartstone cooldowns [$player]\nShows active costume cooldowns.\nRegular players can only check their own cooldowns.\nGameMasters and above can check any player''s cooldowns, including offline players.'),
 ('smartstone lookup',          0, 'Syntax: .smartstone lookup [pets|costumes|allpets]\nLookup commands for browsing available smartstone services.'),
