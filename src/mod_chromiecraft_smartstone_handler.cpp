@@ -116,7 +116,11 @@ void Smartstone::LoadPerks()
     // Load class perks from the database. Each perk belongs to one of the
     // hardcoded class subcategories (1001-1010); class-gating is applied
     // again in ShowCategoryItems for defense in depth.
-    QueryResult result = WorldDatabase.Query("SELECT Id, Title, Description, ClassId, Category, Effect, Value, SubscriptionLevel FROM smartstone_perks WHERE Enabled = 1");
+    // ORDER BY groups perks by their effect (e.g. all Bear Form perks
+    // adjacent, then all Cat Form perks, etc.) so the gossip menu lists
+    // them in clusters. Id is the secondary key to keep ordering stable
+    // when multiple perks share the same effect.
+    QueryResult result = WorldDatabase.Query("SELECT Id, Title, Description, ClassId, Category, Effect, Value, SubscriptionLevel FROM smartstone_perks WHERE Enabled = 1 ORDER BY Effect, Id");
     SmartstonePerkData perkData;
 
     Perks.clear();
