@@ -260,6 +260,33 @@ public:
                         sSmartstone->RestoreDefaultShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF);
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_FERAL_SPIRITS:
+                    {
+                        sSmartstone->SetShamanGuardianDisplay(player, SHAMAN_GUARDIAN_FERAL_SPIRIT, 0);
+                        // Spirit wolves are short-lived guardians; we don't
+                        // bother live-reverting them — the next cast will
+                        // show the default model.
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP:
+                    case SMARTSTONE_ACTION_RESET_WARLOCK_PET_VOIDWALKER:
+                    case SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELHUNTER:
+                    case SMARTSTONE_ACTION_RESET_WARLOCK_PET_SUCCUBUS:
+                    case SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELGUARD:
+                    case SMARTSTONE_ACTION_RESET_WARLOCK_PET_DOOMGUARD:
+                    {
+                        // Slot derived positionally — the action enum is laid
+                        // out to match WarlockPetSlot starting at IMP.
+                        uint8 slot = actionId - SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP;
+                        sSmartstone->SetWarlockPetDisplay(player, slot, 0);
+
+                        // Live-revert if the currently-summoned pet matches
+                        // this slot — otherwise the change waits for next summon.
+                        if (Pet* pet = player->GetPet())
+                            if (Smartstone::GetWarlockPetSlotForEntry(pet->GetEntry()) == slot)
+                                pet->SetDisplayId(pet->GetNativeDisplayId());
+                        break;
+                    }
                 }
                 break;
             }
@@ -578,6 +605,28 @@ public:
                     case PERK_EFFECT_SHAMAN_GHOST_WOLF:
                         sSmartstone->SetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF, perk.Value);
                         break;
+                    case PERK_EFFECT_SHAMAN_FERAL_SPIRIT:
+                        sSmartstone->SetShamanGuardianDisplay(player, SHAMAN_GUARDIAN_FERAL_SPIRIT, perk.Value);
+                        break;
+                    case PERK_EFFECT_WARLOCK_PET_IMP:
+                    case PERK_EFFECT_WARLOCK_PET_VOIDWALKER:
+                    case PERK_EFFECT_WARLOCK_PET_FELHUNTER:
+                    case PERK_EFFECT_WARLOCK_PET_SUCCUBUS:
+                    case PERK_EFFECT_WARLOCK_PET_FELGUARD:
+                    case PERK_EFFECT_WARLOCK_PET_DOOMGUARD:
+                    {
+                        // Slot index is positional — PERK_EFFECT_WARLOCK_PET_*
+                        // lines up with WARLOCK_PET_* by construction.
+                        uint8 slot = perk.Effect - PERK_EFFECT_WARLOCK_PET_IMP;
+                        sSmartstone->SetWarlockPetDisplay(player, slot, perk.Value);
+
+                        // Live-apply if the matching pet is currently summoned
+                        // so the user doesn't have to dismiss + resummon.
+                        if (Pet* pet = player->GetPet())
+                            if (Smartstone::GetWarlockPetSlotForEntry(pet->GetEntry()) == slot)
+                                pet->SetDisplayId(perk.Value);
+                        break;
+                    }
                     default:
                         handled = false;
                         break;
@@ -784,6 +833,32 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Ghost Wolf display",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_GHOST_WOLF_FORM), "", 0);
+
+            if (sSmartstone->GetShamanGuardianDisplay(player, SHAMAN_GUARDIAN_FERAL_SPIRIT))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Feral Spirit display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_FERAL_SPIRITS), "", 0);
+
+            // Per-pet warlock resets, matching the druid one-button-per-form
+            // pattern. Each button only shows when its slot has a value.
+            if (player->getClass() == CLASS_WARLOCK)
+            {
+                static constexpr struct { uint8 slot; uint32 action; char const* label; } warlockPetResets[] =
+                {
+                    { WARLOCK_PET_IMP,        SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP,        "Reset Imp appearance"        },
+                    { WARLOCK_PET_VOIDWALKER, SMARTSTONE_ACTION_RESET_WARLOCK_PET_VOIDWALKER, "Reset Voidwalker appearance" },
+                    { WARLOCK_PET_FELHUNTER,  SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELHUNTER,  "Reset Felhunter appearance"  },
+                    { WARLOCK_PET_SUCCUBUS,   SMARTSTONE_ACTION_RESET_WARLOCK_PET_SUCCUBUS,   "Reset Succubus appearance"   },
+                    { WARLOCK_PET_FELGUARD,   SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELGUARD,   "Reset Felguard appearance"   },
+                    { WARLOCK_PET_DOOMGUARD,  SMARTSTONE_ACTION_RESET_WARLOCK_PET_DOOMGUARD,  "Reset Doomguard appearance"  },
+                };
+
+                for (auto const& r : warlockPetResets)
+                    if (sSmartstone->GetWarlockPetDisplay(player, r.slot))
+                        player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                            (std::string("|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t ") + r.label).c_str(),
+                            0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, r.action), "", 0);
+            }
 
             /**
              * Paginated items

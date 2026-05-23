@@ -5,11 +5,13 @@
 void Addmod_cc_smartstoneScripts();
 void AddSC_smartstone_commandscript();
 void AddSC_smartstone_spells();
+void AddSC_smartstone_pets();
 
 void Addmod_chromiecraft_smartstoneScripts()
 {
     Addmod_cc_smartstoneScripts();
     AddSC_smartstone_commandscript();
     AddSC_smartstone_spells();
+    AddSC_smartstone_pets();
 }
 

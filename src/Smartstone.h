@@ -42,9 +42,9 @@ enum Misc
     SETTING_CURR_AURA    = 1
 };
 
-// Per-player setting indices for the "#druid_form" namespace.
-// Value at each slot is the displayId to apply when the form is taken,
-// or 0 to leave the default model.
+// Per-player slot indices for class display-override namespaces.
+// Each slot stores a displayId (0 = use default model). Namespace is
+// chosen by the helper used (#druid_form, #shaman_form, etc.).
 enum DruidFormSlot
 {
     DRUID_FORM_BEAR    = 0,
@@ -57,11 +57,29 @@ enum DruidFormSlot
     MAX_DRUID_FORM_SLOTS
 };
 
-// Per-player setting indices for the "#shaman_form" namespace.
 enum ShamanFormSlot
 {
     SHAMAN_FORM_GHOST_WOLF = 0,
     MAX_SHAMAN_FORM_SLOTS
+};
+
+// Guardians (TempSummons) rather than shapeshift forms — separate
+// namespace so they can't collide with form slots.
+enum ShamanGuardianSlot
+{
+    SHAMAN_GUARDIAN_FERAL_SPIRIT = 0,
+    MAX_SHAMAN_GUARDIAN_SLOTS
+};
+
+enum WarlockPetSlot
+{
+    WARLOCK_PET_IMP        = 0,
+    WARLOCK_PET_VOIDWALKER = 1,
+    WARLOCK_PET_FELHUNTER  = 2,
+    WARLOCK_PET_SUCCUBUS   = 3,
+    WARLOCK_PET_FELGUARD   = 4,
+    WARLOCK_PET_DOOMGUARD  = 5,
+    MAX_WARLOCK_PET_SLOTS
 };
 
 // Account-setting slot range for class perks. One slot per class so
@@ -100,6 +118,15 @@ enum UtilActions
     SMARTSTONE_ACTION_RESET_TREE_FORM        = 13,
     SMARTSTONE_ACTION_RESET_MOONKIN_FORM     = 14,
     SMARTSTONE_ACTION_RESET_GHOST_WOLF_FORM  = 15,
+    // Per-pet warlock resets. Order matches WarlockPetSlot so we can
+    // derive the slot from (actionId - SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP).
+    SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP        = 16,
+    SMARTSTONE_ACTION_RESET_WARLOCK_PET_VOIDWALKER = 17,
+    SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELHUNTER  = 18,
+    SMARTSTONE_ACTION_RESET_WARLOCK_PET_SUCCUBUS   = 19,
+    SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELGUARD   = 20,
+    SMARTSTONE_ACTION_RESET_WARLOCK_PET_DOOMGUARD  = 21,
+    SMARTSTONE_ACTION_RESET_FERAL_SPIRITS          = 22,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -255,6 +282,13 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_DRUID_FORM_TREE     = 6,
     PERK_EFFECT_DRUID_FORM_MOONKIN  = 7,
     PERK_EFFECT_SHAMAN_GHOST_WOLF   = 8,
+    PERK_EFFECT_WARLOCK_PET_IMP        = 9,
+    PERK_EFFECT_WARLOCK_PET_VOIDWALKER = 10,
+    PERK_EFFECT_WARLOCK_PET_FELHUNTER  = 11,
+    PERK_EFFECT_WARLOCK_PET_SUCCUBUS   = 12,
+    PERK_EFFECT_WARLOCK_PET_FELGUARD   = 13,
+    PERK_EFFECT_WARLOCK_PET_DOOMGUARD  = 14,
+    PERK_EFFECT_SHAMAN_FERAL_SPIRIT    = 15,
 };
 
 struct SmartstonePerkData
@@ -492,6 +526,45 @@ public:
     [[nodiscard]] uint32 GetShamanFormDisplay(Player* player, uint8 slot) const
     {
         return player->GetPlayerSetting(ModName + "#shaman_form", slot).value;
+    }
+
+    // Shaman guardian display overrides (per-character). Used for
+    // TempSummon creatures (Feral Spirit wolves, etc.) rather than
+    // shapeshift forms.
+    void SetShamanGuardianDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#shaman_guardian", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetShamanGuardianDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#shaman_guardian", slot).value;
+    }
+
+    // Warlock pet display overrides (per-character). Slot = WarlockPetSlot,
+    // value = displayId to apply when that pet is summoned (0 = default).
+    void SetWarlockPetDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#warlock_pet", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetWarlockPetDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#warlock_pet", slot).value;
+    }
+
+    // Map a warlock pet creature entry to its WarlockPetSlot index, or -1
+    // if the entry isn't a recognised warlock pet.
+    [[nodiscard]] static int32 GetWarlockPetSlotForEntry(uint32 entry)
+    {
+        switch (entry)
+        {
+            case   416: return WARLOCK_PET_IMP;
+            case  1860: return WARLOCK_PET_VOIDWALKER;
+            case   417: return WARLOCK_PET_FELHUNTER;
+            case  1863: return WARLOCK_PET_SUCCUBUS;
+            case 17252: return WARLOCK_PET_FELGUARD;
+            case 11859: return WARLOCK_PET_DOOMGUARD;
+            default:    return -1;
+        }
     }
 
     // If the player is currently shapeshifted into the form matching

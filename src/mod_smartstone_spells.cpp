@@ -108,7 +108,52 @@ class spell_smartstone_form_display_override : public AuraScript
     }
 };
 
+// 51533 - Feral Spirit (shaman)
+// Re-skins the two Spirit Wolves (entry 29264) summoned by Feral Spirit
+// when the caster has a non-zero SHAMAN_GUARDIAN_FERAL_SPIRIT override
+// stored. SpellScript hook fires exactly once per cast — cheaper than
+// an AllCreatureScript filtering every creature spawn.
+class spell_sha_feral_spirit_display : public SpellScript
+{
+    PrepareSpellScript(spell_sha_feral_spirit_display);
+
+    static constexpr uint32 SPIRIT_WOLF_ENTRY = 29264;
+
+    bool Load() override
+    {
+        Unit* caster = GetCaster();
+        return caster && caster->IsPlayer();
+    }
+
+    void HandleAfterCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (!player)
+            return;
+
+        if (player->InBattleground() || player->InArena())
+            return;
+
+        uint32 displayId = sSmartstone->GetShamanGuardianDisplay(
+            player, SHAMAN_GUARDIAN_FERAL_SPIRIT);
+        if (!displayId)
+            return;
+
+        // By AfterCast the summon effects have run and the wolves are in
+        // the caster's controlled set. Apply the override to each.
+        for (Unit* controlled : player->m_Controlled)
+            if (controlled && controlled->GetEntry() == SPIRIT_WOLF_ENTRY)
+                controlled->SetDisplayId(displayId);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_sha_feral_spirit_display::HandleAfterCast);
+    }
+};
+
 void AddSC_smartstone_spells()
 {
     RegisterSpellScript(spell_smartstone_form_display_override);
+    RegisterSpellScript(spell_sha_feral_spirit_display);
 }

@@ -38,7 +38,7 @@ VALUES
     (1006, 1000, 'Death Knight Perks',0, 92014, 0),
     (1007, 1000, '|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Shaman Perks',      0, 92015, 1),
     (1008, 1000, 'Mage Perks',        0, 92016, 0),
-    (1009, 1000, 'Warlock Perks',     0, 92017, 0),
+    (1009, 1000, '|TInterface/icons/Spell_Shadow_Metamorphosis:30:30:-18:0|t Warlock Perks',     0, 92017, 1),
     (1010, 1000, '|TInterface/icons/Spell_Nature_Regeneration:30:30:-18:0|t Druid Perks', 0, 92018, 1);
 
 -- Seed perk rows live in mod-chromiecraft/data/sql/db-world/updates/8_smartstone_perks.sql

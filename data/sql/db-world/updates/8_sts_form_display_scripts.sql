@@ -6,6 +6,7 @@
 DELETE FROM `spell_script_names`
  WHERE `ScriptName` IN (
     'spell_smartstone_form_display_override',
+    'spell_sha_feral_spirit_display',
     'spell_dru_form_display_override',     -- previous druid-only name
     'spell_sha_form_display_override',     -- previous shaman-only name
     'spell_dru_cat_form_panther'           -- obsolete prototype binding
@@ -21,4 +22,5 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 ( 1066, 'spell_smartstone_form_display_override'),  -- Druid: Aquatic Form
 (33891, 'spell_smartstone_form_display_override'),  -- Druid: Tree of Life
 (24858, 'spell_smartstone_form_display_override'),  -- Druid: Moonkin Form
-( 2645, 'spell_smartstone_form_display_override');  -- Shaman: Ghost Wolf
+( 2645, 'spell_smartstone_form_display_override'),  -- Shaman: Ghost Wolf
+(51533, 'spell_sha_feral_spirit_display');          -- Shaman: Feral Spirit (Spirit Wolves)
