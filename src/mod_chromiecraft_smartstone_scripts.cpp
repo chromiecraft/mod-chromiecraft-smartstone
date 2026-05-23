@@ -36,6 +36,17 @@ namespace
     constexpr char const* JOYOUS_JOURNEYS_ENABLE_BUTTON_TEXT =
         "|TInterface/icons/INV_Misc_PocketWatch_01:30:30:-18:0|t Enable Joyous Journeys";
 
+    // Mirrors mod-resurrection-scroll/src/ResurrectionScroll.h to avoid a build-time dependency.
+    constexpr char const* MOD_ROS_STRING_NS              = "mod_ros";
+    constexpr uint32      MOD_ROS_SETTING_DISABLE        = 0;
+    constexpr uint32      MOD_ROS_LANG_BONUS_ENABLED     = 2;
+    constexpr uint32      MOD_ROS_LANG_BONUS_DISABLED    = 3;
+    constexpr uint32      MOD_ROS_LANG_DISCLAIMER_RESTED = 4;
+    constexpr uint32      MOD_ROS_LANG_DISCLAIMER_NO_REM = 5;
+
+    constexpr char const* RES_SCROLL_ENABLE_BUTTON_TEXT =
+        "|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t Enable bonus";
+
     uint32 EncodeWeekendXpRate(float rate)
     {
         uint32 encoded = 0;
@@ -333,6 +344,33 @@ public:
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_JJ, toggled);
                         uint32 ackId = toggled ? LANG_MOD_JOYOUS_JOURNEYS_DISABLED : LANG_MOD_JOYOUS_JOURNEYS_ENABLED;
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, ackId);
+                        break;
+                    }
+                    case SERVICE_RES_SCROLL_BONUS:
+                    {
+                        // Slot 0 = receiving bonus (default), 1 = opted out. Acks reuse mod_ros's
+                        // own strings for parity with the .rscroll disable command.
+                        uint32 current = player->GetPlayerSetting(MOD_ROS_STRING_NS, MOD_ROS_SETTING_DISABLE).value;
+                        uint32 toggled = (current == 0) ? 1u : 0u;
+                        player->UpdatePlayerSetting(MOD_ROS_STRING_NS, MOD_ROS_SETTING_DISABLE, toggled);
+
+                        ChatHandler ch(player->GetSession());
+                        if (toggled == 0)
+                            ch.PSendModuleSysMessage(MOD_ROS_STRING_NS, MOD_ROS_LANG_BONUS_ENABLED);
+                        else
+                        {
+                            ch.PSendModuleSysMessage(MOD_ROS_STRING_NS, MOD_ROS_LANG_BONUS_DISABLED);
+                            ch.PSendModuleSysMessage(MOD_ROS_STRING_NS, MOD_ROS_LANG_DISCLAIMER_RESTED);
+                            ch.PSendModuleSysMessage(MOD_ROS_STRING_NS, MOD_ROS_LANG_DISCLAIMER_NO_REM);
+                        }
+                        break;
+                    }
+                    case SERVICE_RES_SCROLL_INFO:
+                    {
+                        // Replicate `.rscroll info` for the calling player. Going through ParseCommands
+                        // avoids duplicating the eligibility/expiration logic and means any future
+                        // change to mod-ros's info output is picked up automatically.
+                        ChatHandler(player->GetSession()).ParseCommands(".rscroll info");
                         break;
                     }
                 }
@@ -769,10 +807,14 @@ public:
                         if (menuItem.ItemId != Smartstone::GetClassPerkCategoryForClass(player->getClass()))
                             available = false;
                     }
+
+                    // Hide module-integration subcategories when the upstream module is disabled.
+                    if (menuItem.ItemId == CATEGORY_SCROLL_OF_RESURRECTION && !sSmartstone->IsResScrollEnabled())
+                        available = false;
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
-                    // Hide the Joyous Journeys toggle when the server-side event is not active.
+                    // Hide module-integration toggles when the upstream module is disabled.
                     bool gated = menuItem.ItemId == SERVICE_JOYOUS_JOURNEYS && !sSmartstone->IsJoyousJourneysActive();
                     if (!gated && subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
@@ -868,6 +910,12 @@ public:
                         if (jjOptOut != 0)
                             serviceLabel = JOYOUS_JOURNEYS_ENABLE_BUTTON_TEXT;
                     }
+                    else if (menuItem.ItemId == SERVICE_RES_SCROLL_BONUS)
+                    {
+                        uint32 rosOptOut = player->GetPlayerSetting(MOD_ROS_STRING_NS, MOD_ROS_SETTING_DISABLE).value;
+                        if (rosOptOut != 0)
+                            serviceLabel = RES_SCROLL_ENABLE_BUTTON_TEXT;
+                    }
 
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
                         menuItemIndex++, GOSSIP_ICON_CHAT, serviceLabel, 0,
@@ -943,9 +991,8 @@ public:
         sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
         sSmartstone->SetIndividualCostumeCooldowns(sConfigMgr->GetOption("ModChromiecraftSmartstone.IndividualCostumeCooldowns", false));
         sSmartstone->SetCostumeConvertEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.CostumeConvert.Enable", false));
-        // Cached from mod-weekend-xp so the Joyous Journeys button in the Experience-rates submenu can
-        // gate its own visibility without reading sConfigMgr at runtime.
         sSmartstone->SetJoyousJourneysActive(sConfigMgr->GetOption<bool>("XPWeekend.IsJoyousJourneysActive", false));
+        sSmartstone->SetResScrollEnabled(sConfigMgr->GetOption<bool>("ModResurrectionScroll.Enable", false));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();

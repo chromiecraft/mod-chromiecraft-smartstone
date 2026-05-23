@@ -2,24 +2,25 @@
 -- Smartstone Update Script
 --
 
-DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9);
+DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10);
 INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Pets', 0, 92002, 1),
 (2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Combat Pets', 0, 92003, 1),
 (3,0, '|TInterface/icons/Ability_Rogue_Disguise:30:30:-18:0|t Costumes', 0, 92005, 1),
 (4,0, '|TInterface/icons/Spell_Shadow_Charm:30:30:-18:0|t Character', 0, 92020, 1),
 (5,3,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0, 92006,1),
-(9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1);
+(9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1),
+(10,4,'|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Scroll of Resurrection', 0, 92021, 1);
 
-DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5);
+DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5, 6, 7);
 INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, 4, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),
 (2, 9, '|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t 2x experience (default)', 0, 1),
 (3, 9, '|TInterface/icons/Spell_Holy_BorrowedTime:30:30:-18:0|t 1x experience', 0, 1),
 (4, 9, '|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Disable experience gains', 0, 1),
--- The C++ menu builder hides this row when XPWeekend.IsJoyousJourneysActive is false,
--- and swaps the label to "Enable Joyous Journeys" when the player has opted out.
-(5, 9, '|TInterface/icons/INV_Misc_PocketWatch_01:30:30:-18:0|t Disable Joyous Journeys', 0, 1);
+(5, 9, '|TInterface/icons/INV_Misc_PocketWatch_01:30:30:-18:0|t Disable Joyous Journeys', 0, 1),
+(6, 10, '|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Disable bonus', 0, 1),
+(7, 10, '|TInterface/icons/INV_Scroll_03:30:30:-18:0|t View status', 0, 1);
 
 DELETE FROM `smartstone_costumes` WHERE `Id` IN (20001, 20002);
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
@@ -42,7 +43,7 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (80000, 0, 0, 'Looking for a change, ay? I got just what you need! Come, take a seat.', 12, 0, 'Smartstone - Barber - Spawn'),
 (80000, 1, 0, 'Time is up, pal! Off we go!', 12, 0, 'Smartstone - Barber - Despawn');
 
-DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007, 92008, 92009, 92010, 92011, 92012, 92013, 92014, 92015, 92016, 92017, 92018, 92019, 92020);
+DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007, 92008, 92009, 92010, 92011, 92012, 92013, 92014, 92015, 92016, 92017, 92018, 92019, 92020, 92021);
 INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike.'),
 (92001, 'Hey there, pal! Welcome to the finest chop shop in Azeroth! Need a trim, a shave, or a whole new look? We’ve got styles to make your enemies quake in fear—or at least wonder where you got such a snazzy do! Sit down, relax, and let’s get you looking spectacular!'),
@@ -64,7 +65,8 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92017, 'For those who bargain with the abyss: a coal-light behind the eye, a shadow that lingers a moment too long, the calm of one who has read a contract few would sign. These are not crueller fels, but the bearing of every pact-bearer who returned before you.'),
 (92018, 'For those who walk the wild ways: dirt at the heel, leaf in the hair, the easy carriage of one who has worn many shapes. These are not stronger forms, but the bearing of every changeling who answered the wild''s call before you.'),
 (92019, 'Choose how quickly you wish to advance, and return here at any time to change your mind.\n\nPrefer a finer-grained pace? You can set any custom rate up to the server-allowed maximum with the |cff4CFF00.weekendxp rate|r command.\n '),
-(92020, 'Here lie the threads of self — the cut of your hair, the pace of your becoming, the small marks of your calling. Tend to them as you wish; the stone holds no judgement on what shape you take, only the means to take it.\n ');
+(92020, 'Here lie the threads of self — the cut of your hair, the pace of your becoming, the small marks of your calling. Tend to them as you wish; the stone holds no judgement on what shape you take, only the means to take it.\n '),
+(92021, 'An old kindness, kept for champions who return to Azeroth after long absence. To those whose silence has lengthened beyond the seasons, the stone grants the comfort of full rest — rested experience, gathered as if the long pause had been spent in inn or hall.\n\nReturning after a long absence triggers this bonus automatically and grants rested experience for a limited time. You may disable and re-enable it at any time, and use the option below to see your current status.\n ');
 
 --
 -- Localized npc_text. Locales match the set used by module_string_locale
@@ -72,7 +74,7 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 -- back to the enUS row above. Translations are best-effort; native-speaker
 -- review recommended for the florid class-perk register (92008-92018).
 --
-DELETE FROM `npc_text_locale` WHERE `ID` BETWEEN 92000 AND 92020;
+DELETE FROM `npc_text_locale` WHERE `ID` BETWEEN 92000 AND 92021;
 INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 
 -- deDE
@@ -97,6 +99,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'deDE', 'Für jene, die die wilden Pfade gehen: Erde an der Ferse, ein Blatt im Haar, die leichte Haltung dessen, der viele Gestalten getragen hat. Dies sind keine stärkeren Formen, sondern die Art jedes Wandlers, der vor dir dem Ruf der Wildnis antwortete.'),
 (92019, 'deDE', 'Wähle, wie rasch du voranschreiten möchtest, und kehre jederzeit hierher zurück, um deine Wahl zu ändern.\n\nBevorzugst du ein feineres Tempo? Mit dem Befehl |cff4CFF00.weekendxp rate|r kannst du jede beliebige Rate bis zum vom Server erlaubten Maximum einstellen.\n '),
 (92020, 'deDE', 'Hier liegen die Fäden des Selbst — der Schnitt deines Haares, das Tempo deines Werdens, die kleinen Zeichen deiner Berufung. Pflege sie, wie es dir beliebt; der Stein urteilt nicht über die Gestalt, die du annimmst, sondern bietet nur die Mittel, sie anzunehmen.\n '),
+(92021, 'deDE', 'Eine alte Gnade, bewahrt für Champions, die nach langer Abwesenheit nach Azeroth zurückkehren. Jenen, deren Schweigen die Jahreszeiten überdauert hat, gewährt der Stein den Trost vollen Ruhens — Erholungs-EP, gesammelt, als wäre die lange Pause in Wirtshäusern oder Hallen verbracht worden.\n\nEine Rückkehr nach langer Abwesenheit löst diesen Bonus automatisch aus und gewährt für eine begrenzte Zeit Erholungs-EP. Du kannst ihn jederzeit deaktivieren und wieder aktivieren; nutze die Option unten, um deinen aktuellen Status einzusehen.\n '),
 
 -- frFR
 (92000, 'frFR', 'Au cœur de la magie d''Azeroth, il existe un artefact légendaire connu sous le nom de Smartstone. Cette pierre antique, imprégnée d''énergie mystique et de sagesse infinie, sert de guide et de compagnon aux braves et aux curieux. D''un scintillement de ses facettes enchantées, le Smartstone peut révéler des trésors cachés, dispenser de sages conseils ou offrir des aperçus essentiels aussi bien sur l''arcane que sur le quotidien.'),
@@ -120,6 +123,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'frFR', 'Pour ceux qui marchent les voies sauvages : terre au talon, feuille dans les cheveux, le port aisé de qui a revêtu mille formes. Ce ne sont pas des formes plus puissantes, mais le port de chaque changeant qui a répondu à l''appel sauvage avant vous.'),
 (92019, 'frFR', 'Choisissez à quelle vitesse vous souhaitez progresser, et revenez ici à tout moment pour changer d''avis.\n\nVous préférez un réglage plus fin ? Vous pouvez définir n''importe quel taux personnalisé jusqu''au maximum autorisé par le serveur avec la commande |cff4CFF00.weekendxp rate|r.\n '),
 (92020, 'frFR', 'Ici reposent les fils de soi — la coupe de vos cheveux, le rythme de votre devenir, les petites marques de votre vocation. Soignez-les à votre guise ; la pierre ne juge pas la forme que vous prenez, elle n''offre que les moyens de la prendre.\n '),
+(92021, 'frFR', 'Une vieille bienveillance, conservée pour les champions qui reviennent à Azeroth après une longue absence. À ceux dont le silence s''est prolongé au-delà des saisons, la pierre accorde le réconfort d''un plein repos — de l''expérience reposée, accumulée comme si la longue pause avait été passée à l''auberge ou dans une grande salle.\n\nUn retour après une longue absence déclenche ce bonus automatiquement et accorde de l''expérience reposée pour une durée limitée. Vous pouvez le désactiver et le réactiver à tout moment ; utilisez l''option ci-dessous pour consulter votre statut actuel.\n '),
 
 -- esES
 (92000, 'esES', 'En el corazón de la magia de Azeroth existe un artefacto legendario conocido como la Smartstone. Esta gema antigua, rebosante de energía mística y de sabiduría sin límites, sirve de guía y compañera a los valientes y los curiosos. Con un destello de sus facetas encantadas, la Smartstone puede revelar tesoros ocultos, dispensar sabios consejos o brindar perspectivas cruciales tanto sobre lo arcano como sobre lo mundano.'),
@@ -143,6 +147,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'esES', 'Para quienes caminan las vías salvajes: tierra en el talón, hoja en el cabello, el porte sereno de quien ha vestido muchas formas. No son formas más fuertes, sino el porte de cada cambiante que respondió al llamado salvaje antes que tú.'),
 (92019, 'esES', 'Elige a qué velocidad deseas avanzar y vuelve aquí en cualquier momento para cambiar de opinión.\n\n¿Prefieres un ritmo más afinado? Puedes establecer cualquier tasa personalizada hasta el máximo permitido por el servidor con el comando |cff4CFF00.weekendxp rate|r.\n '),
 (92020, 'esES', 'Aquí reposan los hilos del yo — el corte de tu cabello, el ritmo de tu llegar a ser, las pequeñas marcas de tu vocación. Cuídalos como gustes; la piedra no juzga la forma que tomes, sólo ofrece los medios para tomarla.\n '),
+(92021, 'esES', 'Una antigua gentileza, reservada para los campeones que regresan a Azeroth tras una larga ausencia. A aquellos cuyo silencio se ha prolongado más allá de las estaciones, la piedra concede el consuelo del pleno descanso — experiencia de descanso, acumulada como si la larga pausa se hubiera pasado en posadas o salones.\n\nRegresar tras una larga ausencia activa esta bonificación automáticamente y otorga experiencia de descanso durante un tiempo limitado. Puedes desactivarla y reactivarla en cualquier momento; usa la opción de abajo para consultar tu estado actual.\n '),
 
 -- esMX (identical to esES)
 (92000, 'esMX', 'En el corazón de la magia de Azeroth existe un artefacto legendario conocido como la Smartstone. Esta gema antigua, rebosante de energía mística y de sabiduría sin límites, sirve de guía y compañera a los valientes y los curiosos. Con un destello de sus facetas encantadas, la Smartstone puede revelar tesoros ocultos, dispensar sabios consejos o brindar perspectivas cruciales tanto sobre lo arcano como sobre lo mundano.'),
@@ -166,6 +171,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'esMX', 'Para quienes caminan las vías salvajes: tierra en el talón, hoja en el cabello, el porte sereno de quien ha vestido muchas formas. No son formas más fuertes, sino el porte de cada cambiante que respondió al llamado salvaje antes que tú.'),
 (92019, 'esMX', 'Elige a qué velocidad deseas avanzar y vuelve aquí en cualquier momento para cambiar de opinión.\n\n¿Prefieres un ritmo más afinado? Puedes establecer cualquier tasa personalizada hasta el máximo permitido por el servidor con el comando |cff4CFF00.weekendxp rate|r.\n '),
 (92020, 'esMX', 'Aquí reposan los hilos del yo — el corte de tu cabello, el ritmo de tu llegar a ser, las pequeñas marcas de tu vocación. Cuídalos como gustes; la piedra no juzga la forma que tomes, sólo ofrece los medios para tomarla.\n '),
+(92021, 'esMX', 'Una antigua gentileza, reservada para los campeones que regresan a Azeroth tras una larga ausencia. A aquellos cuyo silencio se ha prolongado más allá de las estaciones, la piedra concede el consuelo del pleno descanso — experiencia de descanso, acumulada como si la larga pausa se hubiera pasado en posadas o salones.\n\nRegresar tras una larga ausencia activa esta bonificación automáticamente y otorga experiencia de descanso durante un tiempo limitado. Puedes desactivarla y reactivarla en cualquier momento; usa la opción de abajo para consultar tu estado actual.\n '),
 
 -- ruRU
 (92000, 'ruRU', 'В сердце магии Азерота существует легендарный артефакт, известный как Smartstone. Этот древний камень, наполненный мистической энергией и безграничной мудростью, служит проводником и спутником для смелых и любознательных. Мерцанием своих зачарованных граней Smartstone способен открывать сокрытые сокровища, давать мудрые советы и являть важные истины как о тайном, так и о повседневном.'),
@@ -189,6 +195,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'ruRU', 'Для тех, кто ходит дикими путями: земля на пятке, лист в волосах, лёгкая осанка того, кто носил множество обличий. Это не более сильные формы, но осанка каждого перевёртыша, ответившего на зов дикой природы до тебя.'),
 (92019, 'ruRU', 'Выбери, как быстро ты хочешь продвигаться, и возвращайся сюда в любое время, чтобы передумать.\n\nПредпочитаешь более тонкую настройку? Любой произвольный множитель в пределах разрешённого сервером максимума можно задать командой |cff4CFF00.weekendxp rate|r.\n '),
 (92020, 'ruRU', 'Здесь сходятся нити самого себя — стрижка волос, темп твоего становления, малые знаки твоего призвания. Заботься о них как пожелаешь; камень не судит, какую форму ты примешь, — он лишь даёт средства её принять.\n '),
+(92021, 'ruRU', 'Старая милость, хранимая для героев, возвращающихся в Азерот после долгого отсутствия. Тем, чьё молчание затянулось дольше смены времён года, камень дарует утешение полным покоем — накопленный опыт, словно долгая пауза была проведена в тавернах и пиршественных залах.\n\nВозвращение после долгого отсутствия запускает этот бонус автоматически и даёт накопленный опыт в течение ограниченного времени. Вы можете отключить и снова включить его в любой момент; используйте опцию ниже, чтобы узнать свой текущий статус.\n '),
 
 -- koKR
 (92000, 'koKR', '아제로스 마법의 심장에는 스마트스톤이라 알려진 전설의 유물이 존재합니다. 이 고대의 보석은 신비로운 기운과 끝없는 지혜로 가득 차 있으며, 용감하고 호기심 많은 이들에게 길잡이이자 동반자가 되어 줍니다. 그 마법의 면들이 어른거리면 스마트스톤은 숨겨진 보물을 드러내거나 현명한 조언을 들려주고, 비전과 일상 모두에 대한 결정적인 통찰을 전해 줍니다.'),
@@ -212,6 +219,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'koKR', '거친 길을 걷는 자들을 위해: 뒤꿈치의 흙, 머리카락 속의 잎, 여러 모습을 입어 온 이의 편안한 자세. 더 강한 형상이 아니라, 그대 이전에 야성의 부름에 응답한 모든 변신자의 풍모입니다.'),
 (92019, 'koKR', '나아가고 싶은 속도를 선택하고, 마음이 바뀌면 언제든지 이곳으로 다시 돌아오십시오.\n\n더 세밀한 조정을 원하십니까? |cff4CFF00.weekendxp rate|r 명령으로 서버가 허용하는 최대치까지 원하는 비율을 설정할 수 있습니다.\n '),
 (92020, 'koKR', '여기에는 자아의 실들이 놓여 있습니다 — 머리카락의 모양, 그대 되어 감의 속도, 소명의 작은 표식들. 원하는 대로 가꾸십시오. 이 돌은 그대가 어떤 모습을 취하든 판단하지 않으며, 다만 그렇게 할 수단만을 줍니다.\n '),
+(92021, 'koKR', '오랜 부재 끝에 아제로스로 돌아오는 영웅들을 위해 간직된 오랜 은혜입니다. 침묵이 계절을 넘어 길어진 이들에게, 이 돌은 충만한 휴식의 위안을 — 마치 그 긴 정지가 여관과 회당에서 보내진 듯한 휴식 경험치를 — 베풉니다.\n\n오랜 부재 끝에 돌아오면 이 보너스가 자동으로 활성화되어 일정 기간 휴식 경험치를 부여합니다. 언제든지 비활성화하고 다시 활성화할 수 있으며, 아래의 옵션으로 현재 상태를 확인할 수 있습니다.\n '),
 
 -- zhCN
 (92000, 'zhCN', '在艾泽拉斯魔法的核心,存在着一件名为智慧石的传奇神器。这枚古老的宝石充盈着神秘能量与无尽智慧,为勇敢者和好奇者引路、相伴。当它附魔的切面闪烁微光,智慧石能揭示隐秘的宝藏、给予贤明的劝告,亦能在奥秘与寻常之间提供至关重要的洞见。'),
@@ -235,6 +243,7 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'zhCN', '为那些行走荒野者:足跟之泥土,发间之绿叶,曾披过万千形貌者的从容。这并非更强大的形态,而是每一位在你之前回应荒野召唤的变形者的气度。'),
 (92019, 'zhCN', '选择你希望前进的速度,日后可随时回到此处更改决定。\n\n想要更细致的调节?你可以使用 |cff4CFF00.weekendxp rate|r 命令将倍率自定义为服务器允许的任意最大值以内的数值。\n '),
 (92020, 'zhCN', '此处汇聚自我的丝缕——你发的修饰,你成长的步调,你召命的细小印记。随心打理它们;此石不评判你所采取的形态,只赋予采取它的方法。\n '),
+(92021, 'zhCN', '一份古老的善意,留予在长久离去之后重返艾泽拉斯的英杰。对那些沉寂已逾季节更迭之人,此石赐予充裕休憩之慰——以充裕经验值的形式,仿佛那段漫长的停歇曾在旅馆与殿堂中度过。\n\n在长期离去后回归会自动触发此奖励,并在有限时间内授予充裕经验值。您可随时禁用并重新启用,使用下方选项查看您当前的状态。\n '),
 
 -- zhTW
 (92000, 'zhTW', '在艾澤拉斯魔法的核心,存在著一件名為智慧石的傳奇神器。這枚古老的寶石充盈著神秘能量與無盡智慧,為勇敢者和好奇者引路、相伴。當它附魔的切面閃爍微光,智慧石能揭示隱秘的寶藏、給予賢明的勸告,亦能在奧秘與尋常之間提供至關重要的洞見。'),
@@ -257,7 +266,8 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92017, 'zhTW', '為那些與深淵討價還價之人:眼底的熾炭微光,徘徊得稍久一刻的影,讀過少有人願簽之契者的平靜。這並非更殘酷的邪能,而是每一位在你之前歸返的契約承載者的氣度。'),
 (92018, 'zhTW', '為那些行走荒野者:足跟之泥土,髮間之綠葉,曾披過萬千形貌者的從容。這並非更強大的形態,而是每一位在你之前回應荒野召喚的變形者的氣度。'),
 (92019, 'zhTW', '選擇你希望前進的速度,日後可隨時回到此處更改決定。\n\n想要更細緻的調節?你可以使用 |cff4CFF00.weekendxp rate|r 指令將倍率自訂為伺服器允許的任意最大值以內的數值。\n '),
-(92020, 'zhTW', '此處匯聚自我的絲縷——你髮的修飾,你成長的步調,你召命的細小印記。隨心打理它們;此石不評判你所採取的形態,只賦予採取它的方法。\n ');
+(92020, 'zhTW', '此處匯聚自我的絲縷——你髮的修飾,你成長的步調,你召命的細小印記。隨心打理它們;此石不評判你所採取的形態,只賦予採取它的方法。\n '),
+(92021, 'zhTW', '一份古老的善意,留予在長久離去之後重返艾澤拉斯的英傑。對那些沉寂已逾季節更迭之人,此石賜予充裕休憩之慰——以充裕經驗值的形式,彷彿那段漫長的停歇曾在旅館與殿堂中度過。\n\n在長期離去後回歸會自動觸發此獎勵,並在有限時間內授予充裕經驗值。您可隨時停用並重新啟用,使用下方選項查看您目前的狀態。\n ');
 
 DELETE FROM `gossip_menu` WHERE `MenuID` IN (92000, 92001, 92004);
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES

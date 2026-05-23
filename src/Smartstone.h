@@ -13,6 +13,10 @@ enum Misc
 
     CATEGORY_MAIN = 0,
 
+    // Module-integration subcategories under Character. Gated in the menu
+    // builder against the matching cached server-side config.
+    CATEGORY_SCROLL_OF_RESURRECTION = 10,
+
     // Class Perks: parent category + 10 hardcoded per-class child IDs.
     // Class-gating is enforced in C++ (see GetClassPerkCategoryForClass).
     CATEGORY_CLASS_PERKS         = 1000,
@@ -96,6 +100,8 @@ enum Service
     SERVICE_XP_RATE_1X        = 3,
     SERVICE_XP_RATE_DISABLED  = 4,
     SERVICE_JOYOUS_JOURNEYS   = 5,
+    SERVICE_RES_SCROLL_BONUS  = 6,
+    SERVICE_RES_SCROLL_INFO   = 7,
 };
 
 /**
@@ -296,6 +302,7 @@ private:
     // config so the Joyous Journeys toggle button can hide itself when the
     // event is off, without re-reading sConfigMgr at runtime.
     bool JoyousJourneysActive{ false };
+    bool ResScrollEnabled{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -342,6 +349,9 @@ public:
 
     void SetJoyousJourneysActive(bool active) { JoyousJourneysActive = active; }
     [[nodiscard]] bool IsJoyousJourneysActive() const { return JoyousJourneysActive; }
+
+    void SetResScrollEnabled(bool enabled) { ResScrollEnabled = enabled; }
+    [[nodiscard]] bool IsResScrollEnabled() const { return ResScrollEnabled; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
