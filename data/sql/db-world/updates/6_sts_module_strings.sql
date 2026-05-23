@@ -70,7 +70,12 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 -- Perk messages (62-63). Title-first so the icon embedded at the start
 -- of `perk.Title` lands at the leftmost position in the chat line.
 ('mod-cc-smartstone', 62, '{} — perk applied.'),
-('mod-cc-smartstone', 63, '{} has no implementation for effect {}.');
+('mod-cc-smartstone', 63, '{} has no implementation for effect {}.'),
+-- Experience-rate messages (64-67)
+('mod-cc-smartstone', 64, 'Your experience rate is now |cff4CFF002x|r.'),
+('mod-cc-smartstone', 65, 'Your experience rate is now |cffFFFFFF1x|r.'),
+('mod-cc-smartstone', 66, 'Experience gains are now |cffFF4C4Cdisabled|r. Return here to re-enable them.'),
+('mod-cc-smartstone', 67, 'Experience gains are now |cff4CFF00enabled|r.');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 
@@ -138,6 +143,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'deDE', 'Dein Kostüm wurde entfernt. Kostüme sind in Schlachtfeldern oder Arenen nicht erlaubt.'),
 ('mod-cc-smartstone', 62, 'deDE', '{} — Perk angewendet.'),
 ('mod-cc-smartstone', 63, 'deDE', '{} hat keine Implementierung für Effekt {}.'),
+('mod-cc-smartstone', 64, 'deDE', 'Deine Erfahrungsrate ist jetzt |cff4CFF002x|r.'),
+('mod-cc-smartstone', 65, 'deDE', 'Deine Erfahrungsrate ist jetzt |cffFFFFFF1x|r.'),
+('mod-cc-smartstone', 66, 'deDE', 'Erfahrungsgewinne sind jetzt |cffFF4C4Cdeaktiviert|r. Kehre hierher zurück, um sie wieder zu aktivieren.'),
+('mod-cc-smartstone', 67, 'deDE', 'Erfahrungsgewinne sind jetzt |cff4CFF00aktiviert|r.'),
 
 
 -- frFR
@@ -204,6 +213,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'frFR', 'Votre costume a été retiré. Les costumes ne sont pas autorisés dans les champs de bataille ou les arènes.'),
 ('mod-cc-smartstone', 62, 'frFR', '{} — perk appliqué.'),
 ('mod-cc-smartstone', 63, 'frFR', '{} n''a pas d''implémentation pour l''effet {}.'),
+('mod-cc-smartstone', 64, 'frFR', 'Votre taux d''expérience est maintenant de |cff4CFF002x|r.'),
+('mod-cc-smartstone', 65, 'frFR', 'Votre taux d''expérience est maintenant de |cffFFFFFF1x|r.'),
+('mod-cc-smartstone', 66, 'frFR', 'Les gains d''expérience sont maintenant |cffFF4C4Cdésactivés|r. Revenez ici pour les réactiver.'),
+('mod-cc-smartstone', 67, 'frFR', 'Les gains d''expérience sont maintenant |cff4CFF00activés|r.'),
 
 
 -- esES
@@ -270,6 +283,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'esES', 'Tu disfraz ha sido eliminado. Los disfraces no están permitidos en campos de batalla o arenas.'),
 ('mod-cc-smartstone', 62, 'esES', '{} — perk aplicado.'),
 ('mod-cc-smartstone', 63, 'esES', '{} no tiene implementación para el efecto {}.'),
+('mod-cc-smartstone', 64, 'esES', 'Tu tasa de experiencia ahora es |cff4CFF002x|r.'),
+('mod-cc-smartstone', 65, 'esES', 'Tu tasa de experiencia ahora es |cffFFFFFF1x|r.'),
+('mod-cc-smartstone', 66, 'esES', 'Las ganancias de experiencia están ahora |cffFF4C4Cdesactivadas|r. Vuelve aquí para reactivarlas.'),
+('mod-cc-smartstone', 67, 'esES', 'Las ganancias de experiencia están ahora |cff4CFF00activadas|r.'),
 
 
 -- esMX
@@ -336,6 +353,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'esMX', 'Tu disfraz ha sido eliminado. Los disfraces no están permitidos en campos de batalla o arenas.'),
 ('mod-cc-smartstone', 62, 'esMX', '{} — perk aplicado.'),
 ('mod-cc-smartstone', 63, 'esMX', '{} no tiene implementación para el efecto {}.'),
+('mod-cc-smartstone', 64, 'esMX', 'Tu tasa de experiencia ahora es |cff4CFF002x|r.'),
+('mod-cc-smartstone', 65, 'esMX', 'Tu tasa de experiencia ahora es |cffFFFFFF1x|r.'),
+('mod-cc-smartstone', 66, 'esMX', 'Las ganancias de experiencia están ahora |cffFF4C4Cdesactivadas|r. Vuelve aquí para reactivarlas.'),
+('mod-cc-smartstone', 67, 'esMX', 'Las ganancias de experiencia están ahora |cff4CFF00activadas|r.'),
 
 
 -- ruRU
@@ -402,6 +423,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'ruRU', 'Ваш костюм был снят. Костюмы не разрешены на полях сражений или в аренах.'),
 ('mod-cc-smartstone', 62, 'ruRU', '{} — перк применён.'),
 ('mod-cc-smartstone', 63, 'ruRU', 'У {} нет реализации для эффекта {}.'),
+('mod-cc-smartstone', 64, 'ruRU', 'Ваш множитель опыта теперь |cff4CFF002x|r.'),
+('mod-cc-smartstone', 65, 'ruRU', 'Ваш множитель опыта теперь |cffFFFFFF1x|r.'),
+('mod-cc-smartstone', 66, 'ruRU', 'Получение опыта |cffFF4C4Cотключено|r. Вернитесь сюда, чтобы снова его включить.'),
+('mod-cc-smartstone', 67, 'ruRU', 'Получение опыта |cff4CFF00включено|r.'),
 
 
 -- koKR
@@ -468,6 +493,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'koKR', '코스튬이 제거되었습니다. 전장이나 투기장에서는 코스튬을 사용할 수 없습니다.'),
 ('mod-cc-smartstone', 62, 'koKR', '{} — 특전 적용됨.'),
 ('mod-cc-smartstone', 63, 'koKR', '{} 특전에는 효과 {}에 대한 구현이 없습니다.'),
+('mod-cc-smartstone', 64, 'koKR', '경험치 배율이 이제 |cff4CFF002x|r입니다.'),
+('mod-cc-smartstone', 65, 'koKR', '경험치 배율이 이제 |cffFFFFFF1x|r입니다.'),
+('mod-cc-smartstone', 66, 'koKR', '경험치 획득이 |cffFF4C4C비활성화|r되었습니다. 다시 활성화하려면 여기로 돌아오십시오.'),
+('mod-cc-smartstone', 67, 'koKR', '경험치 획득이 |cff4CFF00활성화|r되었습니다.'),
 
 
 -- zhCN
@@ -534,6 +563,10 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 61, 'zhCN', '您的服装已被移除。服装不允许在战场或竞技场中使用。'),
 ('mod-cc-smartstone', 62, 'zhCN', '{} — 已应用特技。'),
 ('mod-cc-smartstone', 63, 'zhCN', '{}没有效果 {} 的实现。'),
+('mod-cc-smartstone', 64, 'zhCN', '您的经验倍率现在为 |cff4CFF002x|r。'),
+('mod-cc-smartstone', 65, 'zhCN', '您的经验倍率现在为 |cffFFFFFF1x|r。'),
+('mod-cc-smartstone', 66, 'zhCN', '经验获取已|cffFF4C4C禁用|r。返回此处可重新启用。'),
+('mod-cc-smartstone', 67, 'zhCN', '经验获取已|cff4CFF00启用|r。'),
 
 
 -- zhTW
@@ -599,4 +632,8 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 60, 'zhTW', '您的''{}''服裝已過期。'),
 ('mod-cc-smartstone', 61, 'zhTW', '您的服裝已被移除。服裝不允許在戰場或競技場中使用。'),
 ('mod-cc-smartstone', 62, 'zhTW', '{} — 已套用特技。'),
-('mod-cc-smartstone', 63, 'zhTW', '{}沒有效果 {} 的實作。');
+('mod-cc-smartstone', 63, 'zhTW', '{}沒有效果 {} 的實作。'),
+('mod-cc-smartstone', 64, 'zhTW', '您的經驗倍率現在為 |cff4CFF002x|r。'),
+('mod-cc-smartstone', 65, 'zhTW', '您的經驗倍率現在為 |cffFFFFFF1x|r。'),
+('mod-cc-smartstone', 66, 'zhTW', '經驗獲取已|cffFF4C4C停用|r。返回此處可重新啟用。'),
+('mod-cc-smartstone', 67, 'zhTW', '經驗獲取已|cff4CFF00啟用|r。');

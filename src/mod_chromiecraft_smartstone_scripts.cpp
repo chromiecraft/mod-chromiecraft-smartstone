@@ -12,6 +12,31 @@
 #include "Player.h"
 #include "Vehicle.h"
 
+#include <cstring>
+
+namespace
+{
+    // mod-weekend-xp setting namespace and slot indices. The module stores
+    // its rate as a `float` reinterpreted as `uint32` because PlayerSetting
+    // values are uint32; we mirror that encoding so its reader sees the
+    // intended float.
+    constexpr char const* WEEKEND_XP_SETTING_NS      = "mod-double-xp-weekend";
+    constexpr uint32      WEEKEND_XP_SETTING_RATE    = 0;
+    constexpr uint32      WEEKEND_XP_SETTING_DISABLE = 1;
+
+    // Shown in place of the DB-loaded service title for SERVICE_XP_RATE_DISABLED when the player already
+    // has PLAYER_FLAGS_NO_XP_GAIN set, so the same button doubles as a re-enable toggle.
+    constexpr char const* XP_RATE_ENABLE_BUTTON_TEXT =
+        "|TInterface/icons/Spell_Holy_BorrowedTime:30:30:-18:0|t Enable experience gains";
+
+    uint32 EncodeWeekendXpRate(float rate)
+    {
+        uint32 encoded = 0;
+        std::memcpy(&encoded, &rate, sizeof(encoded));
+        return encoded;
+    }
+}
+
 enum GameObjectEntry
 {
     GO_BARBERSHOP_CHAIR = 191029,
@@ -246,6 +271,49 @@ public:
                                 barber->DespawnOrUnsummon(4s);
                             }, sSmartstone->GetBarberDuration());
                         }
+                        break;
+                    }
+                    case SERVICE_XP_RATE_2X:
+                    {
+                        player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
+                            WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(2.0f));
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_2X);
+                        break;
+                    }
+                    case SERVICE_XP_RATE_1X:
+                    {
+                        player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
+                            WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(1.0f));
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_1X);
+                        break;
+                    }
+                    case SERVICE_XP_RATE_DISABLED:
+                    {
+                        // Single service id 4 toggles XP off/on. The button text shown by the menu builder
+                        // mirrors this state.
+                        if (player->HasPlayerFlag(PLAYER_FLAGS_NO_XP_GAIN))
+                        {
+                            // Re-enable. Allowed anywhere (no BG/arena gate on enabling — gating only
+                            // restricts disabling).
+                            player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_ENABLED);
+                            break;
+                        }
+
+                        if (player->InBattleground() || player->InArena())
+                        {
+                            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_BG_ARENA);
+                            break;
+                        }
+
+                        // Core check: Player::GiveXP short-circuits when this flag is set, regardless of XP
+                        // source. Same mechanism used by the Behsten/Slahtz NPCs in capital cities.
+                        player->SetPlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_DISABLED);
                         break;
                     }
                 }
@@ -767,8 +835,15 @@ public:
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
+                    // The Disable-XP service doubles as an Enable toggle when the player already has
+                    // PLAYER_FLAGS_NO_XP_GAIN set; swap the displayed label in that case (action handler
+                    // decides what to do based on the same flag).
+                    std::string serviceLabel = menuItem.Text;
+                    if (menuItem.ItemId == SERVICE_XP_RATE_DISABLED && player->HasPlayerFlag(PLAYER_FLAGS_NO_XP_GAIN))
+                        serviceLabel = XP_RATE_ENABLE_BUTTON_TEXT;
+
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
-                        menuItemIndex++, GOSSIP_ICON_CHAT, menuItem.Text, 0,
+                        menuItemIndex++, GOSSIP_ICON_CHAT, serviceLabel, 0,
                         sSmartstone->GetActionTypeId(ACTION_TYPE_SERVICE, menuItem.ItemId), "", 0);
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_VEHICLE)

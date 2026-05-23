@@ -91,7 +91,10 @@ enum UtilActions
 
 enum Service
 {
-    SERVICE_BARBERSHOP = 1,
+    SERVICE_BARBERSHOP        = 1,
+    SERVICE_XP_RATE_2X        = 2,
+    SERVICE_XP_RATE_1X        = 3,
+    SERVICE_XP_RATE_DISABLED  = 4,
 };
 
 /**
@@ -681,6 +684,11 @@ enum SmartstoneStringId : uint32
     // Perk messages (62-63)
     LANG_MOD_PERK_APPLIED              = 62,
     LANG_MOD_PERK_NO_IMPL              = 63,
+    // Experience-rate messages (64-67)
+    LANG_MOD_XP_RATE_2X                = 64,
+    LANG_MOD_XP_RATE_1X                = 65,
+    LANG_MOD_XP_RATE_DISABLED          = 66,
+    LANG_MOD_XP_RATE_ENABLED           = 67,
 };
 
 #define sSmartstone Smartstone::instance()
