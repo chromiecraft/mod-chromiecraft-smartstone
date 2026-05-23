@@ -20,6 +20,7 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "WorldSessionMgr.h"
 #include <algorithm>
 #include <unordered_set>
 
@@ -53,6 +54,7 @@ public:
         static ChatCommandTable smartstoneTable =
         {
             { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR,     Console::Yes },
+            { "unlock account", HandleSmartStoneUnlockAccountCommand, SEC_MODERATOR,     Console::Yes },
             { "reload",         HandleSmartstoneReloadCommand,        SEC_ADMINISTRATOR, Console::Yes },
             { "cooldowns",      HandleSmartstoneCooldownsCommand,     SEC_PLAYER,        Console::Yes },
             { "lookup",         smartstoneLookupTable },
@@ -918,6 +920,105 @@ public:
                 LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: Unknown service type {}.", serviceType);
                 return false;
         }
+
+        return true;
+    }
+
+    static bool HandleSmartStoneUnlockAccountCommand(ChatHandler* handler, AccountIdentifier account, uint8 serviceType, uint32 id, bool add)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint32 accountId = account.GetID();
+        std::string const& accountName = account.GetName();
+
+        auto sendDupError = [&](std::string_view desc) {
+            handler->PSendModuleSysMessage(ModName,
+                add ? LANG_MOD_SERVICE_ALREADY_UNLOCKED : LANG_MOD_SERVICE_ALREADY_LOCKED,
+                desc);
+            handler->SetSentErrorMessage(true);
+        };
+
+        auto sendSuccess = [&](std::string_view desc) {
+            handler->PSendModuleSysMessage(ModName,
+                add ? LANG_MOD_SERVICE_BEEN_UNLOCKED : LANG_MOD_SERVICE_BEEN_REMOVED,
+                desc, accountName);
+        };
+
+        sSmartstone->LoadAccountSettings(accountId);
+
+        switch (serviceType)
+        {
+            case ACTION_TYPE_COSTUME:
+            {
+                SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
+                if (!costume.DisplayId)
+                {
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_SERVICE_NOT_EXIST, id);
+                    handler->SetSentErrorMessage(true);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: The costume {} does not exist.", id);
+                    return false;
+                }
+
+                uint32 settingId = sSmartstone->GetShortId(id, serviceType);
+
+                if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
+                {
+                    sendDupError(costume.Description);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: The costume {} is already {} for account {}.", id, add ? "unlocked" : "locked", accountName);
+                    return false;
+                }
+
+                sSmartstone->UpdateAccountSetting(accountId, serviceType, settingId, add);
+                sendSuccess(costume.Description);
+                break;
+            }
+
+            case ACTION_TYPE_PERK:
+            {
+                SmartstonePerkData perk = sSmartstone->GetPerkData(id);
+                if (!perk.Id)
+                {
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
+                    handler->SetSentErrorMessage(true);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: The perk {} does not exist.", id);
+                    return false;
+                }
+
+                uint32 perkSlot = Smartstone::GetPerkAccountSettingForClass(perk.ClassId);
+                if (!perkSlot)
+                {
+                    handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
+                    handler->SetSentErrorMessage(true);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: Perk {} has unsupported ClassId {}.", id, perk.ClassId);
+                    return false;
+                }
+
+                if (sSmartstone->GetAccountSetting(accountId, perkSlot, perk.Id).IsEnabled() == add)
+                {
+                    sendDupError(perk.Title);
+                    LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: The perk {} is already {} for account {}.", id, add ? "unlocked" : "locked", accountName);
+                    return false;
+                }
+
+                sSmartstone->UpdateAccountSetting(accountId, perkSlot, perk.Id, add);
+                sendSuccess(perk.Title);
+                break;
+            }
+
+            default:
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_UNKNOWN_SERVICE_TYPE);
+                handler->SetSentErrorMessage(true);
+                LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: Service type {} is not account-wide. Use 'unlock service' instead.", serviceType);
+                return false;
+        }
+
+        if (!sWorldSessionMgr->FindSession(accountId))
+            sSmartstone->ClearAccountSettings(accountId);
 
         return true;
     }
