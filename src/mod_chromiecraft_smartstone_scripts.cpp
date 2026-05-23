@@ -23,11 +23,18 @@ namespace
     constexpr char const* WEEKEND_XP_SETTING_NS      = "mod-double-xp-weekend";
     constexpr uint32      WEEKEND_XP_SETTING_RATE    = 0;
     constexpr uint32      WEEKEND_XP_SETTING_DISABLE = 1;
+    // Slot 3: per-player Joyous Journeys opt-out. 0 = receiving bonus (default), 1 = opted out.
+    constexpr uint32      WEEKEND_XP_SETTING_JJ      = 3;
 
     // Shown in place of the DB-loaded service title for SERVICE_XP_RATE_DISABLED when the player already
     // has PLAYER_FLAGS_NO_XP_GAIN set, so the same button doubles as a re-enable toggle.
     constexpr char const* XP_RATE_ENABLE_BUTTON_TEXT =
         "|TInterface/icons/Spell_Holy_BorrowedTime:30:30:-18:0|t Enable experience gains";
+
+    // Same toggle pattern for the Joyous Journeys button: DB row text is the "disable" variant (default
+    // player state has the bonus active), and we swap to this when the player has opted out.
+    constexpr char const* JOYOUS_JOURNEYS_ENABLE_BUTTON_TEXT =
+        "|TInterface/icons/INV_Misc_PocketWatch_01:30:30:-18:0|t Enable Joyous Journeys";
 
     uint32 EncodeWeekendXpRate(float rate)
     {
@@ -314,6 +321,18 @@ public:
                         // source. Same mechanism used by the Behsten/Slahtz NPCs in capital cities.
                         player->SetPlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_DISABLED);
+                        break;
+                    }
+                    case SERVICE_JOYOUS_JOURNEYS:
+                    {
+                        // The slot is an opt-out flag: 0 = receiving bonus, 1 = opted out. Toggle it,
+                        // then ack with the matching message. Visibility gating (event-active check)
+                        // happens in the menu builder, so we don't repeat it here.
+                        uint32 current = player->GetPlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_JJ).value;
+                        uint32 toggled = (current == 0) ? 1u : 0u;
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_JJ, toggled);
+                        uint32 ackId = toggled ? LANG_MOD_JOYOUS_JOURNEYS_DISABLED : LANG_MOD_JOYOUS_JOURNEYS_ENABLED;
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, ackId);
                         break;
                     }
                 }
@@ -753,7 +772,9 @@ public:
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
-                    if (subscriptionLevel >= menuItem.SubscriptionLevelRequired)
+                    // Hide the Joyous Journeys toggle when the server-side event is not active.
+                    bool gated = menuItem.ItemId == SERVICE_JOYOUS_JOURNEYS && !sSmartstone->IsJoyousJourneysActive();
+                    if (!gated && subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_VEHICLE)
@@ -835,12 +856,18 @@ public:
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
-                    // The Disable-XP service doubles as an Enable toggle when the player already has
-                    // PLAYER_FLAGS_NO_XP_GAIN set; swap the displayed label in that case (action handler
-                    // decides what to do based on the same flag).
+                    // Toggle-style services swap their displayed label based on the player's current
+                    // state. The action handler keys off the same state, so the button is never
+                    // ambiguous.
                     std::string serviceLabel = menuItem.Text;
                     if (menuItem.ItemId == SERVICE_XP_RATE_DISABLED && player->HasPlayerFlag(PLAYER_FLAGS_NO_XP_GAIN))
                         serviceLabel = XP_RATE_ENABLE_BUTTON_TEXT;
+                    else if (menuItem.ItemId == SERVICE_JOYOUS_JOURNEYS)
+                    {
+                        uint32 jjOptOut = player->GetPlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_JJ).value;
+                        if (jjOptOut != 0)
+                            serviceLabel = JOYOUS_JOURNEYS_ENABLE_BUTTON_TEXT;
+                    }
 
                     player->PlayerTalkClass->GetGossipMenu().AddMenuItem(
                         menuItemIndex++, GOSSIP_ICON_CHAT, serviceLabel, 0,
@@ -916,6 +943,9 @@ public:
         sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
         sSmartstone->SetIndividualCostumeCooldowns(sConfigMgr->GetOption("ModChromiecraftSmartstone.IndividualCostumeCooldowns", false));
         sSmartstone->SetCostumeConvertEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.CostumeConvert.Enable", false));
+        // Cached from mod-weekend-xp so the Joyous Journeys button in the Experience-rates submenu can
+        // gate its own visibility without reading sConfigMgr at runtime.
+        sSmartstone->SetJoyousJourneysActive(sConfigMgr->GetOption<bool>("XPWeekend.IsJoyousJourneysActive", false));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();

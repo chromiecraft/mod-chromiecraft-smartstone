@@ -95,6 +95,7 @@ enum Service
     SERVICE_XP_RATE_2X        = 2,
     SERVICE_XP_RATE_1X        = 3,
     SERVICE_XP_RATE_DISABLED  = 4,
+    SERVICE_JOYOUS_JOURNEYS   = 5,
 };
 
 /**
@@ -291,6 +292,10 @@ private:
     bool IsDebugEnabled{ false };
     bool IndividualCostumeCooldowns{ false };
     bool CostumeConvertEnabled{ false };
+    // Cached on startup from mod-weekend-xp's XPWeekend.IsJoyousJourneysActive
+    // config so the Joyous Journeys toggle button can hide itself when the
+    // event is off, without re-reading sConfigMgr at runtime.
+    bool JoyousJourneysActive{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -334,6 +339,9 @@ public:
 
     void SetCostumeConvertEnabled(bool enabled) { CostumeConvertEnabled = enabled; }
     [[nodiscard]] bool IsCostumeConvertEnabled() const { return CostumeConvertEnabled; }
+
+    void SetJoyousJourneysActive(bool active) { JoyousJourneysActive = active; }
+    [[nodiscard]] bool IsJoyousJourneysActive() const { return JoyousJourneysActive; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
@@ -689,6 +697,9 @@ enum SmartstoneStringId : uint32
     LANG_MOD_XP_RATE_1X                = 65,
     LANG_MOD_XP_RATE_DISABLED          = 66,
     LANG_MOD_XP_RATE_ENABLED           = 67,
+    // Joyous Journeys toggle (68-69)
+    LANG_MOD_JOYOUS_JOURNEYS_ENABLED   = 68,
+    LANG_MOD_JOYOUS_JOURNEYS_DISABLED  = 69,
 };
 
 #define sSmartstone Smartstone::instance()

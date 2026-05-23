@@ -11,12 +11,15 @@ INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `Subscript
 (5,3,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0, 92006,1),
 (9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1);
 
-DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4);
+DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5);
 INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
 (1, 4, '|TInterface/icons/Spell_Misc_ConjureManaJewel:30:30:-18:0|t Request Barber Services', 2, 1),
 (2, 9, '|TInterface/icons/Spell_ChargePositive:30:30:-18:0|t 2x experience (default)', 0, 1),
 (3, 9, '|TInterface/icons/Spell_Holy_BorrowedTime:30:30:-18:0|t 1x experience', 0, 1),
-(4, 9, '|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Disable experience gains', 0, 1);
+(4, 9, '|TInterface/icons/Spell_ChargeNegative:30:30:-18:0|t Disable experience gains', 0, 1),
+-- The C++ menu builder hides this row when XPWeekend.IsJoyousJourneysActive is false,
+-- and swaps the label to "Enable Joyous Journeys" when the player has opted out.
+(5, 9, '|TInterface/icons/INV_Misc_PocketWatch_01:30:30:-18:0|t Disable Joyous Journeys', 0, 1);
 
 DELETE FROM `smartstone_costumes` WHERE `Id` IN (20001, 20002);
 INSERT INTO `smartstone_costumes` (`Id`, `DisplayId`, `Category`, `SubscriptionLevel`, `Duration`, `Description`, `Enabled`) VALUES
