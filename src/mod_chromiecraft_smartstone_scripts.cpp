@@ -248,6 +248,18 @@ public:
                         sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_TREE);
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_MOONKIN_FORM:
+                    {
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_MOONKIN, 0);
+                        sSmartstone->RestoreDefaultFormDisplay(player, DRUID_FORM_MOONKIN);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_GHOST_WOLF_FORM:
+                    {
+                        sSmartstone->SetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF, 0);
+                        sSmartstone->RestoreDefaultShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF);
+                        break;
+                    }
                 }
                 break;
             }
@@ -560,6 +572,12 @@ public:
                     case PERK_EFFECT_DRUID_FORM_TREE:
                         sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_TREE, perk.Value);
                         break;
+                    case PERK_EFFECT_DRUID_FORM_MOONKIN:
+                        sSmartstone->SetDruidFormDisplay(player, DRUID_FORM_MOONKIN, perk.Value);
+                        break;
+                    case PERK_EFFECT_SHAMAN_GHOST_WOLF:
+                        sSmartstone->SetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF, perk.Value);
+                        break;
                     default:
                         handled = false;
                         break;
@@ -756,6 +774,16 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Tree of Life display",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_TREE_FORM), "", 0);
+
+            if (sSmartstone->GetDruidFormDisplay(player, DRUID_FORM_MOONKIN))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Moonkin Form display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_MOONKIN_FORM), "", 0);
+
+            if (sSmartstone->GetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Ghost Wolf display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_GHOST_WOLF_FORM), "", 0);
 
             /**
              * Paginated items
@@ -1010,10 +1038,12 @@ public:
         {
             sSmartstone->LoadAccountSettings(player->GetSession()->GetAccountId());
 
-            // Re-apply druid form display override after engine finishes
-            // restoring auras / display id from saved character data.
+            // Re-apply druid / shaman form display overrides after the
+            // engine finishes restoring auras / display id from saved
+            // character data.
             player->m_Events.AddEventAtOffset([player] {
                 sSmartstone->ReapplyActiveDruidFormDisplay(player);
+                sSmartstone->ReapplyActiveShamanFormDisplay(player);
             }, 1s);
         }
     }
@@ -1049,8 +1079,9 @@ public:
             }
 
             // Map change reapplies form auras the same way login does;
-            // re-stamp the druid form display override.
+            // re-stamp druid + shaman form display overrides.
             sSmartstone->ReapplyActiveDruidFormDisplay(player);
+            sSmartstone->ReapplyActiveShamanFormDisplay(player);
         }, 1s);
     }
 };

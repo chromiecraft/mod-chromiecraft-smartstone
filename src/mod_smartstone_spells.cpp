@@ -4,19 +4,26 @@
  *
  * Smartstone-owned spell scripts.
  *
- * spell_dru_form_display_override:
- *   Generic AuraScript bound to the four druid form spells. Reads a
- *   per-player setting (#druid_form namespace) to find the displayId to
- *   apply when the form is taken. A zero/missing setting means "use the
- *   default model" — the script becomes a no-op in that case.
+ * spell_smartstone_form_display_override:
+ *   Generic AuraScript bound to every form spell exposed by the perks
+ *   system. The spell's id is mapped to (namespace, slot); the script
+ *   reads the matching per-player setting and overrides the displayId
+ *   when a non-zero value is stored. Zero / missing setting = no-op.
  *
- *   Slot mapping (see DruidFormSlot in Smartstone.h):
- *     0 - Bear / Dire Bear  (spell ids 5487, 9634)
- *     1 - Cat               (spell id   768)
- *     2 - Travel            (spell id   783)
- *     3 - Flight / Swift    (spell ids 33943, 40120)
- *     4 - Aquatic           (spell id  1066)
- *     5 - Tree of Life      (spell id 33891)
+ *   Bindings:
+ *     Druid (#druid_form):
+ *       0 - Bear / Dire Bear  (spell ids 5487, 9634)
+ *       1 - Cat               (spell id   768)
+ *       2 - Travel            (spell id   783)
+ *       3 - Flight / Swift    (spell ids 33943, 40120)
+ *       4 - Aquatic           (spell id  1066)
+ *       5 - Tree of Life      (spell id 33891)
+ *       6 - Moonkin           (spell id 24858)
+ *     Shaman (#shaman_form):
+ *       0 - Ghost Wolf        (spell id  2645)
+ *
+ *   In BG / arena the override is suppressed — the engine's default
+ *   model is left in place.
  */
 
 #include "ScriptMgr.h"
@@ -26,30 +33,38 @@
 #include "SpellScript.h"
 #include "Unit.h"
 
-class spell_dru_form_display_override : public AuraScript
+class spell_smartstone_form_display_override : public AuraScript
 {
-    PrepareAuraScript(spell_dru_form_display_override);
+    PrepareAuraScript(spell_smartstone_form_display_override);
 
-    bool Load() override
+    // Which namespace + slot a spell id maps to. `isShaman == false`
+    // means the druid namespace (#druid_form); true means shaman.
+    struct SlotInfo
     {
-        // Only run for player casters. Shapeshift form auras are self-cast,
-        // so this also rules out anything cast by NPCs / pets.
-        Unit* caster = GetCaster();
-        return caster && caster->IsPlayer();
-    }
+        int32 slot;       // -1 if the spell id isn't mapped.
+        bool  isShaman;
+    };
 
-    static int32 GetSlotForSpell(uint32 spellId)
+    static SlotInfo GetSlotForSpell(uint32 spellId)
     {
         switch (spellId)
         {
-            case 5487: case 9634:   return DRUID_FORM_BEAR;
-            case 768:               return DRUID_FORM_CAT;
-            case 783:               return DRUID_FORM_TRAVEL;
-            case 33943: case 40120: return DRUID_FORM_FLIGHT;
-            case 1066:              return DRUID_FORM_AQUATIC;
-            case 33891:             return DRUID_FORM_TREE;
-            default:                return -1;
+            case  5487: case 9634:  return { DRUID_FORM_BEAR,         false };
+            case   768:             return { DRUID_FORM_CAT,          false };
+            case   783:             return { DRUID_FORM_TRAVEL,       false };
+            case 33943: case 40120: return { DRUID_FORM_FLIGHT,       false };
+            case  1066:             return { DRUID_FORM_AQUATIC,      false };
+            case 33891:             return { DRUID_FORM_TREE,         false };
+            case 24858:             return { DRUID_FORM_MOONKIN,      false };
+            case  2645:             return { SHAMAN_FORM_GHOST_WOLF,  true  };
+            default:                return { -1,                      false };
         }
+    }
+
+    bool Load() override
+    {
+        Unit* caster = GetCaster();
+        return caster && caster->IsPlayer();
     }
 
     void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -62,30 +77,38 @@ class spell_dru_form_display_override : public AuraScript
         if (!player)
             return;
 
-        int32 slot = GetSlotForSpell(GetSpellInfo()->Id);
-        if (slot < 0)
+        SlotInfo info = GetSlotForSpell(GetSpellInfo()->Id);
+        if (info.slot < 0)
             return;
 
-        // Form display overrides are never honoured inside battlegrounds
-        // or arenas — keep the default model so opponents can't be misled
-        // by custom skins.
+        // Suppress overrides inside BG / arena — opponents shouldn't be
+        // misled by custom skins.
         if (player->InBattleground() || player->InArena())
             return;
 
-        uint32 displayId = sSmartstone->GetDruidFormDisplay(player, static_cast<uint8>(slot));
-        if (displayId)
-            target->SetDisplayId(displayId);
+        uint32 displayId = info.isShaman
+            ? sSmartstone->GetShamanFormDisplay(player, static_cast<uint8>(info.slot))
+            : sSmartstone->GetDruidFormDisplay(player, static_cast<uint8>(info.slot));
+
+        if (!displayId)
+            return;
+
+        // Shaman ghost-wolf-derived creature models render much larger
+        // than the player; shrink to fit. Druid form models match the
+        // existing form scale already.
+        float scale = info.isShaman ? 0.5f : 1.0f;
+        target->SetDisplayId(displayId, scale);
     }
 
     void Register() override
     {
         AfterEffectApply += AuraEffectApplyFn(
-            spell_dru_form_display_override::HandleApply,
+            spell_smartstone_form_display_override::HandleApply,
             EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
 void AddSC_smartstone_spells()
 {
-    RegisterSpellScript(spell_dru_form_display_override);
+    RegisterSpellScript(spell_smartstone_form_display_override);
 }

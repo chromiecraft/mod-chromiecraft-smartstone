@@ -53,7 +53,15 @@ enum DruidFormSlot
     DRUID_FORM_FLIGHT  = 3,
     DRUID_FORM_AQUATIC = 4,
     DRUID_FORM_TREE    = 5,
+    DRUID_FORM_MOONKIN = 6,
     MAX_DRUID_FORM_SLOTS
+};
+
+// Per-player setting indices for the "#shaman_form" namespace.
+enum ShamanFormSlot
+{
+    SHAMAN_FORM_GHOST_WOLF = 0,
+    MAX_SHAMAN_FORM_SLOTS
 };
 
 // Account-setting slot range for class perks. One slot per class so
@@ -90,6 +98,8 @@ enum UtilActions
     SMARTSTONE_ACTION_RESET_FLIGHT_FORM      = 11,
     SMARTSTONE_ACTION_RESET_AQUATIC_FORM     = 12,
     SMARTSTONE_ACTION_RESET_TREE_FORM        = 13,
+    SMARTSTONE_ACTION_RESET_MOONKIN_FORM     = 14,
+    SMARTSTONE_ACTION_RESET_GHOST_WOLF_FORM  = 15,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -243,6 +253,8 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_DRUID_FORM_FLIGHT   = 4,
     PERK_EFFECT_DRUID_FORM_AQUATIC  = 5,
     PERK_EFFECT_DRUID_FORM_TREE     = 6,
+    PERK_EFFECT_DRUID_FORM_MOONKIN  = 7,
+    PERK_EFFECT_SHAMAN_GHOST_WOLF   = 8,
 };
 
 struct SmartstonePerkData
@@ -470,6 +482,18 @@ public:
         return player->GetPlayerSetting(ModName + "#druid_form", slot).value;
     }
 
+    // Shaman form display overrides (per-character). Currently only
+    // SHAMAN_FORM_GHOST_WOLF; add slots here if more shaman forms are
+    // ever exposed.
+    void SetShamanFormDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#shaman_form", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetShamanFormDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#shaman_form", slot).value;
+    }
+
     // If the player is currently shapeshifted into the form matching
     // `slot`, restore the canonical model for that form/race/gender so
     // a freshly cleared override is reflected immediately (otherwise
@@ -492,6 +516,7 @@ public:
             case FORM_FLIGHT_EPIC: currentSlot = DRUID_FORM_FLIGHT; spellId = 40120; break;
             case FORM_AQUA:        currentSlot = DRUID_FORM_AQUATIC; spellId = 1066; break;
             case FORM_TREE:        currentSlot = DRUID_FORM_TREE;    spellId = 33891; break;
+            case FORM_MOONKIN:     currentSlot = DRUID_FORM_MOONKIN; spellId = 24858; break;
             default:               return;
         }
 
@@ -524,6 +549,7 @@ public:
             case FORM_FLIGHT_EPIC: slot = DRUID_FORM_FLIGHT; spellId = 40120; break;
             case FORM_AQUA:        slot = DRUID_FORM_AQUATIC; spellId = 1066; break;
             case FORM_TREE:        slot = DRUID_FORM_TREE;    spellId = 33891; break;
+            case FORM_MOONKIN:     slot = DRUID_FORM_MOONKIN; spellId = 24858; break;
             default:               return;
         }
 
@@ -538,6 +564,46 @@ public:
 
         if (uint32 displayId = GetDruidFormDisplay(player, slot))
             player->SetDisplayId(displayId);
+    }
+
+    // Shaman ghost-wolf creature models are oversized at scale 1.0; the
+    // override applies them at 0.5 so they sit at player height.
+    static constexpr float SHAMAN_GHOST_WOLF_OVERRIDE_SCALE = 0.5f;
+
+    // Shaman counterpart of RestoreDefaultFormDisplay. Currently only one
+    // form (Ghost Wolf), but kept slot-parameterised for symmetry.
+    void RestoreDefaultShamanFormDisplay(Player* player, uint8 slot)
+    {
+        if (!player)
+            return;
+
+        ShapeshiftForm form = player->GetShapeshiftForm();
+        if (form != FORM_GHOSTWOLF || slot != SHAMAN_FORM_GHOST_WOLF)
+            return;
+
+        if (uint32 model = player->GetModelForForm(form, 2645)) // Ghost Wolf
+            player->SetDisplayId(model, 1.0f);
+    }
+
+    // Shaman counterpart of ReapplyActiveDruidFormDisplay. In BG / arena
+    // forces the canonical model; otherwise re-stamps the saved override.
+    void ReapplyActiveShamanFormDisplay(Player* player)
+    {
+        if (!player)
+            return;
+
+        if (player->GetShapeshiftForm() != FORM_GHOSTWOLF)
+            return;
+
+        if (player->InBattleground() || player->InArena())
+        {
+            if (uint32 model = player->GetModelForForm(FORM_GHOSTWOLF, 2645))
+                player->SetDisplayId(model, 1.0f);
+            return;
+        }
+
+        if (uint32 displayId = GetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF))
+            player->SetDisplayId(displayId, SHAMAN_GHOST_WOLF_OVERRIDE_SCALE);
     }
 
     [[nodiscard]] std::string GetServiceName(uint8 serviceType) const;
