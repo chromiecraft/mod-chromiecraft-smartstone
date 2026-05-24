@@ -55,6 +55,11 @@ public:
             { "convert", HandleSmartstoneCostumeConvertCommand, SEC_PLAYER, Console::No },
         };
 
+        static ChatCommandTable smartstoneDebugTable =
+        {
+            { "costume", HandleSmartstoneDebugCostumeCommand, SEC_GAMEMASTER, Console::No },
+        };
+
         static ChatCommandTable smartstoneTable =
         {
             { "unlock service", HandleSmartStoneUnlockServiceCommand, SEC_MODERATOR,     Console::Yes },
@@ -64,6 +69,7 @@ public:
             { "lookup",         smartstoneLookupTable },
             { "use",            smartstoneUseTable },
             { "costume",        smartstoneCostumeTable },
+            { "debug",          smartstoneDebugTable },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
         };
 
@@ -1106,6 +1112,94 @@ public:
     {
         sSmartstone->LoadSmartstoneData();
         handler->PSendModuleSysMessage(ModName, LANG_MOD_DATA_RELOADED);
+        return true;
+    }
+
+    static bool HandleSmartstoneDebugCostumeCommand(ChatHandler* handler, uint32 id, Optional<PlayerIdentifier> target)
+    {
+        if (!target)
+            target = PlayerIdentifier::FromSelf(handler);
+
+        if (!target)
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DEBUG_NO_TARGET);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player* player = target->GetConnectedPlayer();
+        if (!player)
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DEBUG_TARGET_OFFLINE, target->GetName());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        SmartstoneCostumeData costume = sSmartstone->GetCostumeData(id);
+        if (!costume.Id)
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_NOT_EXIST, id);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint8 membership = player->IsGameMaster()
+            ? 3
+            : player->GetPlayerSetting(SubsModName, SETTING_MEMBERSHIP_LEVEL).value;
+
+        Milliseconds effectiveDuration = sSmartstone->GetCostumeDuration(player, costume.Duration);
+        uint32 effectiveDurationSec =
+            std::chrono::duration_cast<std::chrono::seconds>(effectiveDuration).count();
+        bool unlimited = (effectiveDuration <= 0s);
+
+        bool individual = sSmartstone->HasIndividualCostumeCooldowns();
+        uint32 now = GameTime::GetGameTime().count();
+
+        uint32 cooldownRemaining = 0;
+        uint32 cooldownTotal = 0;
+        bool cooldownActive = false;
+
+        if (individual)
+        {
+            uint32 cooldownExpire = player->GetPlayerSetting(ModName + "#ccd", id).value;
+            cooldownActive = cooldownExpire > now;
+            cooldownRemaining = cooldownActive ? (cooldownExpire - now) : 0;
+            cooldownTotal = costume.Cooldown
+                ? costume.Cooldown
+                : std::chrono::duration_cast<std::chrono::seconds>(30min).count();
+        }
+        else
+        {
+            cooldownRemaining = player->GetSpellCooldownDelay(90002) / 1000;
+            cooldownActive = cooldownRemaining > 0;
+            cooldownTotal = std::chrono::duration_cast<std::chrono::seconds>(30min).count();
+        }
+
+        uint32 elapsedSinceApply = cooldownActive && cooldownRemaining <= cooldownTotal
+            ? cooldownTotal - cooldownRemaining
+            : 0;
+
+        bool inGrace = sSmartstone->IsInCostumeGracePeriod(player, id);
+        bool hasCooldown = sSmartstone->HasCostumeCooldown(player, id);
+        uint32 reportedRemaining = sSmartstone->GetCostumeCooldownRemaining(player, id);
+
+        std::string effectiveDurationStr = unlimited
+            ? "0 (unlimited)"
+            : std::to_string(effectiveDurationSec);
+
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_DEBUG_COSTUME_DUMP,
+            costume.Id, costume.Description, target->GetName(),
+            costume.DisplayId, costume.Duration, costume.Cooldown,
+            uint32(membership), effectiveDurationStr,
+            individual ? "individual (#ccd)" : "shared (spell 90002)",
+            cooldownTotal,
+            cooldownActive ? "yes" : "no",
+            cooldownRemaining, cooldownRemaining / 60, cooldownRemaining % 60,
+            elapsedSinceApply,
+            inGrace ? "true" : "false",
+            hasCooldown ? "true" : "false",
+            reportedRemaining);
+
         return true;
     }
 };

@@ -859,6 +859,10 @@ enum SmartstoneStringId : uint32
     LANG_MOD_SERVICE_UNLOCK_NOTIFY     = 70,
     LANG_MOD_SERVICE_UNLOCK_MAIL_SUBJ  = 71,
     LANG_MOD_SERVICE_UNLOCK_MAIL_BODY  = 72,
+    // Debug command messages (73-75)
+    LANG_MOD_DEBUG_NO_TARGET           = 73,
+    LANG_MOD_DEBUG_TARGET_OFFLINE      = 74,
+    LANG_MOD_DEBUG_COSTUME_DUMP        = 75,
 };
 
 #define sSmartstone Smartstone::instance()

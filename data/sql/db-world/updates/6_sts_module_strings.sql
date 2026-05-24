@@ -82,7 +82,11 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 -- Service unlock notifications (70-72)
 ('mod-cc-smartstone', 70, 'You have unlocked a new {}: ''{}''! You can find it in your smartstone.'),
 ('mod-cc-smartstone', 71, 'Smartstone unlock: {} – {}'),
-('mod-cc-smartstone', 72, 'You have unlocked a new {}: ''{}''!\n\nYou can find it in your smartstone.');
+('mod-cc-smartstone', 72, 'You have unlocked a new {}: ''{}''!\n\nYou can find it in your smartstone.'),
+-- Debug command messages (73-75)
+('mod-cc-smartstone', 73, 'No target specified.'),
+('mod-cc-smartstone', 74, 'Target ''{}'' is offline. This command requires an online player.'),
+('mod-cc-smartstone', 75, '[Debug] Costume {} ({}) on {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Player: membership={}, effective duration={}\n  Mode: {}, cooldown total={}s\n  Cooldown active={}, remaining={}s (~{}m {}s), elapsed={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 
@@ -159,6 +163,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'deDE', 'Du hast ein neues {} freigeschaltet: ''{}''! Du findest es in deinem Smartstone.'),
 ('mod-cc-smartstone', 71, 'deDE', 'Smartstone-Freischaltung: {} – {}'),
 ('mod-cc-smartstone', 72, 'deDE', 'Du hast ein neues {} freigeschaltet: ''{}''!\n\nDu findest es in deinem Smartstone.'),
+('mod-cc-smartstone', 73, 'deDE', 'Kein Ziel angegeben.'),
+('mod-cc-smartstone', 74, 'deDE', 'Das Ziel ''{}'' ist offline. Dieser Befehl erfordert einen Online-Spieler.'),
+('mod-cc-smartstone', 75, 'deDE', '[Debug] Kostüm {} ({}) auf {}:\n  DB: DisplayId={}, Duration={} (Rohwert), Cooldown={}s\n  Spieler: Mitgliedschaft={}, effektive Dauer={}\n  Modus: {}, Cooldown gesamt={}s\n  Cooldown aktiv={}, verbleibend={}s (~{}m {}s), vergangen={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- frFR
@@ -234,6 +241,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'frFR', 'Vous avez déverrouillé un nouveau {} : ''{}'' ! Vous le trouverez dans votre smartstone.'),
 ('mod-cc-smartstone', 71, 'frFR', 'Déverrouillage Smartstone : {} – {}'),
 ('mod-cc-smartstone', 72, 'frFR', 'Vous avez déverrouillé un nouveau {} : ''{}'' !\n\nVous le trouverez dans votre smartstone.'),
+('mod-cc-smartstone', 73, 'frFR', 'Aucune cible spécifiée.'),
+('mod-cc-smartstone', 74, 'frFR', 'La cible ''{}'' est hors ligne. Cette commande nécessite un joueur en ligne.'),
+('mod-cc-smartstone', 75, 'frFR', '[Debug] Costume {} ({}) sur {} :\n  DB : DisplayId={}, Duration={} (brut), Cooldown={}s\n  Joueur : abonnement={}, durée effective={}\n  Mode : {}, cooldown total={}s\n  Cooldown actif={}, restant={}s (~{}m {}s), écoulé={}s\n  Grace : InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- esES
@@ -309,6 +319,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'esES', '¡Has desbloqueado un nuevo {}: ''{}''! Lo encontrarás en tu smartstone.'),
 ('mod-cc-smartstone', 71, 'esES', 'Desbloqueo de Smartstone: {} – {}'),
 ('mod-cc-smartstone', 72, 'esES', '¡Has desbloqueado un nuevo {}: ''{}''!\n\nLo encontrarás en tu smartstone.'),
+('mod-cc-smartstone', 73, 'esES', 'No se especificó ningún objetivo.'),
+('mod-cc-smartstone', 74, 'esES', 'El objetivo ''{}'' está desconectado. Este comando requiere un jugador en línea.'),
+('mod-cc-smartstone', 75, 'esES', '[Debug] Disfraz {} ({}) en {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Jugador: suscripción={}, duración efectiva={}\n  Modo: {}, cooldown total={}s\n  Cooldown activo={}, restante={}s (~{}m {}s), transcurrido={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- esMX
@@ -384,6 +397,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'esMX', '¡Has desbloqueado un nuevo {}: ''{}''! Lo encontrarás en tu smartstone.'),
 ('mod-cc-smartstone', 71, 'esMX', 'Desbloqueo de Smartstone: {} – {}'),
 ('mod-cc-smartstone', 72, 'esMX', '¡Has desbloqueado un nuevo {}: ''{}''!\n\nLo encontrarás en tu smartstone.'),
+('mod-cc-smartstone', 73, 'esMX', 'No se especificó ningún objetivo.'),
+('mod-cc-smartstone', 74, 'esMX', 'El objetivo ''{}'' está desconectado. Este comando requiere un jugador en línea.'),
+('mod-cc-smartstone', 75, 'esMX', '[Debug] Disfraz {} ({}) en {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Jugador: suscripción={}, duración efectiva={}\n  Modo: {}, cooldown total={}s\n  Cooldown activo={}, restante={}s (~{}m {}s), transcurrido={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- ruRU
@@ -459,6 +475,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'ruRU', 'Вы разблокировали новый {}: ''{}''! Найти можно в вашем смартстоуне.'),
 ('mod-cc-smartstone', 71, 'ruRU', 'Разблокировка Смартстоуна: {} – {}'),
 ('mod-cc-smartstone', 72, 'ruRU', 'Вы разблокировали новый {}: ''{}''!\n\nНайти можно в вашем смартстоуне.'),
+('mod-cc-smartstone', 73, 'ruRU', 'Цель не указана.'),
+('mod-cc-smartstone', 74, 'ruRU', 'Цель ''{}'' не в сети. Эта команда требует игрока, находящегося в сети.'),
+('mod-cc-smartstone', 75, 'ruRU', '[Debug] Костюм {} ({}) на {}:\n  DB: DisplayId={}, Duration={} (сырое), Cooldown={}с\n  Игрок: подписка={}, эффективная длительность={}\n  Режим: {}, cooldown всего={}с\n  Cooldown активен={}, осталось={}с (~{}м {}с), прошло={}с\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- koKR
@@ -534,6 +553,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'koKR', '새로운 {}을(를) 잠금 해제했습니다: ''{}''! Smartstone에서 확인할 수 있습니다.'),
 ('mod-cc-smartstone', 71, 'koKR', 'Smartstone 잠금 해제: {} – {}'),
 ('mod-cc-smartstone', 72, 'koKR', '새로운 {}을(를) 잠금 해제했습니다: ''{}''!\n\nSmartstone에서 확인할 수 있습니다.'),
+('mod-cc-smartstone', 73, 'koKR', '대상이 지정되지 않았습니다.'),
+('mod-cc-smartstone', 74, 'koKR', '대상 ''{}''이(가) 오프라인입니다. 이 명령에는 온라인 플레이어가 필요합니다.'),
+('mod-cc-smartstone', 75, 'koKR', '[Debug] 코스튬 {} ({}) - 대상={}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}초\n  플레이어: 멤버십={}, 유효 지속시간={}\n  모드: {}, 총 cooldown={}초\n  Cooldown 활성={}, 남은시간={}초 (~{}분 {}초), 경과={}초\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- zhCN
@@ -609,6 +631,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 70, 'zhCN', '您已解锁新的{}：''{}''！可以在您的 Smartstone 中找到。'),
 ('mod-cc-smartstone', 71, 'zhCN', 'Smartstone 解锁：{} – {}'),
 ('mod-cc-smartstone', 72, 'zhCN', '您已解锁新的{}：''{}''！\n\n可以在您的 Smartstone 中找到。'),
+('mod-cc-smartstone', 73, 'zhCN', '未指定目标。'),
+('mod-cc-smartstone', 74, 'zhCN', '目标 ''{}'' 已离线。此命令需要在线玩家。'),
+('mod-cc-smartstone', 75, 'zhCN', '[Debug] 服装 {} ({}) 在 {}:\n  DB: DisplayId={}, Duration={} (原始), Cooldown={}秒\n  玩家: 会员={}, 有效持续时间={}\n  模式: {}, 总冷却={}秒\n  冷却激活={}, 剩余={}秒 (~{}分 {}秒), 已过={}秒\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 
 
 -- zhTW
@@ -683,4 +708,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 69, 'zhTW', '歡樂旅程已|cffFF4C4C停用|r——經驗加成將不會被套用。'),
 ('mod-cc-smartstone', 70, 'zhTW', '您已解鎖新的{}：''{}''！可以在您的 Smartstone 中找到。'),
 ('mod-cc-smartstone', 71, 'zhTW', 'Smartstone 解鎖：{} – {}'),
-('mod-cc-smartstone', 72, 'zhTW', '您已解鎖新的{}：''{}''！\n\n可以在您的 Smartstone 中找到。');
+('mod-cc-smartstone', 72, 'zhTW', '您已解鎖新的{}：''{}''！\n\n可以在您的 Smartstone 中找到。'),
+('mod-cc-smartstone', 73, 'zhTW', '未指定目標。'),
+('mod-cc-smartstone', 74, 'zhTW', '目標 ''{}'' 已離線。此指令需要線上玩家。'),
+('mod-cc-smartstone', 75, 'zhTW', '[Debug] 服裝 {} ({}) 在 {}:\n  DB: DisplayId={}, Duration={} (原始), Cooldown={}秒\n  玩家: 會員={}, 有效持續時間={}\n  模式: {}, 總冷卻={}秒\n  冷卻啟用={}, 剩餘={}秒 (~{}分 {}秒), 已過={}秒\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}');
