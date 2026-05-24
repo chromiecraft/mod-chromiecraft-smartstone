@@ -142,8 +142,13 @@ class spell_sha_feral_spirit_display : public SpellScript
         // By AfterCast the summon effects have run and the wolves are in
         // the caster's controlled set. Apply the override to each.
         for (Unit* controlled : player->m_Controlled)
+        {
             if (controlled && controlled->GetEntry() == SPIRIT_WOLF_ENTRY)
+            {
                 controlled->SetDisplayId(displayId);
+                controlled->SetObjectScale(0.6f);
+            }
+        }
     }
 
     void Register() override

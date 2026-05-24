@@ -45,7 +45,15 @@ public:
             return;
 
         if (uint32 displayId = sSmartstone->GetWarlockPetDisplay(owner, static_cast<uint8>(slot)))
+        {
             pet->SetDisplayId(displayId);
+
+            // Shivarra: model is oversized relative to the canonical
+            // succubus rig, so scale down to match.
+            constexpr uint32 SHIVARRA_DISPLAY_ID = 21503;
+            if (displayId == SHIVARRA_DISPLAY_ID)
+                pet->SetObjectScale(0.6f);
+        }
     }
 };
 
