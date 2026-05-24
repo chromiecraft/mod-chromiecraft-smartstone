@@ -1094,6 +1094,7 @@ public:
         sSmartstone->SetDebugEnabled(sConfigMgr->GetOption("ModChromiecraftSmartstone.Debug", false));
         sSmartstone->SetIndividualCostumeCooldowns(sConfigMgr->GetOption("ModChromiecraftSmartstone.IndividualCostumeCooldowns", false));
         sSmartstone->SetCostumeConvertEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.CostumeConvert.Enable", false));
+        sSmartstone->SetMailUnlocksEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.UnlockMail.Enable", false));
         sSmartstone->SetJoyousJourneysActive(sConfigMgr->GetOption<bool>("XPWeekend.IsJoyousJourneysActive", false));
         sSmartstone->SetResScrollEnabled(sConfigMgr->GetOption<bool>("ModResurrectionScroll.Enable", false));
 

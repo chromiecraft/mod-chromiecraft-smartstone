@@ -78,7 +78,11 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'Experience gains are now |cff4CFF00enabled|r.'),
 -- Joyous Journeys toggle (68-69)
 ('mod-cc-smartstone', 68, 'Joyous Journeys |cff4CFF00enabled|r — you will receive the bonus while the event is active.'),
-('mod-cc-smartstone', 69, 'Joyous Journeys |cffFF4C4Cdisabled|r — the bonus will not be applied to your experience.');
+('mod-cc-smartstone', 69, 'Joyous Journeys |cffFF4C4Cdisabled|r — the bonus will not be applied to your experience.'),
+-- Service unlock notifications (70-72)
+('mod-cc-smartstone', 70, 'You have unlocked a new {}: ''{}''! You can find it in your smartstone.'),
+('mod-cc-smartstone', 71, 'Smartstone unlock: {} – {}'),
+('mod-cc-smartstone', 72, 'You have unlocked a new {}: ''{}''!\n\nYou can find it in your smartstone.');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 
@@ -152,6 +156,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'deDE', 'Erfahrungsgewinne sind jetzt |cff4CFF00aktiviert|r.'),
 ('mod-cc-smartstone', 68, 'deDE', 'Freudige Reisen |cff4CFF00aktiviert|r — du erhältst den Bonus, solange das Ereignis aktiv ist.'),
 ('mod-cc-smartstone', 69, 'deDE', 'Freudige Reisen |cffFF4C4Cdeaktiviert|r — der Bonus wird nicht auf deine Erfahrung angewendet.'),
+('mod-cc-smartstone', 70, 'deDE', 'Du hast ein neues {} freigeschaltet: ''{}''! Du findest es in deinem Smartstone.'),
+('mod-cc-smartstone', 71, 'deDE', 'Smartstone-Freischaltung: {} – {}'),
+('mod-cc-smartstone', 72, 'deDE', 'Du hast ein neues {} freigeschaltet: ''{}''!\n\nDu findest es in deinem Smartstone.'),
 
 
 -- frFR
@@ -224,6 +231,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'frFR', 'Les gains d''expérience sont maintenant |cff4CFF00activés|r.'),
 ('mod-cc-smartstone', 68, 'frFR', 'Joyeux Voyages |cff4CFF00activé|r — vous recevrez le bonus tant que l''événement est en cours.'),
 ('mod-cc-smartstone', 69, 'frFR', 'Joyeux Voyages |cffFF4C4Cdésactivé|r — le bonus ne sera pas appliqué à votre expérience.'),
+('mod-cc-smartstone', 70, 'frFR', 'Vous avez déverrouillé un nouveau {} : ''{}'' ! Vous le trouverez dans votre smartstone.'),
+('mod-cc-smartstone', 71, 'frFR', 'Déverrouillage Smartstone : {} – {}'),
+('mod-cc-smartstone', 72, 'frFR', 'Vous avez déverrouillé un nouveau {} : ''{}'' !\n\nVous le trouverez dans votre smartstone.'),
 
 
 -- esES
@@ -296,6 +306,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'esES', 'Las ganancias de experiencia están ahora |cff4CFF00activadas|r.'),
 ('mod-cc-smartstone', 68, 'esES', 'Viajes Alegres |cff4CFF00activado|r — recibirás la bonificación mientras el evento esté activo.'),
 ('mod-cc-smartstone', 69, 'esES', 'Viajes Alegres |cffFF4C4Cdesactivado|r — la bonificación no se aplicará a tu experiencia.'),
+('mod-cc-smartstone', 70, 'esES', '¡Has desbloqueado un nuevo {}: ''{}''! Lo encontrarás en tu smartstone.'),
+('mod-cc-smartstone', 71, 'esES', 'Desbloqueo de Smartstone: {} – {}'),
+('mod-cc-smartstone', 72, 'esES', '¡Has desbloqueado un nuevo {}: ''{}''!\n\nLo encontrarás en tu smartstone.'),
 
 
 -- esMX
@@ -368,6 +381,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'esMX', 'Las ganancias de experiencia están ahora |cff4CFF00activadas|r.'),
 ('mod-cc-smartstone', 68, 'esMX', 'Viajes Alegres |cff4CFF00activado|r — recibirás la bonificación mientras el evento esté activo.'),
 ('mod-cc-smartstone', 69, 'esMX', 'Viajes Alegres |cffFF4C4Cdesactivado|r — la bonificación no se aplicará a tu experiencia.'),
+('mod-cc-smartstone', 70, 'esMX', '¡Has desbloqueado un nuevo {}: ''{}''! Lo encontrarás en tu smartstone.'),
+('mod-cc-smartstone', 71, 'esMX', 'Desbloqueo de Smartstone: {} – {}'),
+('mod-cc-smartstone', 72, 'esMX', '¡Has desbloqueado un nuevo {}: ''{}''!\n\nLo encontrarás en tu smartstone.'),
 
 
 -- ruRU
@@ -440,6 +456,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'ruRU', 'Получение опыта |cff4CFF00включено|r.'),
 ('mod-cc-smartstone', 68, 'ruRU', 'Радостные путешествия |cff4CFF00включены|r — пока событие активно, вы получаете бонус.'),
 ('mod-cc-smartstone', 69, 'ruRU', 'Радостные путешествия |cffFF4C4Cотключены|r — бонус к опыту применяться не будет.'),
+('mod-cc-smartstone', 70, 'ruRU', 'Вы разблокировали новый {}: ''{}''! Найти можно в вашем смартстоуне.'),
+('mod-cc-smartstone', 71, 'ruRU', 'Разблокировка Смартстоуна: {} – {}'),
+('mod-cc-smartstone', 72, 'ruRU', 'Вы разблокировали новый {}: ''{}''!\n\nНайти можно в вашем смартстоуне.'),
 
 
 -- koKR
@@ -512,6 +531,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'koKR', '경험치 획득이 |cff4CFF00활성화|r되었습니다.'),
 ('mod-cc-smartstone', 68, 'koKR', '즐거운 여정 |cff4CFF00활성화|r — 이벤트가 진행되는 동안 보너스를 받습니다.'),
 ('mod-cc-smartstone', 69, 'koKR', '즐거운 여정 |cffFF4C4C비활성화|r — 경험치 보너스가 적용되지 않습니다.'),
+('mod-cc-smartstone', 70, 'koKR', '새로운 {}을(를) 잠금 해제했습니다: ''{}''! Smartstone에서 확인할 수 있습니다.'),
+('mod-cc-smartstone', 71, 'koKR', 'Smartstone 잠금 해제: {} – {}'),
+('mod-cc-smartstone', 72, 'koKR', '새로운 {}을(를) 잠금 해제했습니다: ''{}''!\n\nSmartstone에서 확인할 수 있습니다.'),
 
 
 -- zhCN
@@ -584,6 +606,9 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 67, 'zhCN', '经验获取已|cff4CFF00启用|r。'),
 ('mod-cc-smartstone', 68, 'zhCN', '欢乐旅程已|cff4CFF00启用|r——活动期间你将获得加成。'),
 ('mod-cc-smartstone', 69, 'zhCN', '欢乐旅程已|cffFF4C4C停用|r——经验加成将不会被应用。'),
+('mod-cc-smartstone', 70, 'zhCN', '您已解锁新的{}：''{}''！可以在您的 Smartstone 中找到。'),
+('mod-cc-smartstone', 71, 'zhCN', 'Smartstone 解锁：{} – {}'),
+('mod-cc-smartstone', 72, 'zhCN', '您已解锁新的{}：''{}''！\n\n可以在您的 Smartstone 中找到。'),
 
 
 -- zhTW
@@ -655,4 +680,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 66, 'zhTW', '經驗獲取已|cffFF4C4C停用|r。返回此處可重新啟用。'),
 ('mod-cc-smartstone', 67, 'zhTW', '經驗獲取已|cff4CFF00啟用|r。'),
 ('mod-cc-smartstone', 68, 'zhTW', '歡樂旅程已|cff4CFF00啟用|r——活動期間你將獲得加成。'),
-('mod-cc-smartstone', 69, 'zhTW', '歡樂旅程已|cffFF4C4C停用|r——經驗加成將不會被套用。');
+('mod-cc-smartstone', 69, 'zhTW', '歡樂旅程已|cffFF4C4C停用|r——經驗加成將不會被套用。'),
+('mod-cc-smartstone', 70, 'zhTW', '您已解鎖新的{}：''{}''！可以在您的 Smartstone 中找到。'),
+('mod-cc-smartstone', 71, 'zhTW', 'Smartstone 解鎖：{} – {}'),
+('mod-cc-smartstone', 72, 'zhTW', '您已解鎖新的{}：''{}''！\n\n可以在您的 Smartstone 中找到。');

@@ -96,3 +96,15 @@ ModChromiecraftSmartstone.Debug = 0
 #
 
 ModChromiecraftSmartstone.CostumeConvert.Enable = 0
+
+#
+#    ModChromiecraftSmartstone.UnlockMail.Enable
+#        Description: When enabled, .smartstone unlock service / unlock account also sends the
+#                     target player(s) a GM-stationery in-game mail informing them of the unlock.
+#                     The in-game chat notification is always sent to connected players regardless
+#                     of this setting; this option only controls the mail.
+#        Default:     0 - Disabled (chat notification only)
+#                     1 - Enabled (chat notification + GM mail)
+#
+
+ModChromiecraftSmartstone.UnlockMail.Enable = 0

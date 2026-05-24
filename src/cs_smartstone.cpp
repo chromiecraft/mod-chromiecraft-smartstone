@@ -17,9 +17,13 @@
 
 #include "Chat.h"
 #include "GameTime.h"
+#include "Mail.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "WorldSession.h"
 #include "WorldSessionMgr.h"
 #include <algorithm>
 #include <unordered_set>
@@ -713,6 +717,64 @@ public:
         return true;
     }
 
+    // Resolve the locale to use for module strings sent to a given target
+    // character. Falls back to the DBC default for offline players.
+    static LocaleConstant GetLocaleForCharacter(ObjectGuid::LowType lowGuid)
+    {
+        if (Player* p = ObjectAccessor::FindPlayerByLowGUID(lowGuid))
+            if (WorldSession* s = p->GetSession())
+                return s->GetSessionDbLocaleIndex();
+        return LocaleConstant(sObjectMgr->GetDBCLocaleIndex());
+    }
+
+    // Send the "you have unlocked X" notification (chat + optional mail) to a
+    // single target character. Safe for offline players: chat is silently
+    // skipped, mail is sent via low-guid so it lands when they next log in.
+    // Mail is gated by the ModChromiecraftSmartstone.UnlockMail.Enable config.
+    static void NotifyUnlock(ObjectGuid::LowType lowGuid, std::string_view typeName, std::string_view serviceName)
+    {
+        Player* connected = ObjectAccessor::FindPlayerByLowGUID(lowGuid);
+        if (connected)
+        {
+            ChatHandler(connected->GetSession()).PSendModuleSysMessage(
+                ModName, LANG_MOD_SERVICE_UNLOCK_NOTIFY, typeName, serviceName);
+        }
+
+        if (!sSmartstone->IsMailUnlocksEnabled())
+            return;
+
+        LocaleConstant locale = GetLocaleForCharacter(lowGuid);
+        std::string const* subjectFmt = sObjectMgr->GetModuleString(ModName, LANG_MOD_SERVICE_UNLOCK_MAIL_SUBJ, locale);
+        std::string const* bodyFmt    = sObjectMgr->GetModuleString(ModName, LANG_MOD_SERVICE_UNLOCK_MAIL_BODY, locale);
+        if (!subjectFmt || !bodyFmt)
+            return;
+
+        std::string subject = Acore::StringFormat(subjectFmt->c_str(), typeName, serviceName);
+        std::string body    = Acore::StringFormat(bodyFmt->c_str(), typeName, serviceName);
+
+        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+        MailDraft(std::move(subject), std::move(body))
+            .SendMailTo(trans, MailReceiver(connected, lowGuid),
+                MailSender(MAIL_NORMAL, 0, MAIL_STATIONERY_GM));
+        CharacterDatabase.CommitTransaction(trans);
+    }
+
+    // Account-wide variant: fan out NotifyUnlock to every character on the
+    // account, so all of them learn about the unlock (the underlying setting
+    // is shared, so each character benefits equally).
+    static void NotifyUnlockForAccount(uint32 accountId, std::string_view typeName, std::string_view serviceName)
+    {
+        QueryResult result = CharacterDatabase.Query(
+            "SELECT guid FROM characters WHERE account = {}", accountId);
+        if (!result)
+            return;
+
+        do
+        {
+            NotifyUnlock(result->Fetch()[0].Get<uint32>(), typeName, serviceName);
+        } while (result->NextRow());
+    }
+
     static bool HandleSmartStoneUnlockServiceCommand(ChatHandler* handler, PlayerIdentifier player, uint8 serviceType, uint32 id, bool add)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
@@ -740,6 +802,19 @@ public:
             handler->PSendModuleSysMessage(ModName,
                 add ? LANG_MOD_SERVICE_BEEN_UNLOCKED : LANG_MOD_SERVICE_BEEN_REMOVED,
                 desc, playerName);
+
+            if (!add)
+                return;
+
+            std::string typeName = sSmartstone->GetActionTypeName(static_cast<ActionType>(serviceType));
+
+            // Costumes and perks are account-wide — notify every character
+            // on the owning account so they all see the unlock. Everything
+            // else is per-character.
+            if (serviceType == ACTION_TYPE_COSTUME || serviceType == ACTION_TYPE_PERK)
+                NotifyUnlockForAccount(sCharacterCache->GetCharacterAccountIdByGuid(player.GetGUID()), typeName, desc);
+            else
+                NotifyUnlock(player.GetGUID().GetCounter(), typeName, desc);
         };
 
         uint32 settingId = sSmartstone->GetShortId(id, serviceType);
@@ -947,6 +1022,10 @@ public:
             handler->PSendModuleSysMessage(ModName,
                 add ? LANG_MOD_SERVICE_BEEN_UNLOCKED : LANG_MOD_SERVICE_BEEN_REMOVED,
                 desc, accountName);
+
+            if (add)
+                NotifyUnlockForAccount(accountId,
+                    sSmartstone->GetActionTypeName(static_cast<ActionType>(serviceType)), desc);
         };
 
         sSmartstone->LoadAccountSettings(accountId);

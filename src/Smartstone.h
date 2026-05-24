@@ -344,6 +344,7 @@ private:
     bool IsDebugEnabled{ false };
     bool IndividualCostumeCooldowns{ false };
     bool CostumeConvertEnabled{ false };
+    bool MailUnlocksEnabled{ false };
     // Cached on startup from mod-weekend-xp's XPWeekend.IsJoyousJourneysActive
     // config so the Joyous Journeys toggle button can hide itself when the
     // event is off, without re-reading sConfigMgr at runtime.
@@ -392,6 +393,9 @@ public:
 
     void SetCostumeConvertEnabled(bool enabled) { CostumeConvertEnabled = enabled; }
     [[nodiscard]] bool IsCostumeConvertEnabled() const { return CostumeConvertEnabled; }
+
+    void SetMailUnlocksEnabled(bool enabled) { MailUnlocksEnabled = enabled; }
+    [[nodiscard]] bool IsMailUnlocksEnabled() const { return MailUnlocksEnabled; }
 
     void SetJoyousJourneysActive(bool active) { JoyousJourneysActive = active; }
     [[nodiscard]] bool IsJoyousJourneysActive() const { return JoyousJourneysActive; }
@@ -849,6 +853,10 @@ enum SmartstoneStringId : uint32
     // Joyous Journeys toggle (68-69)
     LANG_MOD_JOYOUS_JOURNEYS_ENABLED   = 68,
     LANG_MOD_JOYOUS_JOURNEYS_DISABLED  = 69,
+    // Service unlock notifications (70-72)
+    LANG_MOD_SERVICE_UNLOCK_NOTIFY     = 70,
+    LANG_MOD_SERVICE_UNLOCK_MAIL_SUBJ  = 71,
+    LANG_MOD_SERVICE_UNLOCK_MAIL_BODY  = 72,
 };
 
 #define sSmartstone Smartstone::instance()
