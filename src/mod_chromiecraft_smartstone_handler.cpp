@@ -554,9 +554,16 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
 void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
 {
     SmartstoneCostumeData costume = GetCostumeData(costumeId);
+
+    bool inGrace = IsInCostumeGracePeriod(player, costumeId);
+
     player->SetDisplayId(costume.DisplayId, costume.Scale);
     SetCurrentCostume(player, costume.DisplayId);
     PlayCostumeSound(player, costume.DisplayId);
+
+    // Grace reapply: original cooldown and duration timer still running, don't re-stamp.
+    if (inGrace)
+        return;
 
     SetCostumeCooldown(player, costumeId);
 
@@ -597,6 +604,9 @@ void Smartstone::SetCostumeCooldown(Player* player, uint32 costumeId)
 
 bool Smartstone::HasCostumeCooldown(Player* player, uint32 costumeId) const
 {
+    if (IsInCostumeGracePeriod(player, costumeId))
+        return false;
+
     if (IndividualCostumeCooldowns)
     {
         uint32 expireTime = player->GetPlayerSetting(ModName + "#ccd", costumeId).value;
@@ -608,6 +618,9 @@ bool Smartstone::HasCostumeCooldown(Player* player, uint32 costumeId) const
 
 uint32 Smartstone::GetCostumeCooldownRemaining(Player* player, uint32 costumeId) const
 {
+    if (IsInCostumeGracePeriod(player, costumeId))
+        return 0;
+
     if (IndividualCostumeCooldowns)
     {
         uint32 expireTime = player->GetPlayerSetting(ModName + "#ccd", costumeId).value;
@@ -616,6 +629,60 @@ uint32 Smartstone::GetCostumeCooldownRemaining(Player* player, uint32 costumeId)
     }
 
     return player->GetSpellCooldownDelay(90002) / 1000;
+}
+
+bool Smartstone::IsInCostumeGracePeriod(Player* player, uint32 costumeId) const
+{
+    SmartstoneCostumeData costume = GetCostumeData(costumeId);
+    if (!costume.Id)
+        return false;
+
+    Milliseconds duration = GetCostumeDuration(player, costume.Duration);
+    bool unlimited = (duration <= 0s);
+    uint32 durationSeconds = unlimited ? 0
+        : std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    uint32 now = GameTime::GetGameTime().count();
+
+    if (IndividualCostumeCooldowns)
+    {
+        uint32 cooldownExpire =
+            player->GetPlayerSetting(ModName + "#ccd", costumeId).value;
+        if (cooldownExpire <= now)
+            return false;
+
+        // Unlimited-duration costumes are meant to stay on indefinitely;
+        // any reapply while the cooldown is still active counts as grace.
+        if (unlimited)
+            return true;
+
+        uint32 cooldownSeconds = costume.Cooldown
+            ? costume.Cooldown
+            : std::chrono::duration_cast<std::chrono::seconds>(30min).count();
+
+        // applyTime = cooldownExpire - cooldownSeconds
+        // graceEnd  = applyTime + durationSeconds
+        // inGrace iff graceEnd > now iff (cooldownExpire - cooldownSeconds + durationSeconds) > now
+        // Guard against underflow when durationSeconds < cooldownSeconds.
+        if (durationSeconds >= cooldownSeconds)
+            return true;
+        uint32 elapsedSinceApply = cooldownSeconds - (cooldownExpire - now);
+        return elapsedSinceApply < durationSeconds;
+    }
+
+    // Shared-cooldown mode (spell 90002, hardcoded 30min).
+    uint32 cooldownRemaining = player->GetSpellCooldownDelay(90002) / 1000;
+    if (!cooldownRemaining)
+        return false;
+
+    if (unlimited)
+        return true;
+
+    uint32 cooldownSeconds =
+        std::chrono::duration_cast<std::chrono::seconds>(30min).count();
+    if (durationSeconds >= cooldownSeconds)
+        return true;
+    uint32 elapsedSinceApply = cooldownSeconds - cooldownRemaining;
+    return elapsedSinceApply < durationSeconds;
 }
 
 PlayerSetting Smartstone::GetAccountSetting(uint32 accountId, uint32 service, uint32 index)

@@ -407,6 +407,8 @@ public:
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
     [[nodiscard]] uint32 GetCostumeCooldownRemaining(Player* player, uint32 costumeId) const;
 
+    [[nodiscard]] bool IsInCostumeGracePeriod(Player* player, uint32 costumeId) const;
+
     void ApplyCostume(Player* player, uint32 costumeId);
 
     [[nodiscard]] constexpr uint32_t GetActionTypeBaseId(ActionType type)
