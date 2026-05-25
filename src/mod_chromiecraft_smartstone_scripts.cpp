@@ -22,6 +22,10 @@ namespace
     // intended float.
     constexpr char const* WEEKEND_XP_SETTING_NS      = "mod-double-xp-weekend";
     constexpr uint32      WEEKEND_XP_SETTING_RATE    = 0;
+    // Slot 1: per-player bonus opt-out. When set to 1, mod-weekend-xp's
+    // GetExperienceRate short-circuits to 1.0f regardless of the rate slot
+    // or server-config xpAmount.
+    constexpr uint32      WEEKEND_XP_SETTING_DISABLE = 1;
     // Slot 3: per-player Joyous Journeys opt-out. 0 = receiving bonus (default), 1 = opted out.
     constexpr uint32      WEEKEND_XP_SETTING_JJ      = 3;
 
@@ -354,6 +358,10 @@ public:
                         player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
                             WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(2.0f));
+                        // Clear the bonus opt-out the challenge-xp reset may have set
+                        // — without this, ex-challenge characters past level 70 would
+                        // stay short-circuited to 1x in GetExperienceRate.
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_2X);
                         break;
                     }
@@ -362,6 +370,9 @@ public:
                         player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
                             WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(1.0f));
+                        // Same as the 2X case — release any lockdown left over from
+                        // a previous challenge-xp reset.
+                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_1X);
                         break;
                     }
@@ -1228,21 +1239,27 @@ private:
             return;
 
         uint32 baseline = EncodeWeekendXpRate(1.0f);
-        uint32 current = player->GetPlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_RATE).value;
-        if (current == baseline)
+        uint32 currentRate = player->GetPlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_RATE).value;
+        uint32 currentDisable = player->GetPlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE).value;
+
+        // Both slots already at the locked-down baseline — nothing to do.
+        if (currentRate == baseline && currentDisable == 1)
             return;
 
-        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
-            WEEKEND_XP_SETTING_RATE, baseline);
+        // Rate slot pinned to 1.0f (cosmetic, in case individual rates are on),
+        // disable slot pinned to 1 (the hard short-circuit in GetExperienceRate
+        // — guarantees 1x regardless of server-side xpAmount config).
+        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_RATE, baseline);
+        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 1);
 
-        // Skip the notice / log on the all-zero default so freshly-created challenge
-        // characters who never picked a rate don't generate noise.
-        if (current != 0)
+        // Notice / log only when the player was actually on a non-default,
+        // non-1x rate — fresh characters (rate slot still 0) stay quiet.
+        if (currentRate != 0 && currentRate != baseline)
         {
             ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_RESET_NOTICE);
 
             LOG_INFO("smartstone", "ChallengeXpReset: Reset weekend-xp rate from {}x to 1x for player {} (guid {}, account {}, level {}).",
-                DecodeWeekendXpRate(current),
+                DecodeWeekendXpRate(currentRate),
                 player->GetName(),
                 player->GetGUID().GetCounter(),
                 player->GetSession()->GetAccountId(),
