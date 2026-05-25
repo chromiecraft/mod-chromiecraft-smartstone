@@ -292,6 +292,19 @@ public:
             }
             case ACTION_TYPE_SERVICE:
             {
+                // Defence-in-depth: the menu builder already hides XP-rate
+                // services for challenge characters, but block direct gossip
+                // action ids too so a crafted client can't bypass it.
+                if (Smartstone::IsChallengeCharacter(player)
+                    && (actionId == SERVICE_XP_RATE_2X
+                     || actionId == SERVICE_XP_RATE_1X
+                     || actionId == SERVICE_XP_RATE_DISABLED
+                     || actionId == SERVICE_JOYOUS_JOURNEYS))
+                {
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_INVALID_ACTION);
+                    break;
+                }
+
                 switch (actionId)
                 {
                     case SERVICE_BARBERSHOP:
@@ -914,11 +927,27 @@ public:
                     // Hide module-integration subcategories when the upstream module is disabled.
                     if (menuItem.ItemId == CATEGORY_SCROLL_OF_RESURRECTION && !sSmartstone->IsResScrollEnabled())
                         available = false;
+
+                    // Challenge characters are on a fixed XP regime — mirrors the
+                    // exclusion in mod-resurrection-scroll so the menu doesn't offer
+                    // toggles that would do nothing for them.
+                    if (menuItem.ItemId == CATEGORY_XP_RATES && Smartstone::IsChallengeCharacter(player))
+                        available = false;
                 }
                 else if (menuItem.ServiceType == ACTION_TYPE_SERVICE)
                 {
                     // Hide module-integration toggles when the upstream module is disabled.
                     bool gated = menuItem.ItemId == SERVICE_JOYOUS_JOURNEYS && !sSmartstone->IsJoyousJourneysActive();
+
+                    // Same challenge-character gate as the parent category, in case
+                    // these services ever surface outside it.
+                    if (!gated && Smartstone::IsChallengeCharacter(player)
+                        && (menuItem.ItemId == SERVICE_XP_RATE_2X
+                         || menuItem.ItemId == SERVICE_XP_RATE_1X
+                         || menuItem.ItemId == SERVICE_XP_RATE_DISABLED
+                         || menuItem.ItemId == SERVICE_JOYOUS_JOURNEYS))
+                        gated = true;
+
                     if (!gated && subscriptionLevel >= menuItem.SubscriptionLevelRequired)
                         available = true;
                 }

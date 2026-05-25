@@ -15,6 +15,7 @@ enum Misc
 
     // Module-integration subcategories under Character. Gated in the menu
     // builder against the matching cached server-side config.
+    CATEGORY_XP_RATES               = 9,
     CATEGORY_SCROLL_OF_RESURRECTION = 10,
 
     // Class Perks: parent category + 10 hardcoded per-class child IDs.
@@ -490,6 +491,15 @@ public:
     {
         return categoryId >= CATEGORY_CLASS_PERKS_WARRIOR
             && categoryId <= CATEGORY_CLASS_PERKS_DRUID;
+    }
+
+    // Challenge-mode marker auras from mod-chromiecraft/challenge_modes.sql.
+    // Mirrors the check in mod-resurrection-scroll's ProcessBonusChecks so
+    // challenge characters are excluded from the same player-facing XP and
+    // bonus toggles.
+    [[nodiscard]] static bool IsChallengeCharacter(Player const* player)
+    {
+        return player && player->HasAnyAuras(2000100, 2000101, 2000102);
     }
 
     // Account-setting slot for a given player class (Classes enum values).
