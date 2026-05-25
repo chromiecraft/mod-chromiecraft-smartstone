@@ -351,6 +351,9 @@ private:
     // event is off, without re-reading sConfigMgr at runtime.
     bool JoyousJourneysActive{ false };
     bool ResScrollEnabled{ false };
+    // When true, the challenge-xp PlayerScript snaps the player's weekend-xp
+    // rate back to 1x on login and level-up. Defaults to enabled.
+    bool ChallengeXpResetEnabled{ true };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -403,6 +406,9 @@ public:
 
     void SetResScrollEnabled(bool enabled) { ResScrollEnabled = enabled; }
     [[nodiscard]] bool IsResScrollEnabled() const { return ResScrollEnabled; }
+
+    void SetChallengeXpResetEnabled(bool enabled) { ChallengeXpResetEnabled = enabled; }
+    [[nodiscard]] bool IsChallengeXpResetEnabled() const { return ChallengeXpResetEnabled; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
@@ -497,9 +503,15 @@ public:
     // Mirrors the check in mod-resurrection-scroll's ProcessBonusChecks so
     // challenge characters are excluded from the same player-facing XP and
     // bonus toggles.
+    //
+    // Returns false at level 70+ — once a character reaches the endgame the
+    // XP-rate restrictions no longer make sense, so they get the full menu
+    // (and the rate-reset PlayerScript stops firing) regardless of marker auras.
     [[nodiscard]] static bool IsChallengeCharacter(Player const* player)
     {
-        return player && player->HasAnyAuras(2000100, 2000101, 2000102);
+        if (!player || player->GetLevel() >= 70)
+            return false;
+        return player->HasAnyAuras(2000100, 2000101, 2000102);
     }
 
     // Account-setting slot for a given player class (Classes enum values).
@@ -873,6 +885,8 @@ enum SmartstoneStringId : uint32
     LANG_MOD_DEBUG_NO_TARGET           = 73,
     LANG_MOD_DEBUG_TARGET_OFFLINE      = 74,
     LANG_MOD_DEBUG_COSTUME_DUMP        = 75,
+    // Challenge-character XP-rate countermeasure (76)
+    LANG_MOD_XP_RATE_RESET_NOTICE      = 76,
 };
 
 #define sSmartstone Smartstone::instance()

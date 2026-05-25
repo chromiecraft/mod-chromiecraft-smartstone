@@ -86,7 +86,9 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 -- Debug command messages (73-75)
 ('mod-cc-smartstone', 73, 'No target specified.'),
 ('mod-cc-smartstone', 74, 'Target ''{}'' is offline. This command requires an online player.'),
-('mod-cc-smartstone', 75, '[Debug] Costume {} ({}) on {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Player: membership={}, effective duration={}\n  Mode: {}, cooldown total={}s\n  Cooldown active={}, remaining={}s (~{}m {}s), elapsed={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}');
+('mod-cc-smartstone', 75, '[Debug] Costume {} ({}) on {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Player: membership={}, effective duration={}\n  Mode: {}, cooldown total={}s\n  Cooldown active={}, remaining={}s (~{}m {}s), elapsed={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+-- Challenge-character XP-rate countermeasure (76)
+('mod-cc-smartstone', 76, '|cffFF4C4CYour experience rate has been reset to 1x — challenge mode characters cannot modify it.|r');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 
@@ -166,6 +168,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'deDE', 'Kein Ziel angegeben.'),
 ('mod-cc-smartstone', 74, 'deDE', 'Das Ziel ''{}'' ist offline. Dieser Befehl erfordert einen Online-Spieler.'),
 ('mod-cc-smartstone', 75, 'deDE', '[Debug] Kostüm {} ({}) auf {}:\n  DB: DisplayId={}, Duration={} (Rohwert), Cooldown={}s\n  Spieler: Mitgliedschaft={}, effektive Dauer={}\n  Modus: {}, Cooldown gesamt={}s\n  Cooldown aktiv={}, verbleibend={}s (~{}m {}s), vergangen={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'deDE', '|cffFF4C4CDeine Erfahrungsrate wurde auf 1x zurückgesetzt — Charaktere im Challenge-Modus können sie nicht ändern.|r'),
 
 
 -- frFR
@@ -244,6 +247,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'frFR', 'Aucune cible spécifiée.'),
 ('mod-cc-smartstone', 74, 'frFR', 'La cible ''{}'' est hors ligne. Cette commande nécessite un joueur en ligne.'),
 ('mod-cc-smartstone', 75, 'frFR', '[Debug] Costume {} ({}) sur {} :\n  DB : DisplayId={}, Duration={} (brut), Cooldown={}s\n  Joueur : abonnement={}, durée effective={}\n  Mode : {}, cooldown total={}s\n  Cooldown actif={}, restant={}s (~{}m {}s), écoulé={}s\n  Grace : InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'frFR', '|cffFF4C4CVotre taux d''expérience a été réinitialisé à 1x — les personnages en mode défi ne peuvent pas le modifier.|r'),
 
 
 -- esES
@@ -322,6 +326,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'esES', 'No se especificó ningún objetivo.'),
 ('mod-cc-smartstone', 74, 'esES', 'El objetivo ''{}'' está desconectado. Este comando requiere un jugador en línea.'),
 ('mod-cc-smartstone', 75, 'esES', '[Debug] Disfraz {} ({}) en {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Jugador: suscripción={}, duración efectiva={}\n  Modo: {}, cooldown total={}s\n  Cooldown activo={}, restante={}s (~{}m {}s), transcurrido={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'esES', '|cffFF4C4CTu tasa de experiencia se ha restablecido a 1x — los personajes en modo desafío no pueden modificarla.|r'),
 
 
 -- esMX
@@ -400,6 +405,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'esMX', 'No se especificó ningún objetivo.'),
 ('mod-cc-smartstone', 74, 'esMX', 'El objetivo ''{}'' está desconectado. Este comando requiere un jugador en línea.'),
 ('mod-cc-smartstone', 75, 'esMX', '[Debug] Disfraz {} ({}) en {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Jugador: suscripción={}, duración efectiva={}\n  Modo: {}, cooldown total={}s\n  Cooldown activo={}, restante={}s (~{}m {}s), transcurrido={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'esMX', '|cffFF4C4CTu tasa de experiencia se ha restablecido a 1x — los personajes en modo desafío no pueden modificarla.|r'),
 
 
 -- ruRU
@@ -478,6 +484,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'ruRU', 'Цель не указана.'),
 ('mod-cc-smartstone', 74, 'ruRU', 'Цель ''{}'' не в сети. Эта команда требует игрока, находящегося в сети.'),
 ('mod-cc-smartstone', 75, 'ruRU', '[Debug] Костюм {} ({}) на {}:\n  DB: DisplayId={}, Duration={} (сырое), Cooldown={}с\n  Игрок: подписка={}, эффективная длительность={}\n  Режим: {}, cooldown всего={}с\n  Cooldown активен={}, осталось={}с (~{}м {}с), прошло={}с\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'ruRU', '|cffFF4C4CВаша скорость получения опыта сброшена до 1x — персонажи в режиме испытания не могут её изменять.|r'),
 
 
 -- koKR
@@ -556,6 +563,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'koKR', '대상이 지정되지 않았습니다.'),
 ('mod-cc-smartstone', 74, 'koKR', '대상 ''{}''이(가) 오프라인입니다. 이 명령에는 온라인 플레이어가 필요합니다.'),
 ('mod-cc-smartstone', 75, 'koKR', '[Debug] 코스튬 {} ({}) - 대상={}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}초\n  플레이어: 멤버십={}, 유효 지속시간={}\n  모드: {}, 총 cooldown={}초\n  Cooldown 활성={}, 남은시간={}초 (~{}분 {}초), 경과={}초\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'koKR', '|cffFF4C4C경험치 배율이 1x로 재설정되었습니다 — 챌린지 모드 캐릭터는 이를 변경할 수 없습니다.|r'),
 
 
 -- zhCN
@@ -634,6 +642,7 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 73, 'zhCN', '未指定目标。'),
 ('mod-cc-smartstone', 74, 'zhCN', '目标 ''{}'' 已离线。此命令需要在线玩家。'),
 ('mod-cc-smartstone', 75, 'zhCN', '[Debug] 服装 {} ({}) 在 {}:\n  DB: DisplayId={}, Duration={} (原始), Cooldown={}秒\n  玩家: 会员={}, 有效持续时间={}\n  模式: {}, 总冷却={}秒\n  冷却激活={}, 剩余={}秒 (~{}分 {}秒), 已过={}秒\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'zhCN', '|cffFF4C4C你的经验值倍率已重置为 1x — 挑战模式角色无法修改此设置。|r'),
 
 
 -- zhTW
@@ -711,4 +720,5 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 72, 'zhTW', '您已解鎖新的{}：''{}''！\n\n可以在您的 Smartstone 中找到。'),
 ('mod-cc-smartstone', 73, 'zhTW', '未指定目標。'),
 ('mod-cc-smartstone', 74, 'zhTW', '目標 ''{}'' 已離線。此指令需要線上玩家。'),
-('mod-cc-smartstone', 75, 'zhTW', '[Debug] 服裝 {} ({}) 在 {}:\n  DB: DisplayId={}, Duration={} (原始), Cooldown={}秒\n  玩家: 會員={}, 有效持續時間={}\n  模式: {}, 總冷卻={}秒\n  冷卻啟用={}, 剩餘={}秒 (~{}分 {}秒), 已過={}秒\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}');
+('mod-cc-smartstone', 75, 'zhTW', '[Debug] 服裝 {} ({}) 在 {}:\n  DB: DisplayId={}, Duration={} (原始), Cooldown={}秒\n  玩家: 會員={}, 有效持續時間={}\n  模式: {}, 總冷卻={}秒\n  冷卻啟用={}, 剩餘={}秒 (~{}分 {}秒), 已過={}秒\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
+('mod-cc-smartstone', 76, 'zhTW', '|cffFF4C4C你的經驗值倍率已重置為 1x — 挑戰模式角色無法修改此設定。|r');

@@ -1123,6 +1123,7 @@ public:
         sSmartstone->SetMailUnlocksEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.UnlockMail.Enable", false));
         sSmartstone->SetJoyousJourneysActive(sConfigMgr->GetOption<bool>("XPWeekend.IsJoyousJourneysActive", false));
         sSmartstone->SetResScrollEnabled(sConfigMgr->GetOption<bool>("ModResurrectionScroll.Enable", false));
+        sSmartstone->SetChallengeXpResetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.ChallengeXpReset.Enable", true));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();
@@ -1213,11 +1214,24 @@ public:
 private:
     static void ResetRateIfChallenge(Player* player)
     {
+        if (!sSmartstone->IsChallengeXpResetEnabled())
+            return;
+
         if (!Smartstone::IsChallengeCharacter(player))
             return;
 
+        uint32 baseline = EncodeWeekendXpRate(1.0f);
+        uint32 current = player->GetPlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_RATE).value;
+        if (current == baseline)
+            return;
+
         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
-            WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(1.0f));
+            WEEKEND_XP_SETTING_RATE, baseline);
+
+        // Skip the notice on the all-zero default so freshly-created challenge
+        // characters who never picked a rate don't see a noisy "reset" message.
+        if (current != 0)
+            ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_RESET_NOTICE);
     }
 };
 

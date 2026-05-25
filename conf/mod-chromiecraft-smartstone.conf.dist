@@ -108,3 +108,14 @@ ModChromiecraftSmartstone.CostumeConvert.Enable = 0
 #
 
 ModChromiecraftSmartstone.UnlockMail.Enable = 0
+
+#
+#    ModChromiecraftSmartstone.ChallengeXpReset.Enable
+#        Description: When enabled, challenge characters (marker auras 2000100/2000101/2000102)
+#                     have their mod-weekend-xp rate snapped back to 1x on login and level-up,
+#                     and are notified in chat if their rate was non-default.
+#        Default:     1 - Enabled
+#                     0 - Disabled
+#
+
+ModChromiecraftSmartstone.ChallengeXpReset.Enable = 1
