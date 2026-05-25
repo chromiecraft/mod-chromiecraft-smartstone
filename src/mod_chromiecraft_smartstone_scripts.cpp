@@ -22,7 +22,6 @@ namespace
     // intended float.
     constexpr char const* WEEKEND_XP_SETTING_NS      = "mod-double-xp-weekend";
     constexpr uint32      WEEKEND_XP_SETTING_RATE    = 0;
-    constexpr uint32      WEEKEND_XP_SETTING_DISABLE = 1;
     // Slot 3: per-player Joyous Journeys opt-out. 0 = receiving bonus (default), 1 = opted out.
     constexpr uint32      WEEKEND_XP_SETTING_JJ      = 3;
 
@@ -348,7 +347,6 @@ public:
                         player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
                             WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(2.0f));
-                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_2X);
                         break;
                     }
@@ -357,7 +355,6 @@ public:
                         player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
                             WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(1.0f));
-                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_1X);
                         break;
                     }
