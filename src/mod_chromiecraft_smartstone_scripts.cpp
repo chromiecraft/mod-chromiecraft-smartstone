@@ -1188,6 +1188,39 @@ public:
     }
 };
 
+// Snap challenge characters back to 1x weekend-xp on login and level-up.
+// The smartstone XP-rate menu is already hidden for them, but a rate set
+// before they became a challenge character (or by some other path) would
+// otherwise persist; this enforces the baseline.
+class mod_chromiecraft_smartstone_challenge_xp_playerscript : public PlayerScript
+{
+public:
+    mod_chromiecraft_smartstone_challenge_xp_playerscript() : PlayerScript("mod_chromiecraft_smartstone_challenge_xp_playerscript", {
+        PLAYERHOOK_ON_LOGIN,
+        PLAYERHOOK_ON_LEVEL_CHANGED
+    }) { }
+
+    void OnPlayerLogin(Player* player) override
+    {
+        ResetRateIfChallenge(player);
+    }
+
+    void OnPlayerLevelChanged(Player* player, uint8 /*oldLevel*/) override
+    {
+        ResetRateIfChallenge(player);
+    }
+
+private:
+    static void ResetRateIfChallenge(Player* player)
+    {
+        if (!Smartstone::IsChallengeCharacter(player))
+            return;
+
+        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
+            WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(1.0f));
+    }
+};
+
 struct npc_smartstone_vehicle : public VehicleAI
 {
     npc_smartstone_vehicle(Creature* pCreature) : VehicleAI(pCreature) {}
@@ -1207,5 +1240,6 @@ void Addmod_cc_smartstoneScripts()
     new item_chromiecraft_smartstone();
     new mod_chromiecraft_smartstone_worldscript();
     new mod_chromiecraft_smartstone_playerscript();
+    new mod_chromiecraft_smartstone_challenge_xp_playerscript();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }
