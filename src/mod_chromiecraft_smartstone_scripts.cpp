@@ -52,6 +52,13 @@ namespace
         std::memcpy(&encoded, &rate, sizeof(encoded));
         return encoded;
     }
+
+    float DecodeWeekendXpRate(uint32 encoded)
+    {
+        float rate = 0.0f;
+        std::memcpy(&rate, &encoded, sizeof(rate));
+        return rate;
+    }
 }
 
 enum GameObjectEntry
@@ -1228,10 +1235,19 @@ private:
         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
             WEEKEND_XP_SETTING_RATE, baseline);
 
-        // Skip the notice on the all-zero default so freshly-created challenge
-        // characters who never picked a rate don't see a noisy "reset" message.
+        // Skip the notice / log on the all-zero default so freshly-created challenge
+        // characters who never picked a rate don't generate noise.
         if (current != 0)
+        {
             ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_RESET_NOTICE);
+
+            LOG_INFO("smartstone", "ChallengeXpReset: Reset weekend-xp rate from {}x to 1x for player {} (guid {}, account {}, level {}).",
+                DecodeWeekendXpRate(current),
+                player->GetName(),
+                player->GetGUID().GetCounter(),
+                player->GetSession()->GetAccountId(),
+                player->GetLevel());
+        }
     }
 };
 
