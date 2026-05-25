@@ -358,10 +358,6 @@ public:
                         player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
                             WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(2.0f));
-                        // Clear the bonus opt-out the challenge-xp reset may have set
-                        // — without this, ex-challenge characters past level 70 would
-                        // stay short-circuited to 1x in GetExperienceRate.
-                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_2X);
                         break;
                     }
@@ -370,9 +366,6 @@ public:
                         player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
                         player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS,
                             WEEKEND_XP_SETTING_RATE, EncodeWeekendXpRate(1.0f));
-                        // Same as the 2X case — release any lockdown left over from
-                        // a previous challenge-xp reset.
-                        player->UpdatePlayerSetting(WEEKEND_XP_SETTING_NS, WEEKEND_XP_SETTING_DISABLE, 0);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_1X);
                         break;
                     }
