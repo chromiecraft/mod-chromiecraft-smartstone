@@ -39,25 +39,28 @@ class spell_smartstone_form_display_override : public AuraScript
 
     // Which namespace + slot a spell id maps to. `isShaman == false`
     // means the druid namespace (#druid_form); true means shaman.
+    // `effect` is the SmartstonePerkEffect for this form, used to resolve
+    // the per-context scale override.
     struct SlotInfo
     {
         int32 slot;       // -1 if the spell id isn't mapped.
         bool  isShaman;
+        uint8 effect;
     };
 
     static SlotInfo GetSlotForSpell(uint32 spellId)
     {
         switch (spellId)
         {
-            case  5487: case 9634:  return { DRUID_FORM_BEAR,         false };
-            case   768:             return { DRUID_FORM_CAT,          false };
-            case   783:             return { DRUID_FORM_TRAVEL,       false };
-            case 33943: case 40120: return { DRUID_FORM_FLIGHT,       false };
-            case  1066:             return { DRUID_FORM_AQUATIC,      false };
-            case 33891:             return { DRUID_FORM_TREE,         false };
-            case 24858:             return { DRUID_FORM_MOONKIN,      false };
-            case  2645:             return { SHAMAN_FORM_GHOST_WOLF,  true  };
-            default:                return { -1,                      false };
+            case  5487: case 9634:  return { DRUID_FORM_BEAR,        false, PERK_EFFECT_DRUID_FORM_BEAR    };
+            case   768:             return { DRUID_FORM_CAT,         false, PERK_EFFECT_DRUID_FORM_CAT     };
+            case   783:             return { DRUID_FORM_TRAVEL,      false, PERK_EFFECT_DRUID_FORM_TRAVEL  };
+            case 33943: case 40120: return { DRUID_FORM_FLIGHT,      false, PERK_EFFECT_DRUID_FORM_FLIGHT  };
+            case  1066:             return { DRUID_FORM_AQUATIC,     false, PERK_EFFECT_DRUID_FORM_AQUATIC };
+            case 33891:             return { DRUID_FORM_TREE,        false, PERK_EFFECT_DRUID_FORM_TREE    };
+            case 24858:             return { DRUID_FORM_MOONKIN,     false, PERK_EFFECT_DRUID_FORM_MOONKIN };
+            case  2645:             return { SHAMAN_FORM_GHOST_WOLF, true,  PERK_EFFECT_SHAMAN_GHOST_WOLF  };
+            default:                return { -1,                     false, PERK_EFFECT_NONE               };
         }
     }
 
@@ -93,11 +96,11 @@ class spell_smartstone_form_display_override : public AuraScript
         if (!displayId)
             return;
 
-        // Shaman ghost-wolf-derived creature models render much larger
-        // than the player; shrink to fit. Druid form models match the
-        // existing form scale already.
-        float scale = info.isShaman ? 0.5f : 1.0f;
-        target->SetDisplayId(displayId, scale);
+        // Scale depends on the form + chosen model (e.g. ghost-wolf-derived
+        // creature models render far larger than the player); it's stored
+        // per-(effect, displayId) in smartstone_perks.Scale. Falls back to
+        // 1.0 when no override is configured.
+        target->SetDisplayId(displayId, sSmartstone->GetEffectivePerkScale(info.effect, displayId));
     }
 
     void Register() override
@@ -146,7 +149,10 @@ class spell_sha_feral_spirit_display : public SpellScript
             if (controlled && controlled->GetEntry() == SPIRIT_WOLF_ENTRY)
             {
                 controlled->SetDisplayId(displayId);
-                controlled->SetObjectScale(0.6f);
+                // Per-(effect, model) scale from smartstone_perks.Scale;
+                // leave the creature's natural scale when none is set.
+                if (float scale = sSmartstone->GetPerkScale(PERK_EFFECT_SHAMAN_FERAL_SPIRIT, displayId); scale > 0.0f)
+                    controlled->SetObjectScale(scale);
             }
         }
     }

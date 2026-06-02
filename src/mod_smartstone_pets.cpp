@@ -45,7 +45,16 @@ public:
             return;
 
         if (uint32 displayId = sSmartstone->GetWarlockPetDisplay(owner, static_cast<uint8>(slot)))
+        {
             pet->SetDisplayId(displayId);
+            // WarlockPetSlot lines up with PERK_EFFECT_WARLOCK_PET_* by
+            // construction, so the effect is the slot plus the imp base.
+            uint8 effect = PERK_EFFECT_WARLOCK_PET_IMP + static_cast<uint8>(slot);
+            // Per-(effect, model) scale from smartstone_perks.Scale; leave
+            // the pet's natural scale when none is set.
+            if (float scale = sSmartstone->GetPerkScale(effect, displayId); scale > 0.0f)
+                pet->SetObjectScale(scale);
+        }
     }
 };
 

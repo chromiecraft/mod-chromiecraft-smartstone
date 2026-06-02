@@ -301,6 +301,7 @@ struct SmartstonePerkData
     uint32 Category;
     uint8 Effect;  // SmartstonePerkEffect
     uint32 Value;  // effect-specific payload (e.g. a displayId)
+    float Scale;   // 0 = use model default; >0 overrides object scale for Value
     uint8 SubscriptionLevelRequired;
 };
 
@@ -579,6 +580,34 @@ public:
         return player->GetPlayerSetting(ModName + "#warlock_pet", slot).value;
     }
 
+    // Composite key for PerkScaleOverrides. Scale depends on the render
+    // context, not just the model: the same creature displayId worn as a
+    // player shapeshift vs. summoned as a guardian needs different scales.
+    // SmartstonePerkEffect is that context, so (effect, displayId) keys it.
+    [[nodiscard]] static constexpr uint64 PerkScaleKey(uint8 effect, uint32 displayId)
+    {
+        return (static_cast<uint64>(effect) << 32) | displayId;
+    }
+
+    // Per-(effect, model) object-scale override, populated from
+    // smartstone_perks.Scale in LoadPerks(). Scale lives with the perk
+    // definition rather than per-player; the apply sites know their own
+    // effect and the stored displayId, so they resolve scale through here.
+    // Returns 0 when no override is configured.
+    [[nodiscard]] float GetPerkScale(uint8 effect, uint32 displayId) const
+    {
+        auto it = PerkScaleOverrides.find(PerkScaleKey(effect, displayId));
+        return it != PerkScaleOverrides.end() ? it->second : 0.0f;
+    }
+
+    // Effective scale for SetDisplayId: the configured override, or 1.0
+    // when none is set (matching the engine's default model scale).
+    [[nodiscard]] float GetEffectivePerkScale(uint8 effect, uint32 displayId) const
+    {
+        float scale = GetPerkScale(effect, displayId);
+        return scale > 0.0f ? scale : 1.0f;
+    }
+
     // Map a warlock pet creature entry to its WarlockPetSlot index, or -1
     // if the entry isn't a recognised warlock pet.
     [[nodiscard]] static int32 GetWarlockPetSlotForEntry(uint32 entry)
@@ -639,18 +668,19 @@ public:
 
         ShapeshiftForm form = player->GetShapeshiftForm();
         uint8 slot;
+        uint8 effect;
         uint32 spellId;
         switch (form)
         {
-            case FORM_BEAR:        slot = DRUID_FORM_BEAR;   spellId =  5487; break;
-            case FORM_DIREBEAR:    slot = DRUID_FORM_BEAR;   spellId =  9634; break;
-            case FORM_CAT:         slot = DRUID_FORM_CAT;    spellId =   768; break;
-            case FORM_TRAVEL:      slot = DRUID_FORM_TRAVEL; spellId =   783; break;
-            case FORM_FLIGHT:      slot = DRUID_FORM_FLIGHT; spellId = 33943; break;
-            case FORM_FLIGHT_EPIC: slot = DRUID_FORM_FLIGHT; spellId = 40120; break;
-            case FORM_AQUA:        slot = DRUID_FORM_AQUATIC; spellId = 1066; break;
-            case FORM_TREE:        slot = DRUID_FORM_TREE;    spellId = 33891; break;
-            case FORM_MOONKIN:     slot = DRUID_FORM_MOONKIN; spellId = 24858; break;
+            case FORM_BEAR:        slot = DRUID_FORM_BEAR;    effect = PERK_EFFECT_DRUID_FORM_BEAR;    spellId =  5487; break;
+            case FORM_DIREBEAR:    slot = DRUID_FORM_BEAR;    effect = PERK_EFFECT_DRUID_FORM_BEAR;    spellId =  9634; break;
+            case FORM_CAT:         slot = DRUID_FORM_CAT;     effect = PERK_EFFECT_DRUID_FORM_CAT;     spellId =   768; break;
+            case FORM_TRAVEL:      slot = DRUID_FORM_TRAVEL;  effect = PERK_EFFECT_DRUID_FORM_TRAVEL;  spellId =   783; break;
+            case FORM_FLIGHT:      slot = DRUID_FORM_FLIGHT;  effect = PERK_EFFECT_DRUID_FORM_FLIGHT;  spellId = 33943; break;
+            case FORM_FLIGHT_EPIC: slot = DRUID_FORM_FLIGHT;  effect = PERK_EFFECT_DRUID_FORM_FLIGHT;  spellId = 40120; break;
+            case FORM_AQUA:        slot = DRUID_FORM_AQUATIC; effect = PERK_EFFECT_DRUID_FORM_AQUATIC; spellId =  1066; break;
+            case FORM_TREE:        slot = DRUID_FORM_TREE;    effect = PERK_EFFECT_DRUID_FORM_TREE;    spellId = 33891; break;
+            case FORM_MOONKIN:     slot = DRUID_FORM_MOONKIN; effect = PERK_EFFECT_DRUID_FORM_MOONKIN; spellId = 24858; break;
             default:               return;
         }
 
@@ -664,12 +694,8 @@ public:
         }
 
         if (uint32 displayId = GetDruidFormDisplay(player, slot))
-            player->SetDisplayId(displayId);
+            player->SetDisplayId(displayId, GetEffectivePerkScale(effect, displayId));
     }
-
-    // Shaman ghost-wolf creature models are oversized at scale 1.0; the
-    // override applies them at 0.5 so they sit at player height.
-    static constexpr float SHAMAN_GHOST_WOLF_OVERRIDE_SCALE = 0.5f;
 
     // Shaman counterpart of RestoreDefaultFormDisplay. Currently only one
     // form (Ghost Wolf), but kept slot-parameterised for symmetry.
@@ -704,7 +730,7 @@ public:
         }
 
         if (uint32 displayId = GetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF))
-            player->SetDisplayId(displayId, SHAMAN_GHOST_WOLF_OVERRIDE_SCALE);
+            player->SetDisplayId(displayId, GetEffectivePerkScale(PERK_EFFECT_SHAMAN_GHOST_WOLF, displayId));
     }
 
     [[nodiscard]] std::string GetServiceName(uint8 serviceType) const;
@@ -757,6 +783,7 @@ public:
     std::unordered_map<uint32, std::vector<SmartstoneCategoryData>> Categories;
     std::unordered_map<uint32, std::vector<SmartstoneService>> Services;
     std::unordered_map<uint32, std::vector<SmartstonePerkData>> Perks;
+    std::unordered_map<uint64, float> PerkScaleOverrides; // PerkScaleKey(effect, displayId) -> scale
     std::unordered_map<ObjectGuid, std::vector<SmartstoneMenuState>> MenuStateHolder;
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 

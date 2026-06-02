@@ -120,10 +120,11 @@ void Smartstone::LoadPerks()
     // adjacent, then all Cat Form perks, etc.) so the gossip menu lists
     // them in clusters. Id is the secondary key to keep ordering stable
     // when multiple perks share the same effect.
-    QueryResult result = WorldDatabase.Query("SELECT Id, Title, Description, ClassId, Category, Effect, Value, SubscriptionLevel FROM smartstone_perks WHERE Enabled = 1 ORDER BY Effect, Id");
+    QueryResult result = WorldDatabase.Query("SELECT Id, Title, Description, ClassId, Category, Effect, Value, Scale, SubscriptionLevel FROM smartstone_perks WHERE Enabled = 1 ORDER BY Effect, Id");
     SmartstonePerkData perkData;
 
     Perks.clear();
+    PerkScaleOverrides.clear();
 
     if (result)
     {
@@ -137,8 +138,15 @@ void Smartstone::LoadPerks()
             perkData.Category = fields[4].Get<uint32>();
             perkData.Effect = fields[5].Get<uint8>();
             perkData.Value = fields[6].Get<uint32>();
-            perkData.SubscriptionLevelRequired = fields[7].Get<uint8>();
+            perkData.Scale = fields[7].Get<float>();
+            perkData.SubscriptionLevelRequired = fields[8].Get<uint8>();
             Perks[perkData.Category].push_back(perkData);
+
+            // Cache the scale so the form / pet apply sites can resolve it
+            // from (their effect + the stored displayId). Keyed by effect
+            // so one model can carry different scales per render context.
+            if (perkData.Value && perkData.Scale > 0.0f)
+                PerkScaleOverrides[PerkScaleKey(perkData.Effect, perkData.Value)] = perkData.Scale;
 
             MenuItems[perkData.Category].push_back(MenuItem{
                 perkData.Id,

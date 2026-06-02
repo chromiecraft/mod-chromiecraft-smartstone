@@ -645,7 +645,11 @@ public:
                         // so the user doesn't have to dismiss + resummon.
                         if (Pet* pet = player->GetPet())
                             if (Smartstone::GetWarlockPetSlotForEntry(pet->GetEntry()) == slot)
+                            {
                                 pet->SetDisplayId(perk.Value);
+                                if (perk.Scale > 0.0f)
+                                    pet->SetObjectScale(perk.Scale);
+                            }
                         break;
                     }
                     default:

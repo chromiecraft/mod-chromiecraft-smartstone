@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `smartstone_perks` (
   `Category` INT UNSIGNED NOT NULL DEFAULT 0,
   `Effect` TINYINT UNSIGNED NOT NULL DEFAULT 0,  -- numeric discriminator routed in C++ (see SmartstonePerkEffect)
   `Value` INT UNSIGNED NOT NULL DEFAULT 0,       -- effect-specific payload (e.g. a displayId)
+  `Scale` FLOAT NOT NULL DEFAULT 0,              -- 0 = use model default; >0 overrides object scale for the displayId in Value
   `SubscriptionLevel` TINYINT UNSIGNED NOT NULL DEFAULT 0,
   `Enabled` TINYINT NOT NULL DEFAULT 1
 );
