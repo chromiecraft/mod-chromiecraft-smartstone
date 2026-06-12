@@ -88,7 +88,14 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 74, 'Target ''{}'' is offline. This command requires an online player.'),
 ('mod-cc-smartstone', 75, '[Debug] Costume {} ({}) on {}:\n  DB: DisplayId={}, Duration={} (raw), Cooldown={}s\n  Player: membership={}, effective duration={}\n  Mode: {}, cooldown total={}s\n  Cooldown active={}, remaining={}s (~{}m {}s), elapsed={}s\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 -- Challenge-character XP-rate countermeasure (76)
-('mod-cc-smartstone', 76, '|cffFF4C4CYour experience rate has been reset to 1x — challenge mode characters cannot modify it.|r');
+('mod-cc-smartstone', 76, '|cffFF4C4CYour experience rate has been reset to 1x — challenge mode characters cannot modify it.|r'),
+-- Display opt-out toggles (77-82)
+('mod-cc-smartstone', 77, 'Other players'' costumes are now |cffFF4C4Chidden|r — you will see their regular appearance.'),
+('mod-cc-smartstone', 78, 'Other players'' costumes are now |cff4CFF4Cshown|r.'),
+('mod-cc-smartstone', 79, 'Other players'' form skins are now |cffFF4C4Chidden|r — you will see the regular form models.'),
+('mod-cc-smartstone', 80, 'Other players'' form skins are now |cff4CFF4Cshown|r.'),
+('mod-cc-smartstone', 81, 'Other players'' minion skins are now |cffFF4C4Chidden|r — you will see the regular minion models.'),
+('mod-cc-smartstone', 82, 'Other players'' minion skins are now |cff4CFF4Cshown|r.');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 
@@ -722,3 +729,54 @@ INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 ('mod-cc-smartstone', 74, 'zhTW', '目標 ''{}'' 已離線。此指令需要線上玩家。'),
 ('mod-cc-smartstone', 75, 'zhTW', '[Debug] 服裝 {} ({}) 在 {}:\n  DB: DisplayId={}, Duration={} (原始), Cooldown={}秒\n  玩家: 會員={}, 有效持續時間={}\n  模式: {}, 總冷卻={}秒\n  冷卻啟用={}, 剩餘={}秒 (~{}分 {}秒), 已過={}秒\n  Grace: InGrace={}, HasCooldown={}, ReportedRemaining={}'),
 ('mod-cc-smartstone', 76, 'zhTW', '|cffFF4C4C你的經驗值倍率已重置為 1x — 挑戰模式角色無法修改此設定。|r');
+
+-- Display opt-out toggles (77-82)
+INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
+('mod-cc-smartstone', 77, 'deDE', 'Kostüme anderer Spieler werden jetzt |cffFF4C4Causgeblendet|r — du siehst ihr normales Aussehen.'),
+('mod-cc-smartstone', 78, 'deDE', 'Kostüme anderer Spieler werden jetzt |cff4CFF4Cangezeigt|r.'),
+('mod-cc-smartstone', 79, 'deDE', 'Gestalt-Skins anderer Spieler werden jetzt |cffFF4C4Causgeblendet|r — du siehst die normalen Gestaltmodelle.'),
+('mod-cc-smartstone', 80, 'deDE', 'Gestalt-Skins anderer Spieler werden jetzt |cff4CFF4Cangezeigt|r.'),
+('mod-cc-smartstone', 81, 'deDE', 'Begleiter-Skins anderer Spieler werden jetzt |cffFF4C4Causgeblendet|r — du siehst die normalen Begleitermodelle.'),
+('mod-cc-smartstone', 82, 'deDE', 'Begleiter-Skins anderer Spieler werden jetzt |cff4CFF4Cangezeigt|r.'),
+('mod-cc-smartstone', 77, 'frFR', 'Les costumes des autres joueurs sont désormais |cffFF4C4Cmasqués|r — vous verrez leur apparence normale.'),
+('mod-cc-smartstone', 78, 'frFR', 'Les costumes des autres joueurs sont désormais |cff4CFF4Caffichés|r.'),
+('mod-cc-smartstone', 79, 'frFR', 'Les apparences de forme des autres joueurs sont désormais |cffFF4C4Cmasquées|r — vous verrez les modèles de forme normaux.'),
+('mod-cc-smartstone', 80, 'frFR', 'Les apparences de forme des autres joueurs sont désormais |cff4CFF4Caffichées|r.'),
+('mod-cc-smartstone', 81, 'frFR', 'Les apparences de familier des autres joueurs sont désormais |cffFF4C4Cmasquées|r — vous verrez les modèles de familier normaux.'),
+('mod-cc-smartstone', 82, 'frFR', 'Les apparences de familier des autres joueurs sont désormais |cff4CFF4Caffichées|r.'),
+('mod-cc-smartstone', 77, 'esES', 'Los disfraces de otros jugadores ahora están |cffFF4C4Cocultos|r — verás su aspecto normal.'),
+('mod-cc-smartstone', 78, 'esES', 'Los disfraces de otros jugadores ahora se |cff4CFF4Cmuestran|r.'),
+('mod-cc-smartstone', 79, 'esES', 'Los aspectos de forma de otros jugadores ahora están |cffFF4C4Cocultos|r — verás los modelos de forma normales.'),
+('mod-cc-smartstone', 80, 'esES', 'Los aspectos de forma de otros jugadores ahora se |cff4CFF4Cmuestran|r.'),
+('mod-cc-smartstone', 81, 'esES', 'Los aspectos de esbirro de otros jugadores ahora están |cffFF4C4Cocultos|r — verás los modelos de esbirro normales.'),
+('mod-cc-smartstone', 82, 'esES', 'Los aspectos de esbirro de otros jugadores ahora se |cff4CFF4Cmuestran|r.'),
+('mod-cc-smartstone', 77, 'esMX', 'Los disfraces de otros jugadores ahora están |cffFF4C4Cocultos|r — verás su aspecto normal.'),
+('mod-cc-smartstone', 78, 'esMX', 'Los disfraces de otros jugadores ahora se |cff4CFF4Cmuestran|r.'),
+('mod-cc-smartstone', 79, 'esMX', 'Los aspectos de forma de otros jugadores ahora están |cffFF4C4Cocultos|r — verás los modelos de forma normales.'),
+('mod-cc-smartstone', 80, 'esMX', 'Los aspectos de forma de otros jugadores ahora se |cff4CFF4Cmuestran|r.'),
+('mod-cc-smartstone', 81, 'esMX', 'Los aspectos de esbirro de otros jugadores ahora están |cffFF4C4Cocultos|r — verás los modelos de esbirro normales.'),
+('mod-cc-smartstone', 82, 'esMX', 'Los aspectos de esbirro de otros jugadores ahora se |cff4CFF4Cmuestran|r.'),
+('mod-cc-smartstone', 77, 'ruRU', 'Костюмы других игроков теперь |cffFF4C4Cскрыты|r — вы увидите их обычный облик.'),
+('mod-cc-smartstone', 78, 'ruRU', 'Костюмы других игроков теперь |cff4CFF4Cпоказаны|r.'),
+('mod-cc-smartstone', 79, 'ruRU', 'Облик форм других игроков теперь |cffFF4C4Cскрыт|r — вы увидите обычные модели форм.'),
+('mod-cc-smartstone', 80, 'ruRU', 'Облик форм других игроков теперь |cff4CFF4Cпоказан|r.'),
+('mod-cc-smartstone', 81, 'ruRU', 'Облик питомцев других игроков теперь |cffFF4C4Cскрыт|r — вы увидите обычные модели питомцев.'),
+('mod-cc-smartstone', 82, 'ruRU', 'Облик питомцев других игроков теперь |cff4CFF4Cпоказан|r.'),
+('mod-cc-smartstone', 77, 'koKR', '다른 플레이어의 코스튬이 이제 |cffFF4C4C숨김|r 처리됩니다 — 일반 외형으로 표시됩니다.'),
+('mod-cc-smartstone', 78, 'koKR', '다른 플레이어의 코스튬이 이제 |cff4CFF4C표시|r됩니다.'),
+('mod-cc-smartstone', 79, 'koKR', '다른 플레이어의 변신 외형이 이제 |cffFF4C4C숨김|r 처리됩니다 — 일반 변신 모델로 표시됩니다.'),
+('mod-cc-smartstone', 80, 'koKR', '다른 플레이어의 변신 외형이 이제 |cff4CFF4C표시|r됩니다.'),
+('mod-cc-smartstone', 81, 'koKR', '다른 플레이어의 소환수 외형이 이제 |cffFF4C4C숨김|r 처리됩니다 — 일반 소환수 모델로 표시됩니다.'),
+('mod-cc-smartstone', 82, 'koKR', '다른 플레이어의 소환수 외형이 이제 |cff4CFF4C표시|r됩니다.'),
+('mod-cc-smartstone', 77, 'zhCN', '其他玩家的服装现已|cffFF4C4C隐藏|r — 你将看到他们的常规外观。'),
+('mod-cc-smartstone', 78, 'zhCN', '其他玩家的服装现已|cff4CFF4C显示|r。'),
+('mod-cc-smartstone', 79, 'zhCN', '其他玩家的形态外观现已|cffFF4C4C隐藏|r — 你将看到常规的形态模型。'),
+('mod-cc-smartstone', 80, 'zhCN', '其他玩家的形态外观现已|cff4CFF4C显示|r。'),
+('mod-cc-smartstone', 81, 'zhCN', '其他玩家的仆从外观现已|cffFF4C4C隐藏|r — 你将看到常规的仆从模型。'),
+('mod-cc-smartstone', 82, 'zhCN', '其他玩家的仆从外观现已|cff4CFF4C显示|r。'),
+('mod-cc-smartstone', 77, 'zhTW', '其他玩家的服裝現已|cffFF4C4C隱藏|r — 你將看到他們的常規外觀。'),
+('mod-cc-smartstone', 78, 'zhTW', '其他玩家的服裝現已|cff4CFF4C顯示|r。'),
+('mod-cc-smartstone', 79, 'zhTW', '其他玩家的形態外觀現已|cffFF4C4C隱藏|r — 你將看到常規的形態模型。'),
+('mod-cc-smartstone', 80, 'zhTW', '其他玩家的形態外觀現已|cff4CFF4C顯示|r。'),
+('mod-cc-smartstone', 81, 'zhTW', '其他玩家的僕從外觀現已|cffFF4C4C隱藏|r — 你將看到常規的僕從模型。'),
+('mod-cc-smartstone', 82, 'zhTW', '其他玩家的僕從外觀現已|cff4CFF4C顯示|r。');

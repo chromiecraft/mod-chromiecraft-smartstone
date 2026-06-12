@@ -2,7 +2,7 @@
 -- Smartstone Update Script
 --
 
-DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10);
+DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10, 11);
 INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Pets', 0, 92002, 1),
 (2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Combat Pets', 0, 92003, 1),
@@ -10,7 +10,8 @@ INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `Subscript
 (4,0, '|TInterface/icons/Spell_Shadow_Charm:30:30:-18:0|t Character', 0, 92020, 1),
 (5,3,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0, 92006,1),
 (9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1),
-(10,4,'|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Scroll of Resurrection', 0, 92021, 1);
+(10,4,'|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Scroll of Resurrection', 0, 92021, 1),
+(11,4,'|TInterface/icons/INV_Misc_Spyglass_03:30:30:-18:0|t Display Options', 0, 92020, 1);
 
 DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5, 6, 7);
 INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES

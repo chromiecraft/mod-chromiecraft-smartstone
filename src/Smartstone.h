@@ -8,10 +8,16 @@
 #include "ScriptedGossip.h"
 #include <limits>    // per std::numeric_limits
 
+class Creature;
+
 enum Misc
 {
 
     CATEGORY_MAIN = 0,
+
+    // Display-options submenu under Character (smartstone_categories.Id 11);
+    // rendered in C++ rather than from DB services.
+    CATEGORY_DISPLAY_OPTIONS = 11,
 
     // Module-integration subcategories under Character. Gated in the menu
     // builder against the matching cached server-side config.
@@ -40,7 +46,11 @@ enum Misc
     SETTING_SWP          = 4,
 
     SETTING_CURR_COSTUME = 0,
-    SETTING_CURR_AURA    = 1
+    SETTING_CURR_AURA    = 1,
+    // Per-observer opt-outs (1 = hide that override category from this player).
+    SETTING_HIDE_COSTUMES = 2, // costume morphs
+    SETTING_HIDE_FORMS    = 3, // druid / shaman form-display perks
+    SETTING_HIDE_MINIONS  = 4  // warlock pet / feral-spirit display perks
 };
 
 // Per-player slot indices for class display-override namespaces.
@@ -128,6 +138,10 @@ enum UtilActions
     SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELGUARD   = 20,
     SMARTSTONE_ACTION_RESET_WARLOCK_PET_DOOMGUARD  = 21,
     SMARTSTONE_ACTION_RESET_FERAL_SPIRITS          = 22,
+    // Per-player "hide other players' X" view preferences.
+    SMARTSTONE_ACTION_TOGGLE_HIDE_COSTUMES         = 23,
+    SMARTSTONE_ACTION_TOGGLE_HIDE_FORMS            = 24,
+    SMARTSTONE_ACTION_TOGGLE_HIDE_MINIONS          = 25,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -389,6 +403,25 @@ public:
 
     void SetCurrentAura(Player* player, uint32 spellId) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_CURR_AURA, spellId); }
     [[nodiscard]] uint32 GetCurrentAura(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_CURR_AURA).value; };
+
+    // Per-observer opt-outs, enforced in the values-update patch hook.
+    void SetHideCostumes(Player* player, bool hide) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_HIDE_COSTUMES, hide ? 1 : 0); }
+    [[nodiscard]] bool IsHidingCostumes(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_HIDE_COSTUMES).value != 0; }
+
+    void SetHideForms(Player* player, bool hide) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_HIDE_FORMS, hide ? 1 : 0); }
+    [[nodiscard]] bool IsHidingForms(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_HIDE_FORMS).value != 0; }
+
+    void SetHideMinions(Player* player, bool hide) { player->UpdatePlayerSetting(ModName + "#misc", SETTING_HIDE_MINIONS, hide ? 1 : 0); }
+    [[nodiscard]] bool IsHidingMinions(Player* player) const { return player->GetPlayerSetting(ModName + "#misc", SETTING_HIDE_MINIONS).value != 0; }
+
+    // Return true if the unit currently shows the override, and fill the
+    // value an opted-out observer should see instead (canonical form model /
+    // native minion display id).
+    [[nodiscard]] bool GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const;
+    [[nodiscard]] bool GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const;
+
+    // Re-send nearby overridden units to `observer` so a toggle applies at once.
+    void RefreshSmartstoneVisibilityFor(Player* observer) const;
 
     void SetDebugEnabled(bool enabled) { IsDebugEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneDebugEnabled() const { return IsDebugEnabled; }
@@ -914,6 +947,13 @@ enum SmartstoneStringId : uint32
     LANG_MOD_DEBUG_COSTUME_DUMP        = 75,
     // Challenge-character XP-rate countermeasure (76)
     LANG_MOD_XP_RATE_RESET_NOTICE      = 76,
+    // Display opt-out toggles (77-82)
+    LANG_MOD_COSTUMES_NOW_HIDDEN       = 77,
+    LANG_MOD_COSTUMES_NOW_SHOWN        = 78,
+    LANG_MOD_FORMS_NOW_HIDDEN          = 79,
+    LANG_MOD_FORMS_NOW_SHOWN           = 80,
+    LANG_MOD_MINIONS_NOW_HIDDEN        = 81,
+    LANG_MOD_MINIONS_NOW_SHOWN         = 82,
 };
 
 #define sSmartstone Smartstone::instance()

@@ -10,7 +10,11 @@ DELETE FROM `command` WHERE `name` IN (
     'smartstone lookup allpets',
     'smartstone use',
     'smartstone use costume',
-    'smartstone use pet'
+    'smartstone use pet',
+    'smartstone toggle',
+    'smartstone toggle costumes',
+    'smartstone toggle forms',
+    'smartstone toggle minions'
 );
 
 INSERT INTO `command` (`name`, `security`, `help`) VALUES
@@ -25,4 +29,8 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone lookup allpets',  2, 'Syntax: .smartstone lookup allpets [$filter]\nLists every pet loaded in the system regardless of unlock status.\nOptionally filters results by name. Shows the ID used with .smartstone unlock service.'),
 ('smartstone use',             0, 'Syntax: .smartstone use [costume|pet]\nCommands to apply a smartstone costume or summon a pet.'),
 ('smartstone use costume',     0, 'Syntax: .smartstone use costume $id\nApplies the costume with the given ID if you have access to it.\nUse .smartstone lookup costumes to find available IDs.'),
-('smartstone use pet',         0, 'Syntax: .smartstone use pet $id\nSummons the companion or combat pet with the given ID if you have access to it.\nUse .smartstone lookup pets to find available IDs.');
+('smartstone use pet',         0, 'Syntax: .smartstone use pet $id\nSummons the companion or combat pet with the given ID if you have access to it.\nUse .smartstone lookup pets to find available IDs.'),
+('smartstone toggle',          0, 'Syntax: .smartstone toggle [costumes|forms|minions]\nView preferences for hiding other players'' Smartstone display overrides.'),
+('smartstone toggle costumes', 0, 'Syntax: .smartstone toggle costumes\nToggles whether you see other players'' Smartstone costumes.'),
+('smartstone toggle forms',    0, 'Syntax: .smartstone toggle forms\nToggles whether you see other players'' Smartstone druid / shaman form skins.'),
+('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone warlock-pet / feral-spirit skins.');

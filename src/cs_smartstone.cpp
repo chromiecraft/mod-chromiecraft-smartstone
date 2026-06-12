@@ -55,6 +55,13 @@ public:
             { "convert", HandleSmartstoneCostumeConvertCommand, SEC_PLAYER, Console::No },
         };
 
+        static ChatCommandTable smartstoneToggleTable =
+        {
+            { "costumes", HandleSmartstoneToggleCostumesCommand, SEC_PLAYER, Console::No },
+            { "forms",    HandleSmartstoneToggleFormsCommand,    SEC_PLAYER, Console::No },
+            { "minions",  HandleSmartstoneToggleMinionsCommand,  SEC_PLAYER, Console::No },
+        };
+
         static ChatCommandTable smartstoneDebugTable =
         {
             { "costume", HandleSmartstoneDebugCostumeCommand, SEC_GAMEMASTER, Console::No },
@@ -69,6 +76,7 @@ public:
             { "lookup",         smartstoneLookupTable },
             { "use",            smartstoneUseTable },
             { "costume",        smartstoneCostumeTable },
+            { "toggle",         smartstoneToggleTable },
             { "debug",          smartstoneDebugTable },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
         };
@@ -143,6 +151,39 @@ public:
         sSmartstone->ApplyCostume(player, id);
         handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_APPLIED, costume.Description);
         return true;
+    }
+
+    // Flip one per-player hide-X view preference (shared by the toggle cmds).
+    static bool ToggleDisplayPreference(ChatHandler* handler, uint32 settingSlot, uint32 hiddenMsg, uint32 shownMsg)
+    {
+        Player* player = handler->GetPlayer();
+        if (!player)
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_CONSOLE_NEEDS_PLAYER);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        bool const nowHidden = player->GetPlayerSetting(ModName + "#misc", settingSlot).value == 0;
+        player->UpdatePlayerSetting(ModName + "#misc", settingSlot, nowHidden ? 1 : 0);
+        sSmartstone->RefreshSmartstoneVisibilityFor(player);
+        handler->PSendModuleSysMessage(ModName, nowHidden ? hiddenMsg : shownMsg);
+        return true;
+    }
+
+    static bool HandleSmartstoneToggleCostumesCommand(ChatHandler* handler)
+    {
+        return ToggleDisplayPreference(handler, SETTING_HIDE_COSTUMES, LANG_MOD_COSTUMES_NOW_HIDDEN, LANG_MOD_COSTUMES_NOW_SHOWN);
+    }
+
+    static bool HandleSmartstoneToggleFormsCommand(ChatHandler* handler)
+    {
+        return ToggleDisplayPreference(handler, SETTING_HIDE_FORMS, LANG_MOD_FORMS_NOW_HIDDEN, LANG_MOD_FORMS_NOW_SHOWN);
+    }
+
+    static bool HandleSmartstoneToggleMinionsCommand(ChatHandler* handler)
+    {
+        return ToggleDisplayPreference(handler, SETTING_HIDE_MINIONS, LANG_MOD_MINIONS_NOW_HIDDEN, LANG_MOD_MINIONS_NOW_SHOWN);
     }
 
     static bool HandleSmartStoneUsePetCommand(ChatHandler* handler, uint32 id)

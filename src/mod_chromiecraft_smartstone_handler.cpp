@@ -3,7 +3,9 @@
  */
 
 #include "Chat.h"
+#include "Creature.h"
 #include "GameTime.h"
+#include "Map.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Player.h"
@@ -587,6 +589,125 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
                 ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_EXPIRED, description);
             }
         }, duration);
+    }
+}
+
+// Spirit Wolves summoned by Feral Spirit (see mod_smartstone_spells.cpp).
+static constexpr uint32 FERAL_SPIRIT_WOLF_ENTRY = 29264;
+
+// Form -> (slot, namespace, spell), mirroring spell_smartstone_form_display_override.
+bool Smartstone::GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const
+{
+    if (!player)
+        return false;
+
+    ShapeshiftForm form = player->GetShapeshiftForm();
+    uint8 slot;
+    bool isShaman = false;
+    uint32 spellId;
+    switch (form)
+    {
+        case FORM_BEAR:        slot = DRUID_FORM_BEAR;        spellId =  5487; break;
+        case FORM_DIREBEAR:    slot = DRUID_FORM_BEAR;        spellId =  9634; break;
+        case FORM_CAT:         slot = DRUID_FORM_CAT;         spellId =   768; break;
+        case FORM_TRAVEL:      slot = DRUID_FORM_TRAVEL;      spellId =   783; break;
+        case FORM_FLIGHT:      slot = DRUID_FORM_FLIGHT;      spellId = 33943; break;
+        case FORM_FLIGHT_EPIC: slot = DRUID_FORM_FLIGHT;      spellId = 40120; break;
+        case FORM_AQUA:        slot = DRUID_FORM_AQUATIC;     spellId =  1066; break;
+        case FORM_TREE:        slot = DRUID_FORM_TREE;        spellId = 33891; break;
+        case FORM_MOONKIN:     slot = DRUID_FORM_MOONKIN;     spellId = 24858; break;
+        case FORM_GHOSTWOLF:   slot = SHAMAN_FORM_GHOST_WOLF; isShaman = true; spellId = 2645; break;
+        default:               return false;
+    }
+
+    uint32 overrideDisplay = isShaman
+        ? GetShamanFormDisplay(player, slot)
+        : GetDruidFormDisplay(player, slot);
+    if (!overrideDisplay)
+        return false;
+
+    // Skip when the override isn't live (e.g. BG/arena shows the canonical model).
+    if (player->GetDisplayId() != overrideDisplay)
+        return false;
+
+    canonicalModel = player->GetModelForForm(form, spellId);
+    return canonicalModel != 0;
+}
+
+bool Smartstone::GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const
+{
+    if (!creature)
+        return false;
+
+    // Entry gate first — most creatures are neither pets nor spirit wolves.
+    uint32 entry = creature->GetEntry();
+    int32 wpSlot = Smartstone::GetWarlockPetSlotForEntry(entry);
+    if (wpSlot < 0 && entry != FERAL_SPIRIT_WOLF_ENTRY)
+        return false;
+
+    Player* owner = creature->GetCharmerOrOwnerPlayerOrPlayerItself();
+    if (!owner)
+        return false;
+
+    uint32 overrideDisplay = (wpSlot >= 0)
+        ? GetWarlockPetDisplay(owner, static_cast<uint8>(wpSlot))
+        : GetShamanGuardianDisplay(owner, SHAMAN_GUARDIAN_FERAL_SPIRIT);
+    if (!overrideDisplay)
+        return false;
+
+    if (creature->GetDisplayId() != overrideDisplay)
+        return false;
+
+    nativeDisplay = creature->GetNativeDisplayId();
+    return nativeDisplay != 0;
+}
+
+void Smartstone::RefreshSmartstoneVisibilityFor(Player* observer) const
+{
+    if (!observer || !observer->IsInWorld())
+        return;
+
+    Map* map = observer->GetMap();
+    if (!map)
+        return;
+
+    // A toggle doesn't dirty any field, so push a create block for each
+    // affected unit in range to re-run the patch hook. Only fires on toggle.
+    float const range = observer->GetVisibilityRange();
+
+    Map::PlayerList const& players = map->GetPlayers();
+    for (Map::PlayerList::const_iterator it = players.begin(); it != players.end(); ++it)
+    {
+        Player* p = it->GetSource();
+        if (!p || !p->IsInWorld())
+            continue;
+
+        bool const pInRange = (p == observer) || observer->IsWithinDistInMap(p, range);
+
+        // Player-level overrides: costume morph or shapeshift-form perk.
+        if (pInRange)
+        {
+            uint32 canonical = 0;
+            if (GetCurrentCostume(p) || GetActiveFormPerkSubstitute(p, canonical))
+                p->SendUpdateToPlayer(observer);
+        }
+
+        // Minion overrides live on the player's controlled creatures.
+        for (Unit* controlled : p->m_Controlled)
+        {
+            Creature* c = controlled ? controlled->ToCreature() : nullptr;
+            if (!c || !c->IsInWorld())
+                continue;
+
+            uint32 native = 0;
+            if (!GetActiveMinionPerkSubstitute(c, native))
+                continue;
+
+            if (!observer->IsWithinDistInMap(c, range))
+                continue;
+
+            c->SendUpdateToPlayer(observer);
+        }
     }
 }
 

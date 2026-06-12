@@ -63,6 +63,9 @@ namespace
         std::memcpy(&rate, &encoded, sizeof(rate));
         return rate;
     }
+
+    // Cached to avoid rebuilding the namespace string in the patch hot path.
+    std::string const CostumeMiscNamespace = ModName + "#misc";
 }
 
 enum GameObjectEntry
@@ -216,6 +219,36 @@ public:
                             sSmartstone->SetCurrentCostume(player, 0);
                         }
                         break;
+                    }
+                    case SMARTSTONE_ACTION_TOGGLE_HIDE_COSTUMES:
+                    {
+                        bool const nowHidden = !sSmartstone->IsHidingCostumes(player);
+                        sSmartstone->SetHideCostumes(player, nowHidden);
+                        sSmartstone->RefreshSmartstoneVisibilityFor(player);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName,
+                            nowHidden ? LANG_MOD_COSTUMES_NOW_HIDDEN : LANG_MOD_COSTUMES_NOW_SHOWN);
+                        ShowCategoryItems(CATEGORY_DISPLAY_OPTIONS, player, item, subscriptionLevel);
+                        return;
+                    }
+                    case SMARTSTONE_ACTION_TOGGLE_HIDE_FORMS:
+                    {
+                        bool const nowHidden = !sSmartstone->IsHidingForms(player);
+                        sSmartstone->SetHideForms(player, nowHidden);
+                        sSmartstone->RefreshSmartstoneVisibilityFor(player);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName,
+                            nowHidden ? LANG_MOD_FORMS_NOW_HIDDEN : LANG_MOD_FORMS_NOW_SHOWN);
+                        ShowCategoryItems(CATEGORY_DISPLAY_OPTIONS, player, item, subscriptionLevel);
+                        return;
+                    }
+                    case SMARTSTONE_ACTION_TOGGLE_HIDE_MINIONS:
+                    {
+                        bool const nowHidden = !sSmartstone->IsHidingMinions(player);
+                        sSmartstone->SetHideMinions(player, nowHidden);
+                        sSmartstone->RefreshSmartstoneVisibilityFor(player);
+                        ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName,
+                            nowHidden ? LANG_MOD_MINIONS_NOW_HIDDEN : LANG_MOD_MINIONS_NOW_SHOWN);
+                        ShowCategoryItems(CATEGORY_DISPLAY_OPTIONS, player, item, subscriptionLevel);
+                        return;
                     }
                     case SMARTSTONE_ACTION_REMOVE_AURA:
                     {
@@ -768,12 +801,47 @@ public:
             ShowCategoryItems(CATEGORY_MAIN, player, item, subscriptionLevel);
         }
 
+        // Per-observer opt-out toggles. Each label reflects current state, so
+        // the single button doubles as on/off.
+        void ShowDisplayOptions(Player* player, Item* item)
+        {
+            auto& menu = player->PlayerTalkClass->GetGossipMenu();
+            int32 idx = 0;
+            char const* eye = "|TInterface/icons/INV_Misc_Spyglass_03:30:30:-18:0|t ";
+
+            menu.AddMenuItem(idx++, 0, Acore::StringFormat("{}{} other players' costumes",
+                eye, sSmartstone->IsHidingCostumes(player) ? "Show" : "Hide"),
+                0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_TOGGLE_HIDE_COSTUMES), "", 0);
+
+            menu.AddMenuItem(idx++, 0, Acore::StringFormat("{}{} other players' form skins",
+                eye, sSmartstone->IsHidingForms(player) ? "Show" : "Hide"),
+                0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_TOGGLE_HIDE_FORMS), "", 0);
+
+            menu.AddMenuItem(idx++, 0, Acore::StringFormat("{}{} other players' minion skins",
+                eye, sSmartstone->IsHidingMinions(player) ? "Show" : "Hide"),
+                0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_TOGGLE_HIDE_MINIONS), "", 0);
+
+            menu.AddMenuItem(idx++, GOSSIP_ICON_DOT, "Back", 0,
+                sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
+
+            SetLastCategory(player, CATEGORY_DISPLAY_OPTIONS);
+            player->PlayerTalkClass->SendGossipMenu(
+                sSmartstone->GetNPCTextForCategory(0, CATEGORY_DISPLAY_OPTIONS), item->GetGUID());
+        }
+
         void ShowCategoryItems(uint32 ParentCategoryId, Player* player, Item* item, uint8 subscriptionLevel, uint8 currentPage = 0)
         {
             player->PlayerTalkClass->ClearMenus();
 
             // Update current page
             _currentMenuState[player->GetGUID()].currentPage = currentPage;
+
+            // Toggles are rendered in C++, not from DB services.
+            if (ParentCategoryId == CATEGORY_DISPLAY_OPTIONS)
+            {
+                ShowDisplayOptions(player, item);
+                return;
+            }
 
             // Check if category exists
             if (sSmartstone->MenuItems.find(ParentCategoryId) == sSmartstone->MenuItems.end())
@@ -1279,11 +1347,97 @@ struct npc_smartstone_vehicle : public VehicleAI
     }
 };
 
+// Rewrites model fields per-observer: when a unit shows a smartstone override
+// (costume / druid-shaman form / warlock-pet-feral-spirit) and the observer
+// opted out of that category, they're sent the native/canonical id instead.
+// Server state is untouched, so other observers still see the override.
+// DISPLAYID is core-tracked; SCALE_X is opted in (players only) so resized
+// overrides don't leak their size. Minion native scale isn't recoverable, so
+// minions get display-id-only.
+class unit_smartstone_costume_script : public UnitScript
+{
+public:
+    unit_smartstone_costume_script() : UnitScript("unit_smartstone_costume_script", true, {
+        UNITHOOK_SHOULD_TRACK_VALUES_UPDATE_POS_BY_INDEX,
+        UNITHOOK_ON_PATCH_VALUES_UPDATE
+    }) { }
+
+    bool ShouldTrackValuesUpdatePosByIndex(Unit const* unit, uint8 /*updateType*/, uint16 index) override
+    {
+        return unit->IsPlayer() && index == OBJECT_FIELD_SCALE_X;
+    }
+
+    void OnPatchValuesUpdate(Unit const* unit, ByteBuffer& valuesUpdateBuf, BuildValuesCachePosPointers& posPointers, Player* target) override
+    {
+        auto patchDisplay = [&](uint32 displayId)
+        {
+            if (posPointers.UnitFieldDisplayPos >= 0)
+                valuesUpdateBuf.put(posPointers.UnitFieldDisplayPos, uint32(displayId));
+        };
+        auto patchScaleToDefault = [&]()
+        {
+            auto scaleIt = posPointers.other.find(OBJECT_FIELD_SCALE_X);
+            if (scaleIt != posPointers.other.end())
+                valuesUpdateBuf.put<float>(scaleIt->second, 1.0f);
+        };
+
+        // Display id isn't in this update (most ticks: health/power/auras),
+        // so there's nothing to substitute. Keeps the hot path to one compare;
+        // overrides co-send scale with the display id, so nothing is missed.
+        if (posPointers.UnitFieldDisplayPos < 0)
+            return;
+
+        if (unit->IsPlayer())
+        {
+            Player* wearer = const_cast<Player*>(unit->ToPlayer());
+
+            // Costume: substitute only while the costume is the live model,
+            // so polymorph / GM transforms are left alone.
+            uint32 costumeDisplay = wearer->GetPlayerSetting(CostumeMiscNamespace, SETTING_CURR_COSTUME).value;
+            if (costumeDisplay && wearer->GetDisplayId() == costumeDisplay)
+            {
+                if (target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_COSTUMES).value)
+                {
+                    patchDisplay(wearer->GetNativeDisplayId());
+                    patchScaleToDefault();
+                }
+                return; // costumed players aren't also showing a form perk
+            }
+
+            // Form perk: check the opt-out first, so GetModelForForm only runs
+            // for observers who hide forms.
+            if (target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_FORMS).value)
+            {
+                uint32 canonicalModel = 0;
+                if (sSmartstone->GetActiveFormPerkSubstitute(wearer, canonicalModel))
+                {
+                    patchDisplay(canonicalModel);
+                    patchScaleToDefault();
+                }
+            }
+            return;
+        }
+
+        // Minion perk (warlock pet / feral spirit) — a separate creature.
+        if (Creature const* creatureConst = unit->ToCreature())
+        {
+            Creature* creature = const_cast<Creature*>(creatureConst);
+            uint32 nativeDisplay = 0;
+            if (sSmartstone->GetActiveMinionPerkSubstitute(creature, nativeDisplay)
+                && target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_MINIONS).value)
+            {
+                patchDisplay(nativeDisplay);
+            }
+        }
+    }
+};
+
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
     new mod_chromiecraft_smartstone_worldscript();
     new mod_chromiecraft_smartstone_playerscript();
     new mod_chromiecraft_smartstone_challenge_xp_playerscript();
+    new unit_smartstone_costume_script();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }
