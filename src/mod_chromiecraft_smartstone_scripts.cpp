@@ -691,7 +691,14 @@ public:
                 }
 
                 if (handled)
+                {
+                    // Live-apply form-skin perks if the player is already in
+                    // that form, so they don't have to re-shift to see it.
+                    // Both helpers no-op unless the matching form is active.
+                    sSmartstone->ReapplyActiveDruidFormDisplay(player);
+                    sSmartstone->ReapplyActiveShamanFormDisplay(player);
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_APPLIED, perk.Title);
+                }
                 else
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_NO_IMPL, perk.Title, perk.Effect);
                 break;
