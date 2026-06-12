@@ -836,8 +836,9 @@ public:
             // Update current page
             _currentMenuState[player->GetGUID()].currentPage = currentPage;
 
-            // Toggles are rendered in C++, not from DB services.
-            if (ParentCategoryId == CATEGORY_DISPLAY_OPTIONS)
+            // Toggles are rendered in C++, not from DB services. If disabled,
+            // fall through to the "category not found" path (back to main).
+            if (ParentCategoryId == CATEGORY_DISPLAY_OPTIONS && sSmartstone->IsDisplayOptOutEnabled())
             {
                 ShowDisplayOptions(player, item);
                 return;
@@ -1006,6 +1007,9 @@ public:
 
                     // Hide module-integration subcategories when the upstream module is disabled.
                     if (menuItem.ItemId == CATEGORY_SCROLL_OF_RESURRECTION && !sSmartstone->IsResScrollEnabled())
+                        available = false;
+
+                    if (menuItem.ItemId == CATEGORY_DISPLAY_OPTIONS && !sSmartstone->IsDisplayOptOutEnabled())
                         available = false;
 
                     // Challenge characters are on a fixed XP regime — mirrors the
@@ -1207,6 +1211,7 @@ public:
         sSmartstone->SetJoyousJourneysActive(sConfigMgr->GetOption<bool>("XPWeekend.IsJoyousJourneysActive", false));
         sSmartstone->SetResScrollEnabled(sConfigMgr->GetOption<bool>("ModResurrectionScroll.Enable", false));
         sSmartstone->SetChallengeXpResetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.ChallengeXpReset.Enable", true));
+        sSmartstone->SetDisplayOptOutEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.DisplayOptOut.Enable", true));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();
@@ -1364,7 +1369,7 @@ public:
 
     bool ShouldTrackValuesUpdatePosByIndex(Unit const* unit, uint8 /*updateType*/, uint16 index) override
     {
-        return unit->IsPlayer() && index == OBJECT_FIELD_SCALE_X;
+        return sSmartstone->IsDisplayOptOutEnabled() && unit->IsPlayer() && index == OBJECT_FIELD_SCALE_X;
     }
 
     void OnPatchValuesUpdate(Unit const* unit, ByteBuffer& valuesUpdateBuf, BuildValuesCachePosPointers& posPointers, Player* target) override
@@ -1384,7 +1389,7 @@ public:
         // Display id isn't in this update (most ticks: health/power/auras),
         // so there's nothing to substitute. Keeps the hot path to one compare;
         // overrides co-send scale with the display id, so nothing is missed.
-        if (posPointers.UnitFieldDisplayPos < 0)
+        if (posPointers.UnitFieldDisplayPos < 0 || !sSmartstone->IsDisplayOptOutEnabled())
             return;
 
         if (unit->IsPlayer())

@@ -369,6 +369,8 @@ private:
     // When true, the challenge-xp PlayerScript snaps the player's weekend-xp
     // rate back to 1x on login and level-up. Defaults to enabled.
     bool ChallengeXpResetEnabled{ true };
+    // Master switch for the per-observer display opt-out toggles.
+    bool DisplayOptOutEnabled{ true };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -443,6 +445,9 @@ public:
 
     void SetChallengeXpResetEnabled(bool enabled) { ChallengeXpResetEnabled = enabled; }
     [[nodiscard]] bool IsChallengeXpResetEnabled() const { return ChallengeXpResetEnabled; }
+
+    void SetDisplayOptOutEnabled(bool enabled) { DisplayOptOutEnabled = enabled; }
+    [[nodiscard]] bool IsDisplayOptOutEnabled() const { return DisplayOptOutEnabled; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;

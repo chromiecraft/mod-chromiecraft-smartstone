@@ -119,3 +119,16 @@ ModChromiecraftSmartstone.UnlockMail.Enable = 0
 #
 
 ModChromiecraftSmartstone.ChallengeXpReset.Enable = 1
+
+#
+#    ModChromiecraftSmartstone.DisplayOptOut.Enable
+#        Description: Enables the per-player "hide other players' display overrides" toggles
+#                     (costumes / druid-shaman form skins / warlock-pet & feral-spirit skins),
+#                     exposed via the Character > Display Options menu and
+#                     .smartstone toggle costumes|forms|minions. When disabled, the menu entry
+#                     and commands are unavailable and every player sees all overrides normally.
+#        Default:     1 - Enabled
+#                     0 - Disabled
+#
+
+ModChromiecraftSmartstone.DisplayOptOut.Enable = 1

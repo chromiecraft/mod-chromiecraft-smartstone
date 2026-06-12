@@ -156,6 +156,13 @@ public:
     // Flip one per-player hide-X view preference (shared by the toggle cmds).
     static bool ToggleDisplayPreference(ChatHandler* handler, uint32 settingSlot, uint32 hiddenMsg, uint32 shownMsg)
     {
+        if (!sSmartstone->IsDisplayOptOutEnabled())
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_DISABLED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
         Player* player = handler->GetPlayer();
         if (!player)
         {
