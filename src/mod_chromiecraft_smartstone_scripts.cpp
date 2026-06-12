@@ -66,6 +66,11 @@ namespace
 
     // Cached to avoid rebuilding the namespace string in the patch hot path.
     std::string const CostumeMiscNamespace = ModName + "#misc";
+
+    // mod-transmog's per-player setting (Transmogrification.h): slot 0,
+    // value 1 = hide other players' transmog (see real gear), 0 = show.
+    constexpr char const* TRANSMOG_SETTING_NS   = "mod-transmog";
+    constexpr uint32      TRANSMOG_SETTING_HIDE = 0;
 }
 
 enum GameObjectEntry
@@ -247,6 +252,19 @@ public:
                         sSmartstone->RefreshSmartstoneVisibilityFor(player);
                         ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName,
                             nowHidden ? LANG_MOD_MINIONS_NOW_HIDDEN : LANG_MOD_MINIONS_NOW_SHOWN);
+                        ShowCategoryItems(CATEGORY_DISPLAY_OPTIONS, player, item, subscriptionLevel);
+                        return;
+                    }
+                    case SMARTSTONE_ACTION_TOGGLE_TRANSMOG:
+                    {
+                        if (!sSmartstone->IsTransmogToggleEnabled())
+                            break;
+
+                        // Reuse mod-transmog's own command (flip + visibility
+                        // refresh + ack). Setting 1 = visuals currently off, so
+                        // toggle them on; otherwise off.
+                        bool const currentlyHidden = player->GetPlayerSetting(TRANSMOG_SETTING_NS, TRANSMOG_SETTING_HIDE).value != 0;
+                        ChatHandler(player->GetSession()).ParseCommands(currentlyHidden ? ".transmog on" : ".transmog off");
                         ShowCategoryItems(CATEGORY_DISPLAY_OPTIONS, player, item, subscriptionLevel);
                         return;
                     }
@@ -835,6 +853,12 @@ public:
                 eye, sSmartstone->IsHidingMinions(player) ? "Show" : "Hide"),
                 0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_TOGGLE_HIDE_MINIONS), "", 0);
 
+            // mod-transmog integration: only when transmog is active server-side.
+            if (sSmartstone->IsTransmogToggleEnabled())
+                menu.AddMenuItem(idx++, 0, Acore::StringFormat("{}{} other players' transmog",
+                    eye, player->GetPlayerSetting(TRANSMOG_SETTING_NS, TRANSMOG_SETTING_HIDE).value ? "Show" : "Hide"),
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_TOGGLE_TRANSMOG), "", 0);
+
             menu.AddMenuItem(idx++, GOSSIP_ICON_DOT, "Back", 0,
                 sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
 
@@ -1226,6 +1250,8 @@ public:
         sSmartstone->SetResScrollEnabled(sConfigMgr->GetOption<bool>("ModResurrectionScroll.Enable", false));
         sSmartstone->SetChallengeXpResetEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.ChallengeXpReset.Enable", true));
         sSmartstone->SetDisplayOptOutEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.DisplayOptOut.Enable", true));
+        // Mirror mod-transmog's master switch so the transmog entry only shows when transmog is active.
+        sSmartstone->SetTransmogToggleEnabled(sConfigMgr->GetOption<bool>("Transmogrification.Enable", false));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();

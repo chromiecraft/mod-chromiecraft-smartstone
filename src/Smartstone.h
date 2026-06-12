@@ -142,6 +142,7 @@ enum UtilActions
     SMARTSTONE_ACTION_TOGGLE_HIDE_COSTUMES         = 23,
     SMARTSTONE_ACTION_TOGGLE_HIDE_FORMS            = 24,
     SMARTSTONE_ACTION_TOGGLE_HIDE_MINIONS          = 25,
+    SMARTSTONE_ACTION_TOGGLE_TRANSMOG              = 26,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -371,6 +372,9 @@ private:
     bool ChallengeXpResetEnabled{ true };
     // Master switch for the per-observer display opt-out toggles.
     bool DisplayOptOutEnabled{ true };
+    // Cached from mod-transmog's Transmogrification.Enable; gates the
+    // transmog on/off entry in the Display Options menu.
+    bool TransmogToggleEnabled{ false };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -452,6 +456,9 @@ public:
 
     void SetDisplayOptOutEnabled(bool enabled) { DisplayOptOutEnabled = enabled; }
     [[nodiscard]] bool IsDisplayOptOutEnabled() const { return DisplayOptOutEnabled; }
+
+    void SetTransmogToggleEnabled(bool enabled) { TransmogToggleEnabled = enabled; }
+    [[nodiscard]] bool IsTransmogToggleEnabled() const { return TransmogToggleEnabled; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;
