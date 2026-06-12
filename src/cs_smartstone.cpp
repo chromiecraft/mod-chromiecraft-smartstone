@@ -133,7 +133,8 @@ public:
             return false;
         }
 
-        if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
+        if ((!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
+            || sSmartstone->IsBattlefieldUseBlocked(player))
         {
             handler->PSendModuleSysMessage(ModName, LANG_MOD_COSTUME_NO_PVP);
             handler->SetSentErrorMessage(true);
@@ -233,6 +234,13 @@ public:
         if (isCombat && !sSmartstone->CanUseSmartstone(player))
         {
             handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_COMBAT_PET_INSTANCE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (isCombat && sSmartstone->IsBattlefieldUseBlocked(player))
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_NO_PVP);
             handler->SetSentErrorMessage(true);
             return false;
         }

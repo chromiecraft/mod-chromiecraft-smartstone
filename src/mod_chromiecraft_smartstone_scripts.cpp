@@ -477,6 +477,12 @@ public:
                     break;
                 }
 
+                if (sSmartstone->IsBattlefieldUseBlocked(player))
+                {
+                    ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_PVP);
+                    break;
+                }
+
                 player->CastCustomSpell(90001, SPELLVALUE_MISCVALUE0, actionId);
                 break;
             }
@@ -500,7 +506,8 @@ public:
                     break;
                 }
 
-                if (!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP()) {
+                if ((!sSmartstone->IsSmartstoneCanUseInPvP() && player->IsInCombat() && player->IsPvP())
+                    || sSmartstone->IsBattlefieldUseBlocked(player)) {
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_PVP);
                     break;
                 }

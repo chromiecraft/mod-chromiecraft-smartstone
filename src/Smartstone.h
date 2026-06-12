@@ -379,6 +379,10 @@ public:
 
     bool CanUseSmartstone(Player* player) const { return !player->GetMap()->IsDungeon() && !player->GetMap()->IsBattlegroundOrArena(); }
 
+    // Part of the PvP restriction: blocked while an active Battlefield
+    // (Wintergrasp) battle is in progress, unless PvP use is allowed.
+    [[nodiscard]] bool IsBattlefieldUseBlocked(Player* player) const;
+
     void SetEnabled(bool enabled) { IsEnabled = enabled; }
     [[nodiscard]] bool IsSmartstoneEnabled() const { return IsEnabled; }
 

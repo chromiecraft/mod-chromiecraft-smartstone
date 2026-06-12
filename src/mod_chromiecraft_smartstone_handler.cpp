@@ -2,6 +2,8 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU AGPL v3 license: https://github.com/azerothcore/azerothcore-wotlk/blob/master/LICENSE-AGPL3
  */
 
+#include "Battlefield.h"
+#include "BattlefieldMgr.h"
 #include "Chat.h"
 #include "Creature.h"
 #include "GameTime.h"
@@ -559,6 +561,15 @@ std::string Smartstone::GetModuleStringForService(uint8 serviceType) const
         default:
             return "";
     }
+}
+
+bool Smartstone::IsBattlefieldUseBlocked(Player* player) const
+{
+    if (CanUseInPvP)
+        return false;
+
+    Battlefield* bf = sBattlefieldMgr->GetBattlefieldToZoneId(player->GetZoneId());
+    return bf && bf->IsWarTime();
 }
 
 void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
