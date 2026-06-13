@@ -35,7 +35,7 @@ VALUES
     (1002, 1000, 'Paladin Perks',     0, 92010, 0),
     (1003, 1000, 'Hunter Perks',      0, 92011, 0),
     (1004, 1000, 'Rogue Perks',       0, 92012, 0),
-    (1005, 1000, 'Priest Perks',      0, 92013, 0),
+    (1005, 1000, '|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Priest Perks',      0, 92013, 1),
     (1006, 1000, 'Death Knight Perks',0, 92014, 0),
     (1007, 1000, '|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Shaman Perks',      0, 92015, 1),
     (1008, 1000, 'Mage Perks',        0, 92016, 0),

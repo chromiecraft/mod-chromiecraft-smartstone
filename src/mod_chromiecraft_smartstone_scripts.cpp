@@ -329,6 +329,13 @@ public:
                         // show the default model.
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_SPIRIT_OF_REDEMPTION:
+                    {
+                        sSmartstone->SetPriestFormDisplay(player, PRIEST_FORM_SPIRIT_OF_REDEMPTION, 0);
+                        // Spirit of Redemption only lasts ~15s after death
+                        // and ends with the priest's revive — no live revert.
+                        break;
+                    }
                     case SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP:
                     case SMARTSTONE_ACTION_RESET_WARLOCK_PET_VOIDWALKER:
                     case SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELHUNTER:
@@ -687,6 +694,9 @@ public:
                     case PERK_EFFECT_SHAMAN_FERAL_SPIRIT:
                         sSmartstone->SetShamanGuardianDisplay(player, SHAMAN_GUARDIAN_FERAL_SPIRIT, perk.Value);
                         break;
+                    case PERK_EFFECT_PRIEST_SPIRIT_OF_REDEMPTION:
+                        sSmartstone->SetPriestFormDisplay(player, PRIEST_FORM_SPIRIT_OF_REDEMPTION, perk.Value);
+                        break;
                     case PERK_EFFECT_WARLOCK_PET_IMP:
                     case PERK_EFFECT_WARLOCK_PET_VOIDWALKER:
                     case PERK_EFFECT_WARLOCK_PET_FELHUNTER:
@@ -970,6 +980,11 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Feral Spirit display",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_FERAL_SPIRITS), "", 0);
+
+            if (sSmartstone->GetPriestFormDisplay(player, PRIEST_FORM_SPIRIT_OF_REDEMPTION))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Spirit of Redemption display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_SPIRIT_OF_REDEMPTION), "", 0);
 
             // Per-pet warlock resets, matching the druid one-button-per-form
             // pattern. Each button only shows when its slot has a value.

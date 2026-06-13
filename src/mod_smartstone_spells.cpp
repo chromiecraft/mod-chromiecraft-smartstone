@@ -21,6 +21,9 @@
  *       6 - Moonkin           (spell id 24858)
  *     Shaman (#shaman_form):
  *       0 - Ghost Wolf        (spell id  2645)
+ *     Priest (#priest_form):
+ *       0 - Spirit of Redemption (spell id 27827; SPELL_AURA_MOD_SHAPESHIFT
+ *         lives at a non-zero effect index, hence EFFECT_FIRST_FOUND below)
  *
  *   In BG / arena the override is suppressed — the engine's default
  *   model is left in place.
@@ -37,30 +40,29 @@ class spell_smartstone_form_display_override : public AuraScript
 {
     PrepareAuraScript(spell_smartstone_form_display_override);
 
-    // Which namespace + slot a spell id maps to. `isShaman == false`
-    // means the druid namespace (#druid_form); true means shaman.
-    // `effect` is the SmartstonePerkEffect for this form, used to resolve
-    // the per-context scale override.
+    enum FormNamespace { NS_DRUID, NS_SHAMAN, NS_PRIEST };
+
     struct SlotInfo
     {
-        int32 slot;       // -1 if the spell id isn't mapped.
-        bool  isShaman;
-        uint8 effect;
+        int32         slot;   // -1 if the spell id isn't mapped.
+        FormNamespace ns;
+        uint8         effect; // SmartstonePerkEffect for scale lookup.
     };
 
     static SlotInfo GetSlotForSpell(uint32 spellId)
     {
         switch (spellId)
         {
-            case  5487: case 9634:  return { DRUID_FORM_BEAR,        false, PERK_EFFECT_DRUID_FORM_BEAR    };
-            case   768:             return { DRUID_FORM_CAT,         false, PERK_EFFECT_DRUID_FORM_CAT     };
-            case   783:             return { DRUID_FORM_TRAVEL,      false, PERK_EFFECT_DRUID_FORM_TRAVEL  };
-            case 33943: case 40120: return { DRUID_FORM_FLIGHT,      false, PERK_EFFECT_DRUID_FORM_FLIGHT  };
-            case  1066:             return { DRUID_FORM_AQUATIC,     false, PERK_EFFECT_DRUID_FORM_AQUATIC };
-            case 33891:             return { DRUID_FORM_TREE,        false, PERK_EFFECT_DRUID_FORM_TREE    };
-            case 24858:             return { DRUID_FORM_MOONKIN,     false, PERK_EFFECT_DRUID_FORM_MOONKIN };
-            case  2645:             return { SHAMAN_FORM_GHOST_WOLF, true,  PERK_EFFECT_SHAMAN_GHOST_WOLF  };
-            default:                return { -1,                     false, PERK_EFFECT_NONE               };
+            case  5487: case 9634:  return { DRUID_FORM_BEAR,                 NS_DRUID,  PERK_EFFECT_DRUID_FORM_BEAR              };
+            case   768:             return { DRUID_FORM_CAT,                  NS_DRUID,  PERK_EFFECT_DRUID_FORM_CAT               };
+            case   783:             return { DRUID_FORM_TRAVEL,               NS_DRUID,  PERK_EFFECT_DRUID_FORM_TRAVEL            };
+            case 33943: case 40120: return { DRUID_FORM_FLIGHT,               NS_DRUID,  PERK_EFFECT_DRUID_FORM_FLIGHT            };
+            case  1066:             return { DRUID_FORM_AQUATIC,              NS_DRUID,  PERK_EFFECT_DRUID_FORM_AQUATIC           };
+            case 33891:             return { DRUID_FORM_TREE,                 NS_DRUID,  PERK_EFFECT_DRUID_FORM_TREE              };
+            case 24858:             return { DRUID_FORM_MOONKIN,              NS_DRUID,  PERK_EFFECT_DRUID_FORM_MOONKIN           };
+            case  2645:             return { SHAMAN_FORM_GHOST_WOLF,          NS_SHAMAN, PERK_EFFECT_SHAMAN_GHOST_WOLF            };
+            case 27827:             return { PRIEST_FORM_SPIRIT_OF_REDEMPTION, NS_PRIEST, PERK_EFFECT_PRIEST_SPIRIT_OF_REDEMPTION  };
+            default:                return { -1,                              NS_DRUID,  PERK_EFFECT_NONE                         };
         }
     }
 
@@ -89,10 +91,13 @@ class spell_smartstone_form_display_override : public AuraScript
         if (player->InBattleground() || player->InArena())
             return;
 
-        uint32 displayId = info.isShaman
-            ? sSmartstone->GetShamanFormDisplay(player, static_cast<uint8>(info.slot))
-            : sSmartstone->GetDruidFormDisplay(player, static_cast<uint8>(info.slot));
-
+        uint32 displayId = 0;
+        switch (info.ns)
+        {
+            case NS_DRUID:  displayId = sSmartstone->GetDruidFormDisplay (player, static_cast<uint8>(info.slot)); break;
+            case NS_SHAMAN: displayId = sSmartstone->GetShamanFormDisplay(player, static_cast<uint8>(info.slot)); break;
+            case NS_PRIEST: displayId = sSmartstone->GetPriestFormDisplay(player, static_cast<uint8>(info.slot)); break;
+        }
         if (!displayId)
             return;
 
@@ -107,7 +112,7 @@ class spell_smartstone_form_display_override : public AuraScript
     {
         AfterEffectApply += AuraEffectApplyFn(
             spell_smartstone_form_display_override::HandleApply,
-            EFFECT_0, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+            EFFECT_FIRST_FOUND, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };
 

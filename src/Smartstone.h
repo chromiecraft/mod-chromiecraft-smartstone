@@ -74,6 +74,12 @@ enum ShamanFormSlot
     MAX_SHAMAN_FORM_SLOTS
 };
 
+enum PriestFormSlot
+{
+    PRIEST_FORM_SPIRIT_OF_REDEMPTION = 0,
+    MAX_PRIEST_FORM_SLOTS
+};
+
 // Guardians (TempSummons) rather than shapeshift forms — separate
 // namespace so they can't collide with form slots.
 enum ShamanGuardianSlot
@@ -143,6 +149,7 @@ enum UtilActions
     SMARTSTONE_ACTION_TOGGLE_HIDE_FORMS            = 24,
     SMARTSTONE_ACTION_TOGGLE_HIDE_MINIONS          = 25,
     SMARTSTONE_ACTION_TOGGLE_TRANSMOG              = 26,
+    SMARTSTONE_ACTION_RESET_SPIRIT_OF_REDEMPTION   = 27,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -305,6 +312,7 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_WARLOCK_PET_FELGUARD   = 13,
     PERK_EFFECT_WARLOCK_PET_DOOMGUARD  = 14,
     PERK_EFFECT_SHAMAN_FERAL_SPIRIT    = 15,
+    PERK_EFFECT_PRIEST_SPIRIT_OF_REDEMPTION = 16,
 };
 
 struct SmartstonePerkData
@@ -604,6 +612,15 @@ public:
     [[nodiscard]] uint32 GetShamanFormDisplay(Player* player, uint8 slot) const
     {
         return player->GetPlayerSetting(ModName + "#shaman_form", slot).value;
+    }
+
+    void SetPriestFormDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#priest_form", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetPriestFormDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#priest_form", slot).value;
     }
 
     // Shaman guardian display overrides (per-character). Used for
