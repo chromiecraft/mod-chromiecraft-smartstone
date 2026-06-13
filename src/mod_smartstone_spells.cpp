@@ -24,6 +24,7 @@
  *     Priest (#priest_form):
  *       0 - Spirit of Redemption (spell id 27827; SPELL_AURA_MOD_SHAPESHIFT
  *         lives at a non-zero effect index, hence EFFECT_FIRST_FOUND below)
+ *       1 - Shadowform              (spell id 15473)
  *
  *   In BG / arena the override is suppressed — the engine's default
  *   model is left in place.
@@ -62,6 +63,7 @@ class spell_smartstone_form_display_override : public AuraScript
             case 24858:             return { DRUID_FORM_MOONKIN,              NS_DRUID,  PERK_EFFECT_DRUID_FORM_MOONKIN           };
             case  2645:             return { SHAMAN_FORM_GHOST_WOLF,          NS_SHAMAN, PERK_EFFECT_SHAMAN_GHOST_WOLF            };
             case 27827:             return { PRIEST_FORM_SPIRIT_OF_REDEMPTION, NS_PRIEST, PERK_EFFECT_PRIEST_SPIRIT_OF_REDEMPTION  };
+            case 15473:             return { PRIEST_FORM_SHADOW,              NS_PRIEST, PERK_EFFECT_PRIEST_SHADOWFORM           };
             default:                return { -1,                              NS_DRUID,  PERK_EFFECT_NONE                         };
         }
     }
@@ -108,10 +110,36 @@ class spell_smartstone_form_display_override : public AuraScript
         target->SetDisplayId(displayId, sSmartstone->GetEffectivePerkScale(info.effect, displayId));
     }
 
+    void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        // Only shadowform needs an explicit native-restore on remove —
+        // every other form already drops back to the player's body via
+        // the engine's normal removal flow.
+        if (GetSpellInfo()->Id != 15473)
+            return;
+
+        Unit* target = GetTarget();
+        if (!target)
+            return;
+
+        Player* player = target->ToPlayer();
+        if (!player)
+            return;
+
+        // No-op when no override was applied.
+        if (!sSmartstone->GetPriestFormDisplay(player, PRIEST_FORM_SHADOW))
+            return;
+
+        target->SetDisplayId(player->GetNativeDisplayId(), 1.0f);
+    }
+
     void Register() override
     {
         AfterEffectApply += AuraEffectApplyFn(
             spell_smartstone_form_display_override::HandleApply,
+            EFFECT_FIRST_FOUND, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(
+            spell_smartstone_form_display_override::HandleRemove,
             EFFECT_FIRST_FOUND, SPELL_AURA_MOD_SHAPESHIFT, AURA_EFFECT_HANDLE_REAL);
     }
 };

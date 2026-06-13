@@ -25,4 +25,5 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (24858, 'spell_smartstone_form_display_override'),  -- Druid: Moonkin Form
 ( 2645, 'spell_smartstone_form_display_override'),  -- Shaman: Ghost Wolf
 (27827, 'spell_smartstone_form_display_override'),  -- Priest: Spirit of Redemption
+(15473, 'spell_smartstone_form_display_override'),  -- Priest: Shadowform
 (51533, 'spell_sha_feral_spirit_display');          -- Shaman: Feral Spirit (Spirit Wolves)

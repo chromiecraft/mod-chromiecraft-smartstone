@@ -336,6 +336,11 @@ public:
                         // and ends with the priest's revive — no live revert.
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_SHADOWFORM:
+                    {
+                        sSmartstone->SetPriestFormDisplay(player, PRIEST_FORM_SHADOW, 0);
+                        break;
+                    }
                     case SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP:
                     case SMARTSTONE_ACTION_RESET_WARLOCK_PET_VOIDWALKER:
                     case SMARTSTONE_ACTION_RESET_WARLOCK_PET_FELHUNTER:
@@ -697,6 +702,9 @@ public:
                     case PERK_EFFECT_PRIEST_SPIRIT_OF_REDEMPTION:
                         sSmartstone->SetPriestFormDisplay(player, PRIEST_FORM_SPIRIT_OF_REDEMPTION, perk.Value);
                         break;
+                    case PERK_EFFECT_PRIEST_SHADOWFORM:
+                        sSmartstone->SetPriestFormDisplay(player, PRIEST_FORM_SHADOW, perk.Value);
+                        break;
                     case PERK_EFFECT_WARLOCK_PET_IMP:
                     case PERK_EFFECT_WARLOCK_PET_VOIDWALKER:
                     case PERK_EFFECT_WARLOCK_PET_FELHUNTER:
@@ -985,6 +993,11 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Spirit of Redemption display",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_SPIRIT_OF_REDEMPTION), "", 0);
+
+            if (sSmartstone->GetPriestFormDisplay(player, PRIEST_FORM_SHADOW))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Shadowform display",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_SHADOWFORM), "", 0);
 
             // Per-pet warlock resets, matching the druid one-button-per-form
             // pattern. Each button only shows when its slot has a value.
