@@ -2,7 +2,7 @@
 -- Smartstone Update Script
 --
 
-DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10, 11);
+DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10, 11, 12);
 INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Pets', 0, 92002, 1),
 (2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Combat Pets', 0, 92003, 1),
@@ -11,7 +11,8 @@ INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `Subscript
 (5,3,'|TInterface/icons/Spell_Arcane_PrismaticCloak:30:30:-18:0|t Azeroth Villains',0, 92006,1),
 (9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1),
 (10,4,'|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Scroll of Resurrection', 0, 92021, 1),
-(11,4,'|TInterface/icons/INV_Misc_Spyglass_03:30:30:-18:0|t Display Options', 0, 92020, 1);
+(11,4,'|TInterface/icons/INV_Misc_Spyglass_03:30:30:-18:0|t Display Options', 0, 92020, 1),
+(12,4,'|TInterface/icons/INV_Scroll_03:30:30:-18:0|t Vouchers', 0, 92022, 1);
 
 DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5, 6, 7);
 INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
@@ -44,7 +45,7 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (80000, 0, 0, 'Looking for a change, ay? I got just what you need! Come, take a seat.', 12, 0, 'Smartstone - Barber - Spawn'),
 (80000, 1, 0, 'Time is up, pal! Off we go!', 12, 0, 'Smartstone - Barber - Despawn');
 
-DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007, 92008, 92009, 92010, 92011, 92012, 92013, 92014, 92015, 92016, 92017, 92018, 92019, 92020, 92021);
+DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007, 92008, 92009, 92010, 92011, 92012, 92013, 92014, 92015, 92016, 92017, 92018, 92019, 92020, 92021, 92022);
 INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike.'),
 (92001, 'Hey there, pal! Welcome to the finest chop shop in Azeroth! Need a trim, a shave, or a whole new look? We’ve got styles to make your enemies quake in fear—or at least wonder where you got such a snazzy do! Sit down, relax, and let’s get you looking spectacular!'),
@@ -67,7 +68,8 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92018, 'For those who walk the wild ways: dirt at the heel, leaf in the hair, the easy carriage of one who has worn many shapes. These are not stronger forms, but the bearing of every changeling who answered the wild''s call before you.'),
 (92019, 'Choose how quickly you wish to advance, and return here at any time to change your mind.\n\nPrefer a finer-grained pace? You can set any custom rate up to the server-allowed maximum with the |cff4CFF00.weekendxp rate|r command.\n '),
 (92020, 'Here lie the threads of self — the cut of your hair, the pace of your becoming, the small marks of your calling. Tend to them as you wish; the stone holds no judgement on what shape you take, only the means to take it.\n '),
-(92021, 'An old kindness, kept for champions who return to Azeroth after long absence. To those whose silence has lengthened beyond the seasons, the stone grants the comfort of full rest — rested experience, gathered as if the long pause had been spent in inn or hall.\n\nReturning after a long absence triggers this bonus automatically and grants rested experience for a limited time. You may disable and re-enable it at any time, and use the option below to see your current status.\n ');
+(92021, 'An old kindness, kept for champions who return to Azeroth after long absence. To those whose silence has lengthened beyond the seasons, the stone grants the comfort of full rest — rested experience, gathered as if the long pause had been spent in inn or hall.\n\nReturning after a long absence triggers this bonus automatically and grants rested experience for a limited time. You may disable and re-enable it at any time, and use the option below to see your current status.\n '),
+(92022, 'Some services come as a token — a right you hold until you choose to spend it. Here rest the vouchers granted to your account. Claim one and its work is done: the change takes hold when next you stand at the character selection screen.\n ');
 
 --
 -- Localized npc_text. Locales match the set used by module_string_locale

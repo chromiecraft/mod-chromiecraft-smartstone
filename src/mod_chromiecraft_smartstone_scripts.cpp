@@ -6,6 +6,7 @@
 #include "Chat.h"
 #include "CombatAI.h"
 #include "GameTime.h"
+#include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Pet.h"
@@ -746,6 +747,18 @@ public:
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_NO_IMPL, perk.Title, perk.Effect);
                 break;
             }
+            case ACTION_TYPE_VOUCHER:
+            {
+                // Route the click through the claim command so the consume +
+                // ack logic lives in one place (same pattern as the transmog
+                // toggle). The command reports success/failure itself.
+                ChatHandler(player->GetSession()).ParseCommands(
+                    Acore::StringFormat(".smartstone voucher claim {}", actionId));
+
+                // Re-render the vouchers list (falls back to main if now empty).
+                ShowCategoryItems(CATEGORY_VOUCHERS, player, item, subscriptionLevel);
+                return;
+            }
             case ACTION_TYPE_NONE:
             case MAX_ACTION_TYPE:
             default:
@@ -885,6 +898,46 @@ public:
                 sSmartstone->GetNPCTextForCategory(0, CATEGORY_DISPLAY_OPTIONS), item->GetGUID());
         }
 
+        // Vouchers are per-account rows, so this list is built live from the
+        // auth DB rather than the static MenuItems table. Empty means the last
+        // one was just consumed (or a crafted client reached here) — inform and
+        // drop back to the main menu.
+        void ShowVouchers(Player* player, Item* item)
+        {
+            player->PlayerTalkClass->ClearMenus();
+
+            uint32 accountId = player->GetSession()->GetAccountId();
+            std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(accountId);
+
+            if (vouchers.empty())
+            {
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_NONE_AVAILABLE);
+                ClearMenuHistory(player);
+                ShowMainMenu(player, item, GetPlayerSubscriptionLevel(player));
+                return;
+            }
+
+            auto& menu = player->PlayerTalkClass->GetGossipMenu();
+            LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
+            int32 idx = 0;
+
+            for (auto const& voucher : vouchers)
+            {
+                std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetVoucherNameStringId(voucher.Type), locale);
+                std::string label = "|TInterface/icons/INV_Scroll_03:30:30:-18:0|t ";
+                label += name ? *name : "Voucher";
+                menu.AddMenuItem(idx++, GOSSIP_ICON_CHAT, label, 0,
+                    sSmartstone->GetActionTypeId(ACTION_TYPE_VOUCHER, voucher.Id), "", 0);
+            }
+
+            menu.AddMenuItem(idx++, GOSSIP_ICON_DOT, "Back", 0,
+                sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
+
+            SetLastCategory(player, CATEGORY_VOUCHERS);
+            player->PlayerTalkClass->SendGossipMenu(
+                sSmartstone->GetNPCTextForCategory(0, CATEGORY_VOUCHERS), item->GetGUID());
+        }
+
         void ShowCategoryItems(uint32 ParentCategoryId, Player* player, Item* item, uint8 subscriptionLevel, uint8 currentPage = 0)
         {
             player->PlayerTalkClass->ClearMenus();
@@ -897,6 +950,13 @@ public:
             if (ParentCategoryId == CATEGORY_DISPLAY_OPTIONS && sSmartstone->IsDisplayOptOutEnabled())
             {
                 ShowDisplayOptions(player, item);
+                return;
+            }
+
+            // Vouchers are rendered in C++ from the account's live voucher rows.
+            if (ParentCategoryId == CATEGORY_VOUCHERS)
+            {
+                ShowVouchers(player, item);
                 return;
             }
 
@@ -1076,6 +1136,12 @@ public:
                         available = false;
 
                     if (menuItem.ItemId == CATEGORY_DISPLAY_OPTIONS && !sSmartstone->IsDisplayOptOutEnabled())
+                        available = false;
+
+                    // Only surface the Vouchers category when the account has
+                    // something to claim. Light indexed query, gossip-open only.
+                    if (menuItem.ItemId == CATEGORY_VOUCHERS
+                        && !sSmartstone->HasAccountVouchers(player->GetSession()->GetAccountId()))
                         available = false;
 
                     // Challenge characters are on a fixed XP regime — mirrors the
@@ -1304,6 +1370,22 @@ public:
                 sSmartstone->ReapplyActiveDruidFormDisplay(player);
                 sSmartstone->ReapplyActiveShamanFormDisplay(player);
             }, 1s);
+
+            // Remind the player of any unclaimed account vouchers, delayed so
+            // the notice lands after the login / MOTD spam rather than under it.
+            player->m_Events.AddEventAtOffset([player] {
+                std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(player->GetSession()->GetAccountId());
+                if (vouchers.empty())
+                    return;
+
+                ChatHandler handler(player->GetSession());
+                LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
+                for (auto const& voucher : vouchers)
+                {
+                    std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetVoucherNameStringId(voucher.Type), locale);
+                    handler.PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LOGIN_NOTICE, name ? *name : "", voucher.Id);
+                }
+            }, 3s);
         }
     }
 

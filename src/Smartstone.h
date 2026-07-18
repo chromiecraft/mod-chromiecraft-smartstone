@@ -19,6 +19,11 @@ enum Misc
     // rendered in C++ rather than from DB services.
     CATEGORY_DISPLAY_OPTIONS = 11,
 
+    // Vouchers submenu under Character (smartstone_categories.Id 12). The list
+    // is per-account and rendered in C++ from smartstone_account_vouchers, not
+    // from DB menu items; the category only shows when unconsumed vouchers exist.
+    CATEGORY_VOUCHERS = 12,
+
     // Module-integration subcategories under Character. Gated in the menu
     // builder against the matching cached server-side config.
     CATEGORY_XP_RATES               = 9,
@@ -155,6 +160,26 @@ enum UtilActions
     MAX_SMARTSTONE_ACTIONS
 };
 
+// One-shot character-service voucher kinds. Value is persisted in
+// smartstone_account_vouchers.VoucherType — never renumber existing entries.
+enum SmartstoneVoucherType : uint8
+{
+    VOUCHER_NONE           = 0,
+    VOUCHER_RENAME         = 1, // AT_LOGIN_RENAME
+    VOUCHER_FACTION_CHANGE = 2, // AT_LOGIN_CHANGE_FACTION
+    VOUCHER_RACE_CHANGE    = 3, // AT_LOGIN_CHANGE_RACE
+    VOUCHER_CUSTOMIZE      = 4, // AT_LOGIN_CUSTOMIZE
+    MAX_VOUCHER_TYPE
+};
+
+// A single unconsumed voucher row for an account. Id is the primary key of
+// smartstone_account_vouchers and doubles as the gossip action id.
+struct SmartstoneVoucher
+{
+    uint32 Id;
+    uint8 Type; // SmartstoneVoucherType
+};
+
 enum Service
 {
     SERVICE_BARBERSHOP        = 1,
@@ -182,7 +207,8 @@ enum ActionType
     ACTION_TYPE_VEHICLE   = 7,
     ACTION_TYPE_MOUNT     = 8,
     ACTION_TYPE_PERK      = 9, // Class-gated perks (placeholder action for now)
-    ACTION_TYPE_NONE      = 10, // No action type, used for invalid or uninitialized
+    ACTION_TYPE_VOUCHER   = 10, // One-shot account-scoped character-service vouchers
+    ACTION_TYPE_NONE      = 11, // No action type, used for invalid or uninitialized
     MAX_ACTION_TYPE,
 };
 
@@ -515,6 +541,7 @@ public:
             case ACTION_TYPE_VEHICLE: return "Vehicles";
             case ACTION_TYPE_MOUNT: return "Mounts";
             case ACTION_TYPE_PERK: return "Perk";
+            case ACTION_TYPE_VOUCHER: return "Voucher";
             default: return "None";
         }
     }
@@ -532,6 +559,7 @@ public:
             case ACTION_TYPE_VEHICLE: return "Vehicles service.";
             case ACTION_TYPE_MOUNT: return "Mounts service.";
             case ACTION_TYPE_PERK: return "Class-gated perk.";
+            case ACTION_TYPE_VOUCHER: return "One-shot character-service voucher.";
             default: return "No action type.";
         }
     }
@@ -594,6 +622,34 @@ public:
             default: return 0;
         }
     }
+
+    // Voucher type -> the at-login flag its consumption sets on the character.
+    // Returns 0 for unknown types. AT_LOGIN_* live in Player.h (included above).
+    [[nodiscard]] static uint16 GetVoucherAtLoginFlag(uint8 type)
+    {
+        switch (type)
+        {
+            case VOUCHER_RENAME:         return AT_LOGIN_RENAME;
+            case VOUCHER_FACTION_CHANGE: return AT_LOGIN_CHANGE_FACTION;
+            case VOUCHER_RACE_CHANGE:    return AT_LOGIN_CHANGE_RACE;
+            case VOUCHER_CUSTOMIZE:      return AT_LOGIN_CUSTOMIZE;
+            default:                     return 0;
+        }
+    }
+
+    // Module-string id for a voucher type's display name (see LANG_MOD_VOUCHER_NAME_*).
+    [[nodiscard]] static uint32 GetVoucherNameStringId(uint8 type);
+
+    // Voucher persistence lives in the auth DB (account-scoped, cross-realm),
+    // mirroring smartstone_account_settings. Rows are queried live on gossip
+    // open / claim, never cached in a hot path.
+    [[nodiscard]] std::vector<SmartstoneVoucher> GetAccountVouchers(uint32 accountId) const;
+    [[nodiscard]] bool HasAccountVouchers(uint32 accountId) const;
+    void GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount);
+    // Atomically consume voucher `voucherId` for `accountId` and apply its
+    // service to `consumer`. Returns false if the row is missing, belongs to a
+    // different account, or was already consumed (guards double-click).
+    bool ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* consumer);
 
     // Druid form display overrides (per-character).
     void SetDruidFormDisplay(Player* player, uint8 slot, uint32 displayId)
@@ -990,6 +1046,26 @@ enum SmartstoneStringId : uint32
     LANG_MOD_FORMS_NOW_SHOWN           = 80,
     LANG_MOD_MINIONS_NOW_HIDDEN        = 81,
     LANG_MOD_MINIONS_NOW_SHOWN         = 82,
+    // Voucher names (83-86) — keep aligned with SmartstoneVoucherType so
+    // GetVoucherNameStringId can index off the type.
+    LANG_MOD_VOUCHER_NAME_RENAME       = 83,
+    LANG_MOD_VOUCHER_NAME_FACTION      = 84,
+    LANG_MOD_VOUCHER_NAME_RACE         = 85,
+    LANG_MOD_VOUCHER_NAME_CUSTOMIZE    = 86,
+    // Voucher flow messages (87-98)
+    LANG_MOD_VOUCHER_GRANTED           = 87, // GM ack: granted '{name}' to {account}
+    LANG_MOD_VOUCHER_RECEIVED          = 88, // recipient notify: '{name}' waiting
+    LANG_MOD_VOUCHER_APPLIED           = 89, // '{name}' applied, takes effect at char select
+    LANG_MOD_VOUCHER_NONE_AVAILABLE    = 90,
+    LANG_MOD_VOUCHER_INVALID           = 91, // gone / already consumed
+    // 92 retired (was a combat/BG gate that no longer applies)
+    LANG_MOD_VOUCHER_INVALID_TYPE      = 93, // command: bad type argument
+    LANG_MOD_VOUCHER_LIST_HEADER       = 94,
+    LANG_MOD_VOUCHER_LIST_ENTRY        = 95, // [{id}] {name}
+    LANG_MOD_VOUCHER_LIST_NONE         = 96,
+    LANG_MOD_VOUCHER_REVOKED           = 97,
+    LANG_MOD_VOUCHER_REVOKE_NOT_FOUND  = 98,
+    LANG_MOD_VOUCHER_LOGIN_NOTICE      = 99, // per-voucher blue login reminder
 };
 
 #define sSmartstone Smartstone::instance()

@@ -862,6 +862,90 @@ void Smartstone::LoadAccountSettings(uint32 accountId)
     } while (result->NextRow());
 }
 
+uint32 Smartstone::GetVoucherNameStringId(uint8 type)
+{
+    switch (type)
+    {
+        case VOUCHER_RENAME:         return LANG_MOD_VOUCHER_NAME_RENAME;
+        case VOUCHER_FACTION_CHANGE: return LANG_MOD_VOUCHER_NAME_FACTION;
+        case VOUCHER_RACE_CHANGE:    return LANG_MOD_VOUCHER_NAME_RACE;
+        case VOUCHER_CUSTOMIZE:      return LANG_MOD_VOUCHER_NAME_CUSTOMIZE;
+        default:                     return 0;
+    }
+}
+
+std::vector<SmartstoneVoucher> Smartstone::GetAccountVouchers(uint32 accountId) const
+{
+    std::vector<SmartstoneVoucher> vouchers;
+    QueryResult result = LoginDatabase.Query(
+        "SELECT Id, VoucherType FROM smartstone_account_vouchers WHERE AccountId = {} AND ConsumedByGUID = 0 ORDER BY Id",
+        accountId);
+    if (!result)
+        return vouchers;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        vouchers.push_back(SmartstoneVoucher{ fields[0].Get<uint32>(), fields[1].Get<uint8>() });
+    } while (result->NextRow());
+
+    return vouchers;
+}
+
+bool Smartstone::HasAccountVouchers(uint32 accountId) const
+{
+    return LoginDatabase.Query(
+        "SELECT 1 FROM smartstone_account_vouchers WHERE AccountId = {} AND ConsumedByGUID = 0 LIMIT 1",
+        accountId) != nullptr;
+}
+
+void Smartstone::GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount)
+{
+    LoginDatabase.Execute(
+        "INSERT INTO smartstone_account_vouchers (AccountId, VoucherType, GrantedBy, GrantedTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP())",
+        accountId, type, grantedByAccount);
+}
+
+bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* consumer)
+{
+    if (!consumer)
+        return false;
+
+    QueryResult result = LoginDatabase.Query(
+        "SELECT VoucherType FROM smartstone_account_vouchers WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
+        voucherId, accountId);
+    if (!result)
+        return false;
+
+    uint8 type = result->Fetch()[0].Get<uint8>();
+    uint16 flag = GetVoucherAtLoginFlag(type);
+    if (!flag)
+        return false;
+
+    uint32 guid = consumer->GetGUID().GetCounter();
+
+    // Claim synchronously (DirectExecute) so a follow-up click on the same
+    // menu sees the row already consumed rather than re-reading it as free.
+    // The ConsumedByGUID = 0 guard makes the claim a no-op if it lost a race.
+    LoginDatabase.DirectExecute(
+        "UPDATE smartstone_account_vouchers SET ConsumedByGUID = {}, ConsumedTime = UNIX_TIMESTAMP() "
+        "WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
+        guid, voucherId, accountId);
+
+    // Persist the at-login flag immediately, and mirror it on the in-memory
+    // Player: the periodic/logout character save writes at_login from the
+    // in-memory value, so skipping this would let a later save clobber the DB.
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
+    stmt->SetData(0, flag);
+    stmt->SetData(1, guid);
+    trans->Append(stmt);
+    CharacterDatabase.CommitTransaction(trans);
+
+    consumer->SetAtLoginFlag(static_cast<AtLoginFlags>(flag));
+    return true;
+}
+
 void Smartstone::LoadVehicles()
 {
     QueryResult result = WorldDatabase.Query("SELECT Id, CreatureId, Description, SubscriptionLevel, Flags FROM smartstone_vehicles WHERE Enabled = 1");

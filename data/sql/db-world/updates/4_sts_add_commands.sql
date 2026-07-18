@@ -14,7 +14,12 @@ DELETE FROM `command` WHERE `name` IN (
     'smartstone toggle',
     'smartstone toggle costumes',
     'smartstone toggle forms',
-    'smartstone toggle minions'
+    'smartstone toggle minions',
+    'smartstone voucher',
+    'smartstone voucher claim',
+    'smartstone voucher grant',
+    'smartstone voucher list',
+    'smartstone voucher revoke'
 );
 
 INSERT INTO `command` (`name`, `security`, `help`) VALUES
@@ -33,4 +38,9 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone toggle',          0, 'Syntax: .smartstone toggle [costumes|forms|minions]\nView preferences for hiding other players'' Smartstone display overrides.'),
 ('smartstone toggle costumes', 0, 'Syntax: .smartstone toggle costumes\nToggles whether you see other players'' Smartstone costumes.'),
 ('smartstone toggle forms',    0, 'Syntax: .smartstone toggle forms\nToggles whether you see other players'' Smartstone druid / shaman form skins.'),
-('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone warlock-pet / feral-spirit skins.');
+('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone warlock-pet / feral-spirit skins.'),
+('smartstone voucher',         0, 'Syntax: .smartstone voucher [claim|grant|list|revoke]\nManage one-shot character-service vouchers (rename, faction, race, appearance).'),
+('smartstone voucher claim',   0, 'Syntax: .smartstone voucher claim $id\nClaims one of your account''s vouchers on the current character.\nThe service applies at the character selection screen. Find IDs in your Smartstone (Character > Vouchers) or the login reminder.'),
+('smartstone voucher grant',   1, 'Syntax: .smartstone voucher grant $account $type\nGrants a voucher to an account.\n$type: 1=Name Change, 2=Faction Change, 3=Race Change, 4=Appearance Change.'),
+('smartstone voucher list',    1, 'Syntax: .smartstone voucher list $account\nLists an account''s unclaimed vouchers and their IDs.'),
+('smartstone voucher revoke',  1, 'Syntax: .smartstone voucher revoke $id\nRemoves an unclaimed voucher by ID. Already-claimed vouchers are preserved for audit.');
