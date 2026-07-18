@@ -43,6 +43,45 @@ The command usage in-game or via the worldserver:
 > [!NOTE]
 > Some of the existing pets as example `Summon Hyjal Wisp`, will not work if you haven't completed their required raids in mythic from [mod-zone-difficulty](https://github.com/azerothcore/mod-zone-difficulty).
 
+## Vouchers
+
+Vouchers are one-shot, account-wide grants of a **character service**: a name change, faction change, race change, or appearance (customize) change. A moderator grants a voucher to an account; any character on that account can then claim it. Claiming sets the matching at-login flag, so the actual change happens at the character selection screen the next time the player logs out to it.
+
+Vouchers are stored in `acore_auth` (`smartstone_account_vouchers`), so a granted voucher is available on every realm and to every character on the account until claimed. Claimed vouchers are kept (not deleted) as an audit record.
+
+### Voucher types
+
+| Type | Service           | At-login effect          |
+| ---- | ----------------- | ------------------------ |
+| 1    | Name Change       | `AT_LOGIN_RENAME`        |
+| 2    | Faction Change    | `AT_LOGIN_CHANGE_FACTION`|
+| 3    | Race Change       | `AT_LOGIN_CHANGE_RACE`   |
+| 4    | Appearance Change | `AT_LOGIN_CUSTOMIZE`     |
+
+### Commands
+
+Moderator commands (also usable from the worldserver console). The account can be given by name or account id:
+
+```bash
+# Grant a Faction Change (type 2) voucher to an account
+.smartstone voucher grant Nyeriah 2
+
+# List an account's unclaimed vouchers and their ids
+.smartstone voucher list Nyeriah
+
+# Remove an unclaimed voucher by id (claimed vouchers are preserved)
+.smartstone voucher revoke 42
+```
+
+Player command:
+
+```bash
+# Claim voucher id 42 on the current character
+.smartstone voucher claim 42
+```
+
+Players can also claim from the Smartstone menu under **Character > Vouchers** (the category only appears while the account has unclaimed vouchers). On login, a reminder lists any unclaimed vouchers and the command to claim each one.
+
 ## SQL File Prefixes
 
 All SQL files should have a numeric prefix to indicate their purpose and order of execution. The prefixes are as follows:
@@ -91,3 +130,17 @@ Example for `Edwin VanCleef` [here](https://github.com/chromiecraft/mod-chromiec
 | Id                | CategoryType | Title                        | SubscriptionLevel | [NPCTextId](https://www.azerothcore.org/wiki/npc_text#id) | Enabled              |
 | ----------------- | ------------ | ---------------------------- | ----------------- | --------------------------------------------------------- | -------------------- |
 | Unique Identifier | 0            | Title that shows a sub-menu? | 1 to 3            | npc_text.id                                               | 1 (Show) or 0 (Hide) |
+
+### smartstone_account_vouchers (acore_auth)
+
+One row per granted voucher. Populated by `.smartstone voucher grant`; rows are marked consumed (not deleted) when claimed.
+
+| Column         | Meaning                                                    |
+| -------------- | ---------------------------------------------------------- |
+| Id             | Auto-increment; the id used to claim/revoke the voucher    |
+| AccountId      | Owning account                                             |
+| VoucherType    | 1-4 (see [Vouchers](#vouchers))                            |
+| GrantedBy      | Granting account id (0 = console)                          |
+| GrantedTime    | Unix timestamp of the grant                                |
+| ConsumedByGUID | Character GUID that claimed it (0 = unclaimed)             |
+| ConsumedTime   | Unix timestamp of the claim (0 = unclaimed)                |
