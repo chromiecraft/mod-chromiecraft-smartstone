@@ -69,6 +69,9 @@ Moderator commands (also usable from the worldserver console). The account can b
 # List an account's unclaimed vouchers and their ids
 .smartstone voucher list Nyeriah
 
+# List all vouchers including claimed ones (who claimed each, and when)
+.smartstone voucher list Nyeriah all
+
 # Remove an unclaimed voucher by id (claimed vouchers are preserved)
 .smartstone voucher revoke 42
 ```

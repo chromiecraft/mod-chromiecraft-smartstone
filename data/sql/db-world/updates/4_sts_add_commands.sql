@@ -42,5 +42,5 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone voucher',         0, 'Syntax: .smartstone voucher [claim|grant|list|revoke]\nManage one-shot character-service vouchers (rename, faction, race, appearance).'),
 ('smartstone voucher claim',   0, 'Syntax: .smartstone voucher claim $id\nClaims one of your account''s vouchers on the current character.\nThe service applies at the character selection screen. Find IDs in your Smartstone (Character > Vouchers) or the login reminder.'),
 ('smartstone voucher grant',   1, 'Syntax: .smartstone voucher grant $account $type\nGrants a voucher to an account.\n$type: 1=Name Change, 2=Faction Change, 3=Race Change, 4=Appearance Change.'),
-('smartstone voucher list',    1, 'Syntax: .smartstone voucher list $account\nLists an account''s unclaimed vouchers and their IDs.'),
+('smartstone voucher list',    1, 'Syntax: .smartstone voucher list $account [all]\nLists an account''s unclaimed vouchers and their IDs.\nAdd "all" to also list claimed vouchers, with who claimed each and when.'),
 ('smartstone voucher revoke',  1, 'Syntax: .smartstone voucher revoke $id\nRemoves an unclaimed voucher by ID. Already-claimed vouchers are preserved for audit.');

@@ -113,7 +113,9 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 95, 'Revoked voucher {} (''{}'') from account {}.'),
 ('mod-cc-smartstone', 96, 'No unconsumed voucher with id {} was found.'),
 -- Login reminder (97). Whole line blue; the command is highlighted white.
-('mod-cc-smartstone', 97, '|cff00BFFFYou have a ''{}'' voucher available. Open your Smartstone (Character > Vouchers), or type |cffFFFFFF.smartstone voucher claim {}|r|cff00BFFF to claim it.|r');
+('mod-cc-smartstone', 97, '|cff00BFFFYou have a ''{}'' voucher available. Open your Smartstone (Character > Vouchers), or type |cffFFFFFF.smartstone voucher claim {}|r|cff00BFFF to claim it.|r'),
+-- Claimed entry for `voucher list all` (98): id, name, character, date.
+('mod-cc-smartstone', 98, '  [{}] {} (claimed by {} on {})');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 

@@ -24,6 +24,7 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "Timer.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
 #include <algorithm>
@@ -1270,23 +1271,71 @@ public:
         return true;
     }
 
-    static bool HandleSmartstoneVoucherListCommand(ChatHandler* handler, AccountIdentifier account)
+    static bool HandleSmartstoneVoucherListCommand(ChatHandler* handler, AccountIdentifier account, Optional<std::string_view> mode)
     {
         uint32 accountId = account.GetID();
-        std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(accountId);
 
-        if (vouchers.empty())
+        bool includeClaimed = false;
+        if (mode)
+        {
+            std::string m(*mode);
+            std::transform(m.begin(), m.end(), m.begin(), ::tolower);
+            includeClaimed = (m == "all");
+        }
+
+        LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
+
+        // Default: unclaimed only. `all` also lists consumed rows with who
+        // claimed them and when (the rows are kept for audit).
+        if (!includeClaimed)
+        {
+            std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(accountId);
+            if (vouchers.empty())
+            {
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_NONE, account.GetName());
+                return true;
+            }
+
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_HEADER, account.GetName());
+            for (auto const& voucher : vouchers)
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY,
+                    voucher.Id, GetVoucherName(voucher.Type, handlerLocale));
+            return true;
+        }
+
+        QueryResult result = LoginDatabase.Query(
+            "SELECT Id, VoucherType, ConsumedByGUID, ConsumedTime FROM smartstone_account_vouchers WHERE AccountId = {} ORDER BY Id",
+            accountId);
+        if (!result)
         {
             handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_NONE, account.GetName());
             return true;
         }
 
         handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_HEADER, account.GetName());
+        do
+        {
+            Field* fields = result->Fetch();
+            uint32 id = fields[0].Get<uint32>();
+            uint8 type = fields[1].Get<uint8>();
+            uint32 consumedBy = fields[2].Get<uint32>();
+            uint32 consumedTime = fields[3].Get<uint32>();
+            std::string name = GetVoucherName(type, handlerLocale);
 
-        LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
-        for (auto const& voucher : vouchers)
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY,
-                voucher.Id, GetVoucherName(voucher.Type, handlerLocale));
+            if (!consumedBy)
+            {
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY, id, name);
+                continue;
+            }
+
+            std::string charName;
+            sCharacterCache->GetCharacterNameByGuid(ObjectGuid::Create<HighGuid::Player>(consumedBy), charName);
+            if (charName.empty())
+                charName = std::to_string(consumedBy);
+
+            std::string date = Acore::StringFormat("{:%Y-%m-%d %H:%M}", Acore::Time::TimeBreakdown(consumedTime));
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY_CLAIMED, id, name, charName, date);
+        } while (result->NextRow());
 
         return true;
     }

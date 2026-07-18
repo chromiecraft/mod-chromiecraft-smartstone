@@ -1066,6 +1066,7 @@ enum SmartstoneStringId : uint32
     LANG_MOD_VOUCHER_REVOKED           = 95,
     LANG_MOD_VOUCHER_REVOKE_NOT_FOUND  = 96,
     LANG_MOD_VOUCHER_LOGIN_NOTICE      = 97, // per-voucher blue login reminder
+    LANG_MOD_VOUCHER_LIST_ENTRY_CLAIMED = 98, // [{id}] {name} (claimed by {char} on {date})
 };
 
 #define sSmartstone Smartstone::instance()
