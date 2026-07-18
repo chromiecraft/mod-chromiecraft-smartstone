@@ -101,20 +101,19 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 84, 'Faction Change'),
 ('mod-cc-smartstone', 85, 'Race Change'),
 ('mod-cc-smartstone', 86, 'Appearance Change'),
--- Voucher flow (87-98)
+-- Voucher flow (87-97)
 ('mod-cc-smartstone', 87, 'Granted a ''{}'' voucher to account {}.'),
-('mod-cc-smartstone', 88, 'You have received a ''{}'' voucher! Open your smartstone to claim it.'),
-('mod-cc-smartstone', 89, '''{}'' voucher applied. The change will take effect at the character selection screen.'),
-('mod-cc-smartstone', 90, 'You have no vouchers to claim.'),
-('mod-cc-smartstone', 91, 'That voucher is no longer available.'),
-('mod-cc-smartstone', 93, 'Invalid voucher type. Use 1 (Name Change), 2 (Faction Change), 3 (Race Change), or 4 (Appearance Change).'),
-('mod-cc-smartstone', 94, 'Vouchers for account {}:'),
-('mod-cc-smartstone', 95, '  [{}] {}'),
-('mod-cc-smartstone', 96, 'Account {} has no unconsumed vouchers.'),
-('mod-cc-smartstone', 97, 'Revoked voucher {} (''{}'') from account {}.'),
-('mod-cc-smartstone', 98, 'No unconsumed voucher with id {} was found.'),
--- Login reminder (99). Whole line blue; the command is highlighted white.
-('mod-cc-smartstone', 99, '|cff00BFFFYou have a ''{}'' voucher available. Open your Smartstone (Character > Vouchers), or type |cffFFFFFF.smartstone voucher claim {}|r|cff00BFFF to claim it.|r');
+('mod-cc-smartstone', 88, '''{}'' voucher applied. The change will take effect at the character selection screen.'),
+('mod-cc-smartstone', 89, 'You have no vouchers to claim.'),
+('mod-cc-smartstone', 90, 'That voucher is no longer available.'),
+('mod-cc-smartstone', 91, 'Invalid voucher type. Use 1 (Name Change), 2 (Faction Change), 3 (Race Change), or 4 (Appearance Change).'),
+('mod-cc-smartstone', 92, 'Vouchers for account {}:'),
+('mod-cc-smartstone', 93, '  [{}] {}'),
+('mod-cc-smartstone', 94, 'Account {} has no unconsumed vouchers.'),
+('mod-cc-smartstone', 95, 'Revoked voucher {} (''{}'') from account {}.'),
+('mod-cc-smartstone', 96, 'No unconsumed voucher with id {} was found.'),
+-- Login reminder (97). Whole line blue; the command is highlighted white.
+('mod-cc-smartstone', 97, '|cff00BFFFYou have a ''{}'' voucher available. Open your Smartstone (Character > Vouchers), or type |cffFFFFFF.smartstone voucher claim {}|r|cff00BFFF to claim it.|r');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 

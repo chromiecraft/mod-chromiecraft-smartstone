@@ -1251,20 +1251,20 @@ public:
         if (Player* gm = handler->GetPlayer())
             grantedBy = gm->GetSession()->GetAccountId();
 
-        sSmartstone->GrantVoucher(accountId, voucherType, grantedBy);
+        uint32 voucherId = sSmartstone->GrantVoucher(accountId, voucherType, grantedBy);
 
         LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
         handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_GRANTED,
             GetVoucherName(voucherType, handlerLocale), account.GetName());
 
         // Best-effort notify: an account has at most one online session, so
-        // ping it in its own locale. Offline recipients find the voucher in
-        // their smartstone on next login.
+        // ping it in its own locale with the same reminder shown on login (path
+        // + claim command). Offline recipients get it on next login instead.
         if (WorldSession* session = sWorldSessionMgr->FindSession(accountId))
         {
             LocaleConstant sessionLocale = session->GetSessionDbLocaleIndex();
-            ChatHandler(session).PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_RECEIVED,
-                GetVoucherName(voucherType, sessionLocale));
+            ChatHandler(session).PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LOGIN_NOTICE,
+                GetVoucherName(voucherType, sessionLocale), voucherId);
         }
 
         return true;

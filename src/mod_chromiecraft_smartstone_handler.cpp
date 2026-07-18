@@ -899,13 +899,22 @@ bool Smartstone::HasAccountVouchers(uint32 accountId) const
         accountId) != nullptr;
 }
 
-void Smartstone::GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount)
+uint32 Smartstone::GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount)
 {
-    LoginDatabase.Execute(
+    // Synchronous insert so the id read-back below sees the new row.
+    LoginDatabase.DirectExecute(
         "INSERT INTO smartstone_account_vouchers (AccountId, VoucherType, GrantedBy, GrantedTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP())",
         accountId, type, grantedByAccount);
 
-    LOG_INFO("smartstone", "Voucher granted: type {} to account {} (granted by account {}).", type, accountId, grantedByAccount);
+    // Auto-increment guarantees the row we just inserted has the highest id
+    // for this account + type, so MAX(Id) among unconsumed rows is it.
+    QueryResult result = LoginDatabase.Query(
+        "SELECT MAX(Id) FROM smartstone_account_vouchers WHERE AccountId = {} AND VoucherType = {} AND ConsumedByGUID = 0",
+        accountId, type);
+    uint32 voucherId = result ? result->Fetch()[0].Get<uint32>() : 0;
+
+    LOG_INFO("smartstone", "Voucher {} granted: type {} to account {} (granted by account {}).", voucherId, type, accountId, grantedByAccount);
+    return voucherId;
 }
 
 bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* consumer)

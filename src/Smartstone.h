@@ -645,7 +645,9 @@ public:
     // open / claim, never cached in a hot path.
     [[nodiscard]] std::vector<SmartstoneVoucher> GetAccountVouchers(uint32 accountId) const;
     [[nodiscard]] bool HasAccountVouchers(uint32 accountId) const;
-    void GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount);
+    // Inserts a voucher and returns its new row id (for addressing it in the
+    // claim reminder). 0 if the id could not be read back.
+    uint32 GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount);
     // Atomically consume voucher `voucherId` for `accountId` and apply its
     // service to `consumer`. Returns false if the row is missing, belongs to a
     // different account, or was already consumed (guards double-click).
@@ -1052,20 +1054,18 @@ enum SmartstoneStringId : uint32
     LANG_MOD_VOUCHER_NAME_FACTION      = 84,
     LANG_MOD_VOUCHER_NAME_RACE         = 85,
     LANG_MOD_VOUCHER_NAME_CUSTOMIZE    = 86,
-    // Voucher flow messages (87-98)
+    // Voucher flow messages (87-97)
     LANG_MOD_VOUCHER_GRANTED           = 87, // GM ack: granted '{name}' to {account}
-    LANG_MOD_VOUCHER_RECEIVED          = 88, // recipient notify: '{name}' waiting
-    LANG_MOD_VOUCHER_APPLIED           = 89, // '{name}' applied, takes effect at char select
-    LANG_MOD_VOUCHER_NONE_AVAILABLE    = 90,
-    LANG_MOD_VOUCHER_INVALID           = 91, // gone / already consumed
-    // 92 retired (was a combat/BG gate that no longer applies)
-    LANG_MOD_VOUCHER_INVALID_TYPE      = 93, // command: bad type argument
-    LANG_MOD_VOUCHER_LIST_HEADER       = 94,
-    LANG_MOD_VOUCHER_LIST_ENTRY        = 95, // [{id}] {name}
-    LANG_MOD_VOUCHER_LIST_NONE         = 96,
-    LANG_MOD_VOUCHER_REVOKED           = 97,
-    LANG_MOD_VOUCHER_REVOKE_NOT_FOUND  = 98,
-    LANG_MOD_VOUCHER_LOGIN_NOTICE      = 99, // per-voucher blue login reminder
+    LANG_MOD_VOUCHER_APPLIED           = 88, // '{name}' applied, takes effect at char select
+    LANG_MOD_VOUCHER_NONE_AVAILABLE    = 89,
+    LANG_MOD_VOUCHER_INVALID           = 90, // gone / already consumed
+    LANG_MOD_VOUCHER_INVALID_TYPE      = 91, // command: bad type argument
+    LANG_MOD_VOUCHER_LIST_HEADER       = 92,
+    LANG_MOD_VOUCHER_LIST_ENTRY        = 93, // [{id}] {name}
+    LANG_MOD_VOUCHER_LIST_NONE         = 94,
+    LANG_MOD_VOUCHER_REVOKED           = 95,
+    LANG_MOD_VOUCHER_REVOKE_NOT_FOUND  = 96,
+    LANG_MOD_VOUCHER_LOGIN_NOTICE      = 97, // per-voucher blue login reminder
 };
 
 #define sSmartstone Smartstone::instance()

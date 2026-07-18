@@ -755,8 +755,15 @@ public:
                 ChatHandler(player->GetSession()).ParseCommands(
                     Acore::StringFormat(".smartstone voucher claim {}", actionId));
 
-                // Re-render the vouchers list (falls back to main if now empty).
-                ShowCategoryItems(CATEGORY_VOUCHERS, player, item, subscriptionLevel);
+                // Re-render the list only while vouchers remain. Once the last
+                // one is claimed, return to the main menu quietly instead of
+                // re-entering the now-empty category, which would show the
+                // misleading "no vouchers to claim" notice right after a
+                // successful claim.
+                if (sSmartstone->HasAccountVouchers(player->GetSession()->GetAccountId()))
+                    ShowCategoryItems(CATEGORY_VOUCHERS, player, item, subscriptionLevel);
+                else
+                    ShowMainMenu(player, item, subscriptionLevel);
                 return;
             }
             case ACTION_TYPE_NONE:
