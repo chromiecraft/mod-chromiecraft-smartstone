@@ -1218,6 +1218,8 @@ public:
         {
             handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_INVALID);
             handler->SetSentErrorMessage(true);
+            LOG_ERROR("smartstone", "HandleSmartstoneVoucherClaimCommand: voucher {} not claimable for account {} (character {}).",
+                voucherId, accountId, player->GetGUID().ToString());
             return false;
         }
 
@@ -1239,6 +1241,7 @@ public:
         {
             handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_INVALID_TYPE);
             handler->SetSentErrorMessage(true);
+            LOG_ERROR("smartstone", "HandleSmartstoneVoucherGrantCommand: invalid voucher type {}.", voucherType);
             return false;
         }
 
@@ -1299,6 +1302,7 @@ public:
         {
             handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_REVOKE_NOT_FOUND, voucherId);
             handler->SetSentErrorMessage(true);
+            LOG_ERROR("smartstone", "HandleSmartstoneVoucherRevokeCommand: no unconsumed voucher with id {}.", voucherId);
             return false;
         }
 
@@ -1310,6 +1314,11 @@ public:
 
         std::string accountName;
         AccountMgr::GetName(accountId, accountName);
+
+        uint32 byAccount = 0;
+        if (Player* gm = handler->GetPlayer())
+            byAccount = gm->GetSession()->GetAccountId();
+        LOG_INFO("smartstone", "Voucher {} (type {}) revoked from account {} (by account {}).", voucherId, voucherType, accountId, byAccount);
 
         LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
         handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_REVOKED,

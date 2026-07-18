@@ -904,6 +904,8 @@ void Smartstone::GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAcco
     LoginDatabase.Execute(
         "INSERT INTO smartstone_account_vouchers (AccountId, VoucherType, GrantedBy, GrantedTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP())",
         accountId, type, grantedByAccount);
+
+    LOG_INFO("smartstone", "Voucher granted: type {} to account {} (granted by account {}).", type, accountId, grantedByAccount);
 }
 
 bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* consumer)
@@ -943,6 +945,9 @@ bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* cons
     CharacterDatabase.CommitTransaction(trans);
 
     consumer->SetAtLoginFlag(static_cast<AtLoginFlags>(flag));
+
+    LOG_INFO("smartstone", "Voucher {} (type {}) claimed by character {} on account {}; at-login flag {} set.",
+        voucherId, type, guid, accountId, flag);
     return true;
 }
 
