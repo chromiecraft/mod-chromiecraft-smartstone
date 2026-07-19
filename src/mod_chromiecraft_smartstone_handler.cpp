@@ -862,74 +862,74 @@ void Smartstone::LoadAccountSettings(uint32 accountId)
     } while (result->NextRow());
 }
 
-uint32 Smartstone::GetVoucherNameStringId(uint8 type)
+uint32 Smartstone::GetTokenNameStringId(uint8 type)
 {
     switch (type)
     {
-        case VOUCHER_RENAME:         return LANG_MOD_VOUCHER_NAME_RENAME;
-        case VOUCHER_FACTION_CHANGE: return LANG_MOD_VOUCHER_NAME_FACTION;
-        case VOUCHER_RACE_CHANGE:    return LANG_MOD_VOUCHER_NAME_RACE;
-        case VOUCHER_CUSTOMIZE:      return LANG_MOD_VOUCHER_NAME_CUSTOMIZE;
+        case TOKEN_RENAME:         return LANG_MOD_TOKEN_NAME_RENAME;
+        case TOKEN_FACTION_CHANGE: return LANG_MOD_TOKEN_NAME_FACTION;
+        case TOKEN_RACE_CHANGE:    return LANG_MOD_TOKEN_NAME_RACE;
+        case TOKEN_CUSTOMIZE:      return LANG_MOD_TOKEN_NAME_CUSTOMIZE;
         default:                     return 0;
     }
 }
 
-std::vector<SmartstoneVoucher> Smartstone::GetAccountVouchers(uint32 accountId) const
+std::vector<SmartstoneToken> Smartstone::GetAccountTokens(uint32 accountId) const
 {
-    std::vector<SmartstoneVoucher> vouchers;
+    std::vector<SmartstoneToken> tokens;
     QueryResult result = LoginDatabase.Query(
-        "SELECT Id, VoucherType FROM smartstone_account_vouchers WHERE AccountId = {} AND ConsumedByGUID = 0 ORDER BY Id",
+        "SELECT Id, TokenType FROM smartstone_account_tokens WHERE AccountId = {} AND ConsumedByGUID = 0 ORDER BY Id",
         accountId);
     if (!result)
-        return vouchers;
+        return tokens;
 
     do
     {
         Field* fields = result->Fetch();
-        vouchers.push_back(SmartstoneVoucher{ fields[0].Get<uint32>(), fields[1].Get<uint8>() });
+        tokens.push_back(SmartstoneToken{ fields[0].Get<uint32>(), fields[1].Get<uint8>() });
     } while (result->NextRow());
 
-    return vouchers;
+    return tokens;
 }
 
-bool Smartstone::HasAccountVouchers(uint32 accountId) const
+bool Smartstone::HasAccountTokens(uint32 accountId) const
 {
     return LoginDatabase.Query(
-        "SELECT 1 FROM smartstone_account_vouchers WHERE AccountId = {} AND ConsumedByGUID = 0 LIMIT 1",
+        "SELECT 1 FROM smartstone_account_tokens WHERE AccountId = {} AND ConsumedByGUID = 0 LIMIT 1",
         accountId) != nullptr;
 }
 
-uint32 Smartstone::GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount)
+uint32 Smartstone::GrantToken(uint32 accountId, uint8 type, uint32 grantedByAccount)
 {
     // Synchronous insert so the id read-back below sees the new row.
     LoginDatabase.DirectExecute(
-        "INSERT INTO smartstone_account_vouchers (AccountId, VoucherType, GrantedBy, GrantedTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP())",
+        "INSERT INTO smartstone_account_tokens (AccountId, TokenType, GrantedBy, GrantedTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP())",
         accountId, type, grantedByAccount);
 
     // Auto-increment guarantees the row we just inserted has the highest id
     // for this account + type, so MAX(Id) among unconsumed rows is it.
     QueryResult result = LoginDatabase.Query(
-        "SELECT MAX(Id) FROM smartstone_account_vouchers WHERE AccountId = {} AND VoucherType = {} AND ConsumedByGUID = 0",
+        "SELECT MAX(Id) FROM smartstone_account_tokens WHERE AccountId = {} AND TokenType = {} AND ConsumedByGUID = 0",
         accountId, type);
-    uint32 voucherId = result ? result->Fetch()[0].Get<uint32>() : 0;
+    uint32 tokenId = result ? result->Fetch()[0].Get<uint32>() : 0;
 
-    LOG_INFO("smartstone", "Voucher {} granted: type {} to account {} (granted by account {}).", voucherId, type, accountId, grantedByAccount);
-    return voucherId;
+    LOG_INFO("smartstone", "Token {} granted: type {} to account {} (granted by account {}).", tokenId, type, accountId, grantedByAccount);
+    return tokenId;
 }
 
-bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* consumer)
+bool Smartstone::ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer)
 {
     if (!consumer)
         return false;
 
     QueryResult result = LoginDatabase.Query(
-        "SELECT VoucherType FROM smartstone_account_vouchers WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
-        voucherId, accountId);
+        "SELECT TokenType FROM smartstone_account_tokens WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
+        tokenId, accountId);
     if (!result)
         return false;
 
     uint8 type = result->Fetch()[0].Get<uint8>();
-    uint16 flag = GetVoucherAtLoginFlag(type);
+    uint16 flag = GetTokenAtLoginFlag(type);
     if (!flag)
         return false;
 
@@ -939,9 +939,9 @@ bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* cons
     // menu sees the row already consumed rather than re-reading it as free.
     // The ConsumedByGUID = 0 guard makes the claim a no-op if it lost a race.
     LoginDatabase.DirectExecute(
-        "UPDATE smartstone_account_vouchers SET ConsumedByGUID = {}, ConsumedTime = UNIX_TIMESTAMP() "
+        "UPDATE smartstone_account_tokens SET ConsumedByGUID = {}, ConsumedTime = UNIX_TIMESTAMP() "
         "WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
-        guid, voucherId, accountId);
+        guid, tokenId, accountId);
 
     // Persist the at-login flag immediately, and mirror it on the in-memory
     // Player: the periodic/logout character save writes at_login from the
@@ -955,8 +955,8 @@ bool Smartstone::ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* cons
 
     consumer->SetAtLoginFlag(static_cast<AtLoginFlags>(flag));
 
-    LOG_INFO("smartstone", "Voucher {} (type {}) claimed by character {} on account {}; at-login flag {} set.",
-        voucherId, type, guid, accountId, flag);
+    LOG_INFO("smartstone", "Token {} (type {}) claimed by character {} on account {}; at-login flag {} set.",
+        tokenId, type, guid, accountId, flag);
     return true;
 }
 

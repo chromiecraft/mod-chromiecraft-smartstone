@@ -43,13 +43,13 @@ The command usage in-game or via the worldserver:
 > [!NOTE]
 > Some of the existing pets as example `Summon Hyjal Wisp`, will not work if you haven't completed their required raids in mythic from [mod-zone-difficulty](https://github.com/azerothcore/mod-zone-difficulty).
 
-## Vouchers
+## Tokens
 
-Vouchers are one-shot, account-wide grants of a **character service**: a name change, faction change, race change, or appearance (customize) change. A moderator grants a voucher to an account; any character on that account can then claim it. Claiming sets the matching at-login flag, so the actual change happens at the character selection screen the next time the player logs out to it.
+Tokens are one-shot, account-wide grants of a **character service**: a name change, faction change, race change, or appearance (customize) change. A moderator grants a token to an account; any character on that account can then claim it. Claiming sets the matching at-login flag, so the actual change happens at the character selection screen the next time the player logs out to it.
 
-Vouchers are stored in `acore_auth` (`smartstone_account_vouchers`), so a granted voucher is available on every realm and to every character on the account until claimed. Claimed vouchers are kept (not deleted) as an audit record.
+Tokens are stored in `acore_auth` (`smartstone_account_tokens`), so a granted token is available on every realm and to every character on the account until claimed. Claimed tokens are kept (not deleted) as an audit record.
 
-### Voucher types
+### Token types
 
 | Type | Service           | At-login effect          |
 | ---- | ----------------- | ------------------------ |
@@ -63,27 +63,27 @@ Vouchers are stored in `acore_auth` (`smartstone_account_vouchers`), so a grante
 Moderator commands (also usable from the worldserver console). The account can be given by name or account id:
 
 ```bash
-# Grant a Faction Change (type 2) voucher to an account
-.smartstone voucher grant Nyeriah 2
+# Grant a Faction Change (type 2) token to an account
+.smartstone token grant Nyeriah 2
 
-# List an account's unclaimed vouchers and their ids
-.smartstone voucher list Nyeriah
+# List an account's unclaimed tokens and their ids
+.smartstone token list Nyeriah
 
-# List all vouchers including claimed ones (who claimed each, and when)
-.smartstone voucher list Nyeriah all
+# List all tokens including claimed ones (who claimed each, and when)
+.smartstone token list Nyeriah all
 
-# Remove an unclaimed voucher by id (claimed vouchers are preserved)
-.smartstone voucher revoke 42
+# Remove an unclaimed token by id (claimed tokens are preserved)
+.smartstone token revoke 42
 ```
 
 Player command:
 
 ```bash
-# Claim voucher id 42 on the current character
-.smartstone voucher claim 42
+# Claim token id 42 on the current character
+.smartstone token claim 42
 ```
 
-Players can also claim from the Smartstone menu under **Character > Vouchers** (the category only appears while the account has unclaimed vouchers). On login, a reminder lists any unclaimed vouchers and the command to claim each one.
+Players can also claim from the Smartstone menu under **Character > Tokens** (the category only appears while the account has unclaimed tokens). On login, a reminder lists any unclaimed tokens and the command to claim each one.
 
 ## SQL File Prefixes
 
@@ -134,15 +134,15 @@ Example for `Edwin VanCleef` [here](https://github.com/chromiecraft/mod-chromiec
 | ----------------- | ------------ | ---------------------------- | ----------------- | --------------------------------------------------------- | -------------------- |
 | Unique Identifier | 0            | Title that shows a sub-menu? | 1 to 3            | npc_text.id                                               | 1 (Show) or 0 (Hide) |
 
-### smartstone_account_vouchers (acore_auth)
+### smartstone_account_tokens (acore_auth)
 
-One row per granted voucher. Populated by `.smartstone voucher grant`; rows are marked consumed (not deleted) when claimed.
+One row per granted token. Populated by `.smartstone token grant`; rows are marked consumed (not deleted) when claimed.
 
 | Column         | Meaning                                                    |
 | -------------- | ---------------------------------------------------------- |
-| Id             | Auto-increment; the id used to claim/revoke the voucher    |
+| Id             | Auto-increment; the id used to claim/revoke the token    |
 | AccountId      | Owning account                                             |
-| VoucherType    | 1-4 (see [Vouchers](#vouchers))                            |
+| TokenType    | 1-4 (see [Tokens](#tokens))                            |
 | GrantedBy      | Granting account id (0 = console)                          |
 | GrantedTime    | Unix timestamp of the grant                                |
 | ConsumedByGUID | Character GUID that claimed it (0 = unclaimed)             |

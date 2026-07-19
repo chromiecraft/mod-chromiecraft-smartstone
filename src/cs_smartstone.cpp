@@ -69,12 +69,12 @@ public:
             { "costume", HandleSmartstoneDebugCostumeCommand, SEC_GAMEMASTER, Console::No },
         };
 
-        static ChatCommandTable smartstoneVoucherTable =
+        static ChatCommandTable smartstoneTokenTable =
         {
-            { "claim",  HandleSmartstoneVoucherClaimCommand,  SEC_PLAYER,    Console::No  },
-            { "grant",  HandleSmartstoneVoucherGrantCommand,  SEC_MODERATOR, Console::Yes },
-            { "list",   HandleSmartstoneVoucherListCommand,   SEC_MODERATOR, Console::Yes },
-            { "revoke", HandleSmartstoneVoucherRevokeCommand, SEC_MODERATOR, Console::Yes },
+            { "claim",  HandleSmartstoneTokenClaimCommand,  SEC_PLAYER,    Console::No  },
+            { "grant",  HandleSmartstoneTokenGrantCommand,  SEC_MODERATOR, Console::Yes },
+            { "list",   HandleSmartstoneTokenListCommand,   SEC_MODERATOR, Console::Yes },
+            { "revoke", HandleSmartstoneTokenRevokeCommand, SEC_MODERATOR, Console::Yes },
         };
 
         static ChatCommandTable smartstoneTable =
@@ -88,7 +88,7 @@ public:
             { "costume",        smartstoneCostumeTable },
             { "toggle",         smartstoneToggleTable },
             { "debug",          smartstoneDebugTable },
-            { "voucher",        smartstoneVoucherTable },
+            { "token",          smartstoneTokenTable },
             { "",               HandleSmartStoneCommand, SEC_PLAYER, Console::No },
         };
 
@@ -1175,17 +1175,17 @@ public:
         return true;
     }
 
-    // Localized display name for a voucher type in the given locale, or a
+    // Localized display name for a token type in the given locale, or a
     // plain fallback if the module string is missing.
-    static std::string GetVoucherName(uint8 voucherType, LocaleConstant locale)
+    static std::string GetTokenName(uint8 tokenType, LocaleConstant locale)
     {
-        if (uint32 stringId = Smartstone::GetVoucherNameStringId(voucherType))
+        if (uint32 stringId = Smartstone::GetTokenNameStringId(tokenType))
             if (std::string const* name = sObjectMgr->GetModuleString(ModName, stringId, locale))
                 return *name;
-        return std::to_string(voucherType);
+        return std::to_string(tokenType);
     }
 
-    static bool HandleSmartstoneVoucherClaimCommand(ChatHandler* handler, uint32 voucherId)
+    static bool HandleSmartstoneTokenClaimCommand(ChatHandler* handler, uint32 tokenId)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
@@ -1207,29 +1207,29 @@ public:
         uint32 accountId = player->GetSession()->GetAccountId();
 
         // Resolve the type before consuming so the ack can name it.
-        uint8 voucherType = VOUCHER_NONE;
-        for (auto const& voucher : sSmartstone->GetAccountVouchers(accountId))
-            if (voucher.Id == voucherId)
+        uint8 tokenType = TOKEN_NONE;
+        for (auto const& token : sSmartstone->GetAccountTokens(accountId))
+            if (token.Id == tokenId)
             {
-                voucherType = voucher.Type;
+                tokenType = token.Type;
                 break;
             }
 
-        if (!sSmartstone->ConsumeVoucher(voucherId, accountId, player))
+        if (!sSmartstone->ConsumeToken(tokenId, accountId, player))
         {
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_INVALID);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_INVALID);
             handler->SetSentErrorMessage(true);
-            LOG_ERROR("smartstone", "HandleSmartstoneVoucherClaimCommand: voucher {} not claimable for account {} (character {}).",
-                voucherId, accountId, player->GetGUID().ToString());
+            LOG_ERROR("smartstone", "HandleSmartstoneTokenClaimCommand: token {} not claimable for account {} (character {}).",
+                tokenId, accountId, player->GetGUID().ToString());
             return false;
         }
 
         LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
-        handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_APPLIED, GetVoucherName(voucherType, locale));
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_APPLIED, GetTokenName(tokenType, locale));
         return true;
     }
 
-    static bool HandleSmartstoneVoucherGrantCommand(ChatHandler* handler, AccountIdentifier account, uint8 voucherType)
+    static bool HandleSmartstoneTokenGrantCommand(ChatHandler* handler, AccountIdentifier account, uint8 tokenType)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
@@ -1238,11 +1238,11 @@ public:
             return false;
         }
 
-        if (voucherType == VOUCHER_NONE || voucherType >= MAX_VOUCHER_TYPE)
+        if (tokenType == TOKEN_NONE || tokenType >= MAX_TOKEN_TYPE)
         {
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_INVALID_TYPE);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_INVALID_TYPE);
             handler->SetSentErrorMessage(true);
-            LOG_ERROR("smartstone", "HandleSmartstoneVoucherGrantCommand: invalid voucher type {}.", voucherType);
+            LOG_ERROR("smartstone", "HandleSmartstoneTokenGrantCommand: invalid token type {}.", tokenType);
             return false;
         }
 
@@ -1252,11 +1252,11 @@ public:
         if (Player* gm = handler->GetPlayer())
             grantedBy = gm->GetSession()->GetAccountId();
 
-        uint32 voucherId = sSmartstone->GrantVoucher(accountId, voucherType, grantedBy);
+        uint32 tokenId = sSmartstone->GrantToken(accountId, tokenType, grantedBy);
 
         LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
-        handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_GRANTED,
-            GetVoucherName(voucherType, handlerLocale), account.GetName());
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_GRANTED,
+            GetTokenName(tokenType, handlerLocale), account.GetName());
 
         // Best-effort notify: an account has at most one online session, so
         // ping it in its own locale with the same reminder shown on login (path
@@ -1264,14 +1264,14 @@ public:
         if (WorldSession* session = sWorldSessionMgr->FindSession(accountId))
         {
             LocaleConstant sessionLocale = session->GetSessionDbLocaleIndex();
-            ChatHandler(session).PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LOGIN_NOTICE,
-                GetVoucherName(voucherType, sessionLocale), voucherId);
+            ChatHandler(session).PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LOGIN_NOTICE,
+                GetTokenName(tokenType, sessionLocale), tokenId);
         }
 
         return true;
     }
 
-    static bool HandleSmartstoneVoucherListCommand(ChatHandler* handler, AccountIdentifier account, Optional<std::string_view> mode)
+    static bool HandleSmartstoneTokenListCommand(ChatHandler* handler, AccountIdentifier account, Optional<std::string_view> mode)
     {
         uint32 accountId = account.GetID();
 
@@ -1289,30 +1289,30 @@ public:
         // claimed them and when (the rows are kept for audit).
         if (!includeClaimed)
         {
-            std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(accountId);
-            if (vouchers.empty())
+            std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(accountId);
+            if (tokens.empty())
             {
-                handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_NONE, account.GetName());
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_NONE, account.GetName());
                 return true;
             }
 
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_HEADER, account.GetName());
-            for (auto const& voucher : vouchers)
-                handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY,
-                    voucher.Id, GetVoucherName(voucher.Type, handlerLocale));
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_HEADER, account.GetName());
+            for (auto const& token : tokens)
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_ENTRY,
+                    token.Id, GetTokenName(token.Type, handlerLocale));
             return true;
         }
 
         QueryResult result = LoginDatabase.Query(
-            "SELECT Id, VoucherType, ConsumedByGUID, ConsumedTime FROM smartstone_account_vouchers WHERE AccountId = {} ORDER BY Id",
+            "SELECT Id, TokenType, ConsumedByGUID, ConsumedTime FROM smartstone_account_tokens WHERE AccountId = {} ORDER BY Id",
             accountId);
         if (!result)
         {
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_NONE, account.GetName());
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_NONE, account.GetName());
             return true;
         }
 
-        handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_HEADER, account.GetName());
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_HEADER, account.GetName());
         do
         {
             Field* fields = result->Fetch();
@@ -1320,11 +1320,11 @@ public:
             uint8 type = fields[1].Get<uint8>();
             uint32 consumedBy = fields[2].Get<uint32>();
             uint32 consumedTime = fields[3].Get<uint32>();
-            std::string name = GetVoucherName(type, handlerLocale);
+            std::string name = GetTokenName(type, handlerLocale);
 
             if (!consumedBy)
             {
-                handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY, id, name);
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_ENTRY, id, name);
                 continue;
             }
 
@@ -1334,32 +1334,32 @@ public:
                 charName = std::to_string(consumedBy);
 
             std::string date = Acore::StringFormat("{:%Y-%m-%d %H:%M}", Acore::Time::TimeBreakdown(consumedTime));
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LIST_ENTRY_CLAIMED, id, name, charName, date);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_ENTRY_CLAIMED, id, name, charName, date);
         } while (result->NextRow());
 
         return true;
     }
 
-    static bool HandleSmartstoneVoucherRevokeCommand(ChatHandler* handler, uint32 voucherId)
+    static bool HandleSmartstoneTokenRevokeCommand(ChatHandler* handler, uint32 tokenId)
     {
         // Delete only an unconsumed row so we never erase audit history for a
-        // voucher a player already used.
+        // token a player already used.
         QueryResult result = LoginDatabase.Query(
-            "SELECT AccountId, VoucherType FROM smartstone_account_vouchers WHERE Id = {} AND ConsumedByGUID = 0",
-            voucherId);
+            "SELECT AccountId, TokenType FROM smartstone_account_tokens WHERE Id = {} AND ConsumedByGUID = 0",
+            tokenId);
         if (!result)
         {
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_REVOKE_NOT_FOUND, voucherId);
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_REVOKE_NOT_FOUND, tokenId);
             handler->SetSentErrorMessage(true);
-            LOG_ERROR("smartstone", "HandleSmartstoneVoucherRevokeCommand: no unconsumed voucher with id {}.", voucherId);
+            LOG_ERROR("smartstone", "HandleSmartstoneTokenRevokeCommand: no unconsumed token with id {}.", tokenId);
             return false;
         }
 
         Field* fields = result->Fetch();
         uint32 accountId = fields[0].Get<uint32>();
-        uint8 voucherType = fields[1].Get<uint8>();
+        uint8 tokenType = fields[1].Get<uint8>();
 
-        LoginDatabase.Execute("DELETE FROM smartstone_account_vouchers WHERE Id = {} AND ConsumedByGUID = 0", voucherId);
+        LoginDatabase.Execute("DELETE FROM smartstone_account_tokens WHERE Id = {} AND ConsumedByGUID = 0", tokenId);
 
         std::string accountName;
         AccountMgr::GetName(accountId, accountName);
@@ -1367,11 +1367,11 @@ public:
         uint32 byAccount = 0;
         if (Player* gm = handler->GetPlayer())
             byAccount = gm->GetSession()->GetAccountId();
-        LOG_INFO("smartstone", "Voucher {} (type {}) revoked from account {} (by account {}).", voucherId, voucherType, accountId, byAccount);
+        LOG_INFO("smartstone", "Token {} (type {}) revoked from account {} (by account {}).", tokenId, tokenType, accountId, byAccount);
 
         LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
-        handler->PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_REVOKED,
-            voucherId, GetVoucherName(voucherType, handlerLocale), accountName);
+        handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_REVOKED,
+            tokenId, GetTokenName(tokenType, handlerLocale), accountName);
         return true;
     }
 

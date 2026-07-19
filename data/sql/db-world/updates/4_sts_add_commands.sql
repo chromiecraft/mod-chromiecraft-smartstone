@@ -15,11 +15,11 @@ DELETE FROM `command` WHERE `name` IN (
     'smartstone toggle costumes',
     'smartstone toggle forms',
     'smartstone toggle minions',
-    'smartstone voucher',
-    'smartstone voucher claim',
-    'smartstone voucher grant',
-    'smartstone voucher list',
-    'smartstone voucher revoke'
+    'smartstone token',
+    'smartstone token claim',
+    'smartstone token grant',
+    'smartstone token list',
+    'smartstone token revoke'
 );
 
 INSERT INTO `command` (`name`, `security`, `help`) VALUES
@@ -39,8 +39,8 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone toggle costumes', 0, 'Syntax: .smartstone toggle costumes\nToggles whether you see other players'' Smartstone costumes.'),
 ('smartstone toggle forms',    0, 'Syntax: .smartstone toggle forms\nToggles whether you see other players'' Smartstone druid / shaman form skins.'),
 ('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone warlock-pet / feral-spirit skins.'),
-('smartstone voucher',         0, 'Syntax: .smartstone voucher [claim|grant|list|revoke]\nManage one-shot character-service vouchers (rename, faction, race, appearance).'),
-('smartstone voucher claim',   0, 'Syntax: .smartstone voucher claim $id\nClaims one of your account''s vouchers on the current character.\nThe service applies at the character selection screen. Find IDs in your Smartstone (Character > Vouchers) or the login reminder.'),
-('smartstone voucher grant',   1, 'Syntax: .smartstone voucher grant $account $type\nGrants a voucher to an account.\n$type: 1=Name Change, 2=Faction Change, 3=Race Change, 4=Appearance Change.'),
-('smartstone voucher list',    1, 'Syntax: .smartstone voucher list $account [all]\nLists an account''s unclaimed vouchers and their IDs.\nAdd "all" to also list claimed vouchers, with who claimed each and when.'),
-('smartstone voucher revoke',  1, 'Syntax: .smartstone voucher revoke $id\nRemoves an unclaimed voucher by ID. Already-claimed vouchers are preserved for audit.');
+('smartstone token',         0, 'Syntax: .smartstone token [claim|grant|list|revoke]\nManage one-shot character-service tokens (rename, faction, race, appearance).'),
+('smartstone token claim',   0, 'Syntax: .smartstone token claim $id\nClaims one of your account''s tokens on the current character.\nThe service applies at the character selection screen. Find IDs in your Smartstone (Character > Tokens) or the login reminder.'),
+('smartstone token grant',   1, 'Syntax: .smartstone token grant $account $type\nGrants a token to an account.\n$type: 1=Name Change, 2=Faction Change, 3=Race Change, 4=Appearance Change.'),
+('smartstone token list',    1, 'Syntax: .smartstone token list $account [all]\nLists an account''s unclaimed tokens and their IDs.\nAdd "all" to also list claimed tokens, with who claimed each and when.'),
+('smartstone token revoke',  1, 'Syntax: .smartstone token revoke $id\nRemoves an unclaimed token by ID. Already-claimed tokens are preserved for audit.');

@@ -12,7 +12,7 @@ INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `Subscript
 (9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1),
 (10,4,'|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Scroll of Resurrection', 0, 92021, 1),
 (11,4,'|TInterface/icons/INV_Misc_Spyglass_03:30:30:-18:0|t Display Options', 0, 92020, 1),
-(12,4,'|TInterface/icons/INV_Scroll_03:30:30:-18:0|t Vouchers', 0, 92022, 1);
+(12,4,'|TInterface/icons/INV_Scroll_03:30:30:-18:0|t Tokens', 0, 92022, 1);
 
 DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5, 6, 7);
 INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
@@ -69,7 +69,7 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92019, 'Choose how quickly you wish to advance, and return here at any time to change your mind.\n\nPrefer a finer-grained pace? You can set any custom rate up to the server-allowed maximum with the |cff4CFF00.weekendxp rate|r command.\n '),
 (92020, 'Here lie the threads of self — the cut of your hair, the pace of your becoming, the small marks of your calling. Tend to them as you wish; the stone holds no judgement on what shape you take, only the means to take it.\n '),
 (92021, 'An old kindness, kept for champions who return to Azeroth after long absence. To those whose silence has lengthened beyond the seasons, the stone grants the comfort of full rest — rested experience, gathered as if the long pause had been spent in inn or hall.\n\nReturning after a long absence triggers this bonus automatically and grants rested experience for a limited time. You may disable and re-enable it at any time, and use the option below to see your current status.\n '),
-(92022, 'Some services come as a token — a right you hold until you choose to spend it. Here rest the vouchers granted to your account. Claim one and its work is done: the change takes hold when next you stand at the character selection screen.\n ');
+(92022, 'Some services come as a token — a right you hold until you choose to spend it. Here rest the tokens granted to your account. Claim one and its work is done: the change takes hold when next you stand at the character selection screen.\n ');
 
 --
 -- Localized npc_text. Locales match the set used by module_string_locale

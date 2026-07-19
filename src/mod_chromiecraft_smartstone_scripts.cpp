@@ -747,21 +747,21 @@ public:
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_NO_IMPL, perk.Title, perk.Effect);
                 break;
             }
-            case ACTION_TYPE_VOUCHER:
+            case ACTION_TYPE_TOKEN:
             {
                 // Route the click through the claim command so the consume +
                 // ack logic lives in one place (same pattern as the transmog
                 // toggle). The command reports success/failure itself.
                 ChatHandler(player->GetSession()).ParseCommands(
-                    Acore::StringFormat(".smartstone voucher claim {}", actionId));
+                    Acore::StringFormat(".smartstone token claim {}", actionId));
 
-                // Re-render the list only while vouchers remain. Once the last
+                // Re-render the list only while tokens remain. Once the last
                 // one is claimed, return to the main menu quietly instead of
                 // re-entering the now-empty category, which would show the
-                // misleading "no vouchers to claim" notice right after a
+                // misleading "no tokens to claim" notice right after a
                 // successful claim.
-                if (sSmartstone->HasAccountVouchers(player->GetSession()->GetAccountId()))
-                    ShowCategoryItems(CATEGORY_VOUCHERS, player, item, subscriptionLevel);
+                if (sSmartstone->HasAccountTokens(player->GetSession()->GetAccountId()))
+                    ShowCategoryItems(CATEGORY_TOKENS, player, item, subscriptionLevel);
                 else
                     ShowMainMenu(player, item, subscriptionLevel);
                 return;
@@ -905,20 +905,20 @@ public:
                 sSmartstone->GetNPCTextForCategory(0, CATEGORY_DISPLAY_OPTIONS), item->GetGUID());
         }
 
-        // Vouchers are per-account rows, so this list is built live from the
+        // Tokens are per-account rows, so this list is built live from the
         // auth DB rather than the static MenuItems table. Empty means the last
         // one was just consumed (or a crafted client reached here) — inform and
         // drop back to the main menu.
-        void ShowVouchers(Player* player, Item* item)
+        void ShowTokens(Player* player, Item* item)
         {
             player->PlayerTalkClass->ClearMenus();
 
             uint32 accountId = player->GetSession()->GetAccountId();
-            std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(accountId);
+            std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(accountId);
 
-            if (vouchers.empty())
+            if (tokens.empty())
             {
-                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_NONE_AVAILABLE);
+                ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_NONE_AVAILABLE);
                 ClearMenuHistory(player);
                 ShowMainMenu(player, item, GetPlayerSubscriptionLevel(player));
                 return;
@@ -928,21 +928,21 @@ public:
             LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
             int32 idx = 0;
 
-            for (auto const& voucher : vouchers)
+            for (auto const& token : tokens)
             {
-                std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetVoucherNameStringId(voucher.Type), locale);
+                std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetTokenNameStringId(token.Type), locale);
                 std::string label = "|TInterface/icons/INV_Scroll_03:30:30:-18:0|t ";
-                label += name ? *name : "Voucher";
+                label += name ? *name : "Token";
                 menu.AddMenuItem(idx++, GOSSIP_ICON_CHAT, label, 0,
-                    sSmartstone->GetActionTypeId(ACTION_TYPE_VOUCHER, voucher.Id), "", 0);
+                    sSmartstone->GetActionTypeId(ACTION_TYPE_TOKEN, token.Id), "", 0);
             }
 
             menu.AddMenuItem(idx++, GOSSIP_ICON_DOT, "Back", 0,
                 sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
 
-            SetLastCategory(player, CATEGORY_VOUCHERS);
+            SetLastCategory(player, CATEGORY_TOKENS);
             player->PlayerTalkClass->SendGossipMenu(
-                sSmartstone->GetNPCTextForCategory(0, CATEGORY_VOUCHERS), item->GetGUID());
+                sSmartstone->GetNPCTextForCategory(0, CATEGORY_TOKENS), item->GetGUID());
         }
 
         void ShowCategoryItems(uint32 ParentCategoryId, Player* player, Item* item, uint8 subscriptionLevel, uint8 currentPage = 0)
@@ -960,10 +960,10 @@ public:
                 return;
             }
 
-            // Vouchers are rendered in C++ from the account's live voucher rows.
-            if (ParentCategoryId == CATEGORY_VOUCHERS)
+            // Tokens are rendered in C++ from the account's live token rows.
+            if (ParentCategoryId == CATEGORY_TOKENS)
             {
-                ShowVouchers(player, item);
+                ShowTokens(player, item);
                 return;
             }
 
@@ -1145,10 +1145,10 @@ public:
                     if (menuItem.ItemId == CATEGORY_DISPLAY_OPTIONS && !sSmartstone->IsDisplayOptOutEnabled())
                         available = false;
 
-                    // Only surface the Vouchers category when the account has
+                    // Only surface the Tokens category when the account has
                     // something to claim. Light indexed query, gossip-open only.
-                    if (menuItem.ItemId == CATEGORY_VOUCHERS
-                        && !sSmartstone->HasAccountVouchers(player->GetSession()->GetAccountId()))
+                    if (menuItem.ItemId == CATEGORY_TOKENS
+                        && !sSmartstone->HasAccountTokens(player->GetSession()->GetAccountId()))
                         available = false;
 
                     // Challenge characters are on a fixed XP regime — mirrors the
@@ -1378,19 +1378,19 @@ public:
                 sSmartstone->ReapplyActiveShamanFormDisplay(player);
             }, 1s);
 
-            // Remind the player of any unclaimed account vouchers, delayed so
+            // Remind the player of any unclaimed account tokens, delayed so
             // the notice lands after the login / MOTD spam rather than under it.
             player->m_Events.AddEventAtOffset([player] {
-                std::vector<SmartstoneVoucher> vouchers = sSmartstone->GetAccountVouchers(player->GetSession()->GetAccountId());
-                if (vouchers.empty())
+                std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(player->GetSession()->GetAccountId());
+                if (tokens.empty())
                     return;
 
                 ChatHandler handler(player->GetSession());
                 LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
-                for (auto const& voucher : vouchers)
+                for (auto const& token : tokens)
                 {
-                    std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetVoucherNameStringId(voucher.Type), locale);
-                    handler.PSendModuleSysMessage(ModName, LANG_MOD_VOUCHER_LOGIN_NOTICE, name ? *name : "", voucher.Id);
+                    std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetTokenNameStringId(token.Type), locale);
+                    handler.PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LOGIN_NOTICE, name ? *name : "", token.Id);
                 }
             }, 3s);
         }

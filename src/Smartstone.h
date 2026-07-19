@@ -19,10 +19,10 @@ enum Misc
     // rendered in C++ rather than from DB services.
     CATEGORY_DISPLAY_OPTIONS = 11,
 
-    // Vouchers submenu under Character (smartstone_categories.Id 12). The list
-    // is per-account and rendered in C++ from smartstone_account_vouchers, not
-    // from DB menu items; the category only shows when unconsumed vouchers exist.
-    CATEGORY_VOUCHERS = 12,
+    // Tokens submenu under Character (smartstone_categories.Id 12). The list
+    // is per-account and rendered in C++ from smartstone_account_tokens, not
+    // from DB menu items; the category only shows when unconsumed tokens exist.
+    CATEGORY_TOKENS = 12,
 
     // Module-integration subcategories under Character. Gated in the menu
     // builder against the matching cached server-side config.
@@ -160,24 +160,24 @@ enum UtilActions
     MAX_SMARTSTONE_ACTIONS
 };
 
-// One-shot character-service voucher kinds. Value is persisted in
-// smartstone_account_vouchers.VoucherType — never renumber existing entries.
-enum SmartstoneVoucherType : uint8
+// One-shot character-service token kinds. Value is persisted in
+// smartstone_account_tokens.TokenType — never renumber existing entries.
+enum SmartstoneTokenType : uint8
 {
-    VOUCHER_NONE           = 0,
-    VOUCHER_RENAME         = 1, // AT_LOGIN_RENAME
-    VOUCHER_FACTION_CHANGE = 2, // AT_LOGIN_CHANGE_FACTION
-    VOUCHER_RACE_CHANGE    = 3, // AT_LOGIN_CHANGE_RACE
-    VOUCHER_CUSTOMIZE      = 4, // AT_LOGIN_CUSTOMIZE
-    MAX_VOUCHER_TYPE
+    TOKEN_NONE           = 0,
+    TOKEN_RENAME         = 1, // AT_LOGIN_RENAME
+    TOKEN_FACTION_CHANGE = 2, // AT_LOGIN_CHANGE_FACTION
+    TOKEN_RACE_CHANGE    = 3, // AT_LOGIN_CHANGE_RACE
+    TOKEN_CUSTOMIZE      = 4, // AT_LOGIN_CUSTOMIZE
+    MAX_TOKEN_TYPE
 };
 
-// A single unconsumed voucher row for an account. Id is the primary key of
-// smartstone_account_vouchers and doubles as the gossip action id.
-struct SmartstoneVoucher
+// A single unconsumed token row for an account. Id is the primary key of
+// smartstone_account_tokens and doubles as the gossip action id.
+struct SmartstoneToken
 {
     uint32 Id;
-    uint8 Type; // SmartstoneVoucherType
+    uint8 Type; // SmartstoneTokenType
 };
 
 enum Service
@@ -207,7 +207,7 @@ enum ActionType
     ACTION_TYPE_VEHICLE   = 7,
     ACTION_TYPE_MOUNT     = 8,
     ACTION_TYPE_PERK      = 9, // Class-gated perks (placeholder action for now)
-    ACTION_TYPE_VOUCHER   = 10, // One-shot account-scoped character-service vouchers
+    ACTION_TYPE_TOKEN     = 10, // One-shot account-scoped character-service tokens
     ACTION_TYPE_NONE      = 11, // No action type, used for invalid or uninitialized
     MAX_ACTION_TYPE,
 };
@@ -541,7 +541,7 @@ public:
             case ACTION_TYPE_VEHICLE: return "Vehicles";
             case ACTION_TYPE_MOUNT: return "Mounts";
             case ACTION_TYPE_PERK: return "Perk";
-            case ACTION_TYPE_VOUCHER: return "Voucher";
+            case ACTION_TYPE_TOKEN: return "Token";
             default: return "None";
         }
     }
@@ -559,7 +559,7 @@ public:
             case ACTION_TYPE_VEHICLE: return "Vehicles service.";
             case ACTION_TYPE_MOUNT: return "Mounts service.";
             case ACTION_TYPE_PERK: return "Class-gated perk.";
-            case ACTION_TYPE_VOUCHER: return "One-shot character-service voucher.";
+            case ACTION_TYPE_TOKEN: return "One-shot character-service token.";
             default: return "No action type.";
         }
     }
@@ -623,35 +623,35 @@ public:
         }
     }
 
-    // Voucher type -> the at-login flag its consumption sets on the character.
+    // Token type -> the at-login flag its consumption sets on the character.
     // Returns 0 for unknown types. AT_LOGIN_* live in Player.h (included above).
-    [[nodiscard]] static uint16 GetVoucherAtLoginFlag(uint8 type)
+    [[nodiscard]] static uint16 GetTokenAtLoginFlag(uint8 type)
     {
         switch (type)
         {
-            case VOUCHER_RENAME:         return AT_LOGIN_RENAME;
-            case VOUCHER_FACTION_CHANGE: return AT_LOGIN_CHANGE_FACTION;
-            case VOUCHER_RACE_CHANGE:    return AT_LOGIN_CHANGE_RACE;
-            case VOUCHER_CUSTOMIZE:      return AT_LOGIN_CUSTOMIZE;
+            case TOKEN_RENAME:         return AT_LOGIN_RENAME;
+            case TOKEN_FACTION_CHANGE: return AT_LOGIN_CHANGE_FACTION;
+            case TOKEN_RACE_CHANGE:    return AT_LOGIN_CHANGE_RACE;
+            case TOKEN_CUSTOMIZE:      return AT_LOGIN_CUSTOMIZE;
             default:                     return 0;
         }
     }
 
-    // Module-string id for a voucher type's display name (see LANG_MOD_VOUCHER_NAME_*).
-    [[nodiscard]] static uint32 GetVoucherNameStringId(uint8 type);
+    // Module-string id for a token type's display name (see LANG_MOD_TOKEN_NAME_*).
+    [[nodiscard]] static uint32 GetTokenNameStringId(uint8 type);
 
-    // Voucher persistence lives in the auth DB (account-scoped, cross-realm),
+    // Token persistence lives in the auth DB (account-scoped, cross-realm),
     // mirroring smartstone_account_settings. Rows are queried live on gossip
     // open / claim, never cached in a hot path.
-    [[nodiscard]] std::vector<SmartstoneVoucher> GetAccountVouchers(uint32 accountId) const;
-    [[nodiscard]] bool HasAccountVouchers(uint32 accountId) const;
-    // Inserts a voucher and returns its new row id (for addressing it in the
+    [[nodiscard]] std::vector<SmartstoneToken> GetAccountTokens(uint32 accountId) const;
+    [[nodiscard]] bool HasAccountTokens(uint32 accountId) const;
+    // Inserts a token and returns its new row id (for addressing it in the
     // claim reminder). 0 if the id could not be read back.
-    uint32 GrantVoucher(uint32 accountId, uint8 type, uint32 grantedByAccount);
-    // Atomically consume voucher `voucherId` for `accountId` and apply its
+    uint32 GrantToken(uint32 accountId, uint8 type, uint32 grantedByAccount);
+    // Atomically consume token `tokenId` for `accountId` and apply its
     // service to `consumer`. Returns false if the row is missing, belongs to a
     // different account, or was already consumed (guards double-click).
-    bool ConsumeVoucher(uint32 voucherId, uint32 accountId, Player* consumer);
+    bool ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer);
 
     // Druid form display overrides (per-character).
     void SetDruidFormDisplay(Player* player, uint8 slot, uint32 displayId)
@@ -1048,25 +1048,25 @@ enum SmartstoneStringId : uint32
     LANG_MOD_FORMS_NOW_SHOWN           = 80,
     LANG_MOD_MINIONS_NOW_HIDDEN        = 81,
     LANG_MOD_MINIONS_NOW_SHOWN         = 82,
-    // Voucher names (83-86) — keep aligned with SmartstoneVoucherType so
-    // GetVoucherNameStringId can index off the type.
-    LANG_MOD_VOUCHER_NAME_RENAME       = 83,
-    LANG_MOD_VOUCHER_NAME_FACTION      = 84,
-    LANG_MOD_VOUCHER_NAME_RACE         = 85,
-    LANG_MOD_VOUCHER_NAME_CUSTOMIZE    = 86,
-    // Voucher flow messages (87-97)
-    LANG_MOD_VOUCHER_GRANTED           = 87, // GM ack: granted '{name}' to {account}
-    LANG_MOD_VOUCHER_APPLIED           = 88, // '{name}' applied, takes effect at char select
-    LANG_MOD_VOUCHER_NONE_AVAILABLE    = 89,
-    LANG_MOD_VOUCHER_INVALID           = 90, // gone / already consumed
-    LANG_MOD_VOUCHER_INVALID_TYPE      = 91, // command: bad type argument
-    LANG_MOD_VOUCHER_LIST_HEADER       = 92,
-    LANG_MOD_VOUCHER_LIST_ENTRY        = 93, // [{id}] {name}
-    LANG_MOD_VOUCHER_LIST_NONE         = 94,
-    LANG_MOD_VOUCHER_REVOKED           = 95,
-    LANG_MOD_VOUCHER_REVOKE_NOT_FOUND  = 96,
-    LANG_MOD_VOUCHER_LOGIN_NOTICE      = 97, // per-voucher blue login reminder
-    LANG_MOD_VOUCHER_LIST_ENTRY_CLAIMED = 98, // [{id}] {name} (claimed by {char} on {date})
+    // Token names (83-86) — keep aligned with SmartstoneTokenType so
+    // GetTokenNameStringId can index off the type.
+    LANG_MOD_TOKEN_NAME_RENAME       = 83,
+    LANG_MOD_TOKEN_NAME_FACTION      = 84,
+    LANG_MOD_TOKEN_NAME_RACE         = 85,
+    LANG_MOD_TOKEN_NAME_CUSTOMIZE    = 86,
+    // Token flow messages (87-97)
+    LANG_MOD_TOKEN_GRANTED           = 87, // GM ack: granted '{name}' to {account}
+    LANG_MOD_TOKEN_APPLIED           = 88, // '{name}' applied, takes effect at char select
+    LANG_MOD_TOKEN_NONE_AVAILABLE    = 89,
+    LANG_MOD_TOKEN_INVALID           = 90, // gone / already consumed
+    LANG_MOD_TOKEN_INVALID_TYPE      = 91, // command: bad type argument
+    LANG_MOD_TOKEN_LIST_HEADER       = 92,
+    LANG_MOD_TOKEN_LIST_ENTRY        = 93, // [{id}] {name}
+    LANG_MOD_TOKEN_LIST_NONE         = 94,
+    LANG_MOD_TOKEN_REVOKED           = 95,
+    LANG_MOD_TOKEN_REVOKE_NOT_FOUND  = 96,
+    LANG_MOD_TOKEN_LOGIN_NOTICE      = 97, // per-token blue login reminder
+    LANG_MOD_TOKEN_LIST_ENTRY_CLAIMED = 98, // [{id}] {name} (claimed by {char} on {date})
 };
 
 #define sSmartstone Smartstone::instance()

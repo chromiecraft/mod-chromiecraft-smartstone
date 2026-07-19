@@ -96,25 +96,25 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 80, 'Other players'' form skins are now |cff4CFF4Cshown|r.'),
 ('mod-cc-smartstone', 81, 'Other players'' minion skins are now |cffFF4C4Chidden|r — you will see the regular minion models.'),
 ('mod-cc-smartstone', 82, 'Other players'' minion skins are now |cff4CFF4Cshown|r.'),
--- Voucher names (83-86), indexed by SmartstoneVoucherType
+-- Token names (83-86), indexed by SmartstoneTokenType
 ('mod-cc-smartstone', 83, 'Name Change'),
 ('mod-cc-smartstone', 84, 'Faction Change'),
 ('mod-cc-smartstone', 85, 'Race Change'),
 ('mod-cc-smartstone', 86, 'Appearance Change'),
--- Voucher flow (87-97)
-('mod-cc-smartstone', 87, 'Granted a ''{}'' voucher to account {}.'),
-('mod-cc-smartstone', 88, '''{}'' voucher applied. The change will take effect at the character selection screen.'),
-('mod-cc-smartstone', 89, 'You have no vouchers to claim.'),
-('mod-cc-smartstone', 90, 'That voucher is no longer available.'),
-('mod-cc-smartstone', 91, 'Invalid voucher type. Use 1 (Name Change), 2 (Faction Change), 3 (Race Change), or 4 (Appearance Change).'),
-('mod-cc-smartstone', 92, 'Vouchers for account {}:'),
+-- Token flow (87-97)
+('mod-cc-smartstone', 87, 'Granted a ''{}'' token to account {}.'),
+('mod-cc-smartstone', 88, '''{}'' token applied. The change will take effect at the character selection screen.'),
+('mod-cc-smartstone', 89, 'You have no tokens to claim.'),
+('mod-cc-smartstone', 90, 'That token is no longer available.'),
+('mod-cc-smartstone', 91, 'Invalid token type. Use 1 (Name Change), 2 (Faction Change), 3 (Race Change), or 4 (Appearance Change).'),
+('mod-cc-smartstone', 92, 'Tokens for account {}:'),
 ('mod-cc-smartstone', 93, '  [{}] {}'),
-('mod-cc-smartstone', 94, 'Account {} has no unconsumed vouchers.'),
-('mod-cc-smartstone', 95, 'Revoked voucher {} (''{}'') from account {}.'),
-('mod-cc-smartstone', 96, 'No unconsumed voucher with id {} was found.'),
+('mod-cc-smartstone', 94, 'Account {} has no unconsumed tokens.'),
+('mod-cc-smartstone', 95, 'Revoked token {} (''{}'') from account {}.'),
+('mod-cc-smartstone', 96, 'No unconsumed token with id {} was found.'),
 -- Login reminder (97). Whole line blue; the command is highlighted white.
-('mod-cc-smartstone', 97, '|cff00BFFFYou have a ''{}'' voucher available. Open your Smartstone (Character > Vouchers), or type |cffFFFFFF.smartstone voucher claim {}|r|cff00BFFF to claim it.|r'),
--- Claimed entry for `voucher list all` (98): id, name, character, date.
+('mod-cc-smartstone', 97, '|cff00BFFFYou have a ''{}'' token available. Open your Smartstone (Character > Tokens), or type |cffFFFFFF.smartstone token claim {}|r|cff00BFFF to claim it.|r'),
+-- Claimed entry for `token list all` (98): id, name, character, date.
 ('mod-cc-smartstone', 98, '  [{}] {} (claimed by {} on {})');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
