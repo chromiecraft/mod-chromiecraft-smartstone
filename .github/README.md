@@ -85,6 +85,24 @@ Player command:
 
 Players can also claim from the Smartstone menu under **Character > Tokens** (the category only appears while the account has unclaimed tokens). On login, a reminder lists any unclaimed tokens and the command to claim each one.
 
+## Announcements
+
+The Smartstone exposes the core per-character announcer settings (the same ones as the `.settings announcer` command) under **Character > Announcements**. Each entry is a toggle whose label reflects its current state, letting a player silence or restore an announcer type without a command:
+
+- Battleground queue announcements
+- Arena queue announcements
+- PvP start announcements
+- Server broadcasts (autobroadcast)
+
+These are stored as the core `ac_default` character settings, so they require `PlayerSettings.Enable` to be on in the core config.
+
+New characters are created with PvP announcements (battleground queue, arena queue, and PvP start) disabled by default, as if `.settings announcer pvpall off` had been run. Server broadcasts are left on. Players can re-enable any of them from the menu or the command at any time.
+
+Two config options control this feature:
+
+- `ModChromiecraftSmartstone.QueueAnnouncer.Enable` (default `1`) — shows the Announcements menu. When `0`, the category is hidden.
+- `ModChromiecraftSmartstone.QueueAnnouncer.DisablePvpOnCreate` (default `1`) — sets PvP announcements off on character creation. When `0`, new characters keep the core defaults.
+
 ## SQL File Prefixes
 
 All SQL files should have a numeric prefix to indicate their purpose and order of execution. The prefixes are as follows:

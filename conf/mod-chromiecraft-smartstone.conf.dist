@@ -132,3 +132,29 @@ ModChromiecraftSmartstone.ChallengeXpReset.Enable = 1
 #
 
 ModChromiecraftSmartstone.DisplayOptOut.Enable = 1
+
+#
+#    ModChromiecraftSmartstone.QueueAnnouncer.Enable
+#        Description: Enables the Character > Announcements menu, where each player can
+#                     toggle the core announcer flags on/off (battleground queue, arena
+#                     queue, PvP start, and server broadcasts). These are the same
+#                     per-character settings as the .settings announcer command.
+#                     When disabled, the menu entry is unavailable.
+#        Default:     1 - Enabled
+#                     0 - Disabled
+#
+
+ModChromiecraftSmartstone.QueueAnnouncer.Enable = 1
+
+#
+#    ModChromiecraftSmartstone.QueueAnnouncer.DisablePvpOnCreate
+#        Description: When enabled, newly created characters start with PvP announcements
+#                     (battleground queue, arena queue, and PvP start) disabled, as if
+#                     .settings announcer pvpall off had been run. Players can re-enable
+#                     them from the Announcements menu or the command at any time. Server
+#                     broadcasts (autobroadcast) are unaffected.
+#        Default:     1 - Enabled
+#                     0 - Disabled
+#
+
+ModChromiecraftSmartstone.QueueAnnouncer.DisablePvpOnCreate = 1

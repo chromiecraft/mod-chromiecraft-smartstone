@@ -7,6 +7,7 @@
 #include "CombatAI.h"
 #include "GameTime.h"
 #include "ObjectMgr.h"
+#include "PlayerSettings.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Pet.h"
@@ -72,6 +73,33 @@ namespace
     // value 1 = hide other players' transmog (see real gear), 0 = show.
     constexpr char const* TRANSMOG_SETTING_NS   = "mod-transmog";
     constexpr uint32      TRANSMOG_SETTING_HIDE = 0;
+
+    // One announcer toggle: the core flag it reads for the current state, the
+    // menu-item wording, and the `.settings announcer <type>` keyword used to
+    // flip it (the command owns the write and its own confirmation message).
+    struct AnnouncerToggle
+    {
+        uint32      action;
+        uint32      flag;
+        char const* menuText;
+        char const* commandType;
+    };
+
+    constexpr AnnouncerToggle ANNOUNCER_TOGGLES[] =
+    {
+        { SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_BG,            ANNOUNCER_FLAG_DISABLE_BG_QUEUE,      "battleground queue", "bg" },
+        { SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_ARENA,         ANNOUNCER_FLAG_DISABLE_ARENA_QUEUE,   "arena queue",        "arena" },
+        { SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_PVP_START,     ANNOUNCER_FLAG_DISABLE_PVP_START,     "PvP start",          "pvpstart" },
+        { SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_AUTOBROADCAST, ANNOUNCER_FLAG_DISABLE_AUTOBROADCAST, "broadcasts",         "autobroadcast" },
+    };
+
+    AnnouncerToggle const* FindAnnouncerToggle(uint32 action)
+    {
+        for (auto const& toggle : ANNOUNCER_TOGGLES)
+            if (toggle.action == action)
+                return &toggle;
+        return nullptr;
+    }
 }
 
 enum GameObjectEntry
@@ -267,6 +295,28 @@ public:
                         bool const currentlyHidden = player->GetPlayerSetting(TRANSMOG_SETTING_NS, TRANSMOG_SETTING_HIDE).value != 0;
                         ChatHandler(player->GetSession()).ParseCommands(currentlyHidden ? ".transmog on" : ".transmog off");
                         ShowCategoryItems(CATEGORY_DISPLAY_OPTIONS, player, item, subscriptionLevel);
+                        return;
+                    }
+                    case SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_BG:
+                    case SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_ARENA:
+                    case SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_PVP_START:
+                    case SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_AUTOBROADCAST:
+                    {
+                        if (!sSmartstone->IsQueueAnnouncerEnabled())
+                            break;
+
+                        AnnouncerToggle const* toggle = FindAnnouncerToggle(actionId);
+                        if (!toggle)
+                            break;
+
+                        // Reuse the core `.settings announcer` command (flip + its own
+                        // confirmation), mirroring the transmog toggle above. Announcer
+                        // flag set == that type is currently disabled, so a disabled type
+                        // is turned on and vice versa.
+                        bool const currentlyDisabled = player->GetPlayerSetting(AzerothcorePSSource, SETTING_ANNOUNCER_FLAGS).HasFlag(toggle->flag);
+                        ChatHandler(player->GetSession()).ParseCommands(
+                            Acore::StringFormat(".settings announcer {} {}", toggle->commandType, currentlyDisabled ? "on" : "off"));
+                        ShowCategoryItems(CATEGORY_ANNOUNCEMENTS, player, item, subscriptionLevel);
                         return;
                     }
                     case SMARTSTONE_ACTION_REMOVE_AURA:
@@ -905,6 +955,35 @@ public:
                 sSmartstone->GetNPCTextForCategory(0, CATEGORY_DISPLAY_OPTIONS), item->GetGUID());
         }
 
+        // Per-type announcer opt-outs backed by the core ac_default announcer
+        // flags (same state as .settings announcer). Each label reflects the
+        // current state, so the single button doubles as enable/disable.
+        void ShowAnnouncementOptions(Player* player, Item* item)
+        {
+            auto& menu = player->PlayerTalkClass->GetGossipMenu();
+            int32 idx = 0;
+            // Icon mirrors the current state: a bell while the announcer rings,
+            // the Silence spell icon while it's muted.
+            char const* bell    = "|TInterface/icons/INV_Misc_Bell_01:30:30:-18:0|t ";
+            char const* silence = "|TInterface/icons/Spell_Holy_Silence:30:30:-18:0|t ";
+
+            PlayerSetting setting = player->GetPlayerSetting(AzerothcorePSSource, SETTING_ANNOUNCER_FLAGS);
+            for (auto const& toggle : ANNOUNCER_TOGGLES)
+            {
+                bool const disabled = setting.HasFlag(toggle.flag);
+                menu.AddMenuItem(idx++, 0, Acore::StringFormat("{}{} {}",
+                    disabled ? silence : bell, disabled ? "Enable" : "Disable", toggle.menuText),
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, toggle.action), "", 0);
+            }
+
+            menu.AddMenuItem(idx++, GOSSIP_ICON_DOT, "Back", 0,
+                sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_BACK), "", 0);
+
+            SetLastCategory(player, CATEGORY_ANNOUNCEMENTS);
+            player->PlayerTalkClass->SendGossipMenu(
+                sSmartstone->GetNPCTextForCategory(0, CATEGORY_ANNOUNCEMENTS), item->GetGUID());
+        }
+
         // Tokens are per-account rows, so this list is built live from the
         // auth DB rather than the static MenuItems table. Empty means the last
         // one was just consumed (or a crafted client reached here) — inform and
@@ -957,6 +1036,12 @@ public:
             if (ParentCategoryId == CATEGORY_DISPLAY_OPTIONS && sSmartstone->IsDisplayOptOutEnabled())
             {
                 ShowDisplayOptions(player, item);
+                return;
+            }
+
+            if (ParentCategoryId == CATEGORY_ANNOUNCEMENTS && sSmartstone->IsQueueAnnouncerEnabled())
+            {
+                ShowAnnouncementOptions(player, item);
                 return;
             }
 
@@ -1143,6 +1228,9 @@ public:
                         available = false;
 
                     if (menuItem.ItemId == CATEGORY_DISPLAY_OPTIONS && !sSmartstone->IsDisplayOptOutEnabled())
+                        available = false;
+
+                    if (menuItem.ItemId == CATEGORY_ANNOUNCEMENTS && !sSmartstone->IsQueueAnnouncerEnabled())
                         available = false;
 
                     // Only surface the Tokens category when the account has
@@ -1353,6 +1441,8 @@ public:
         sSmartstone->SetDisplayOptOutEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.DisplayOptOut.Enable", true));
         // Mirror mod-transmog's master switch so the transmog entry only shows when transmog is active.
         sSmartstone->SetTransmogToggleEnabled(sConfigMgr->GetOption<bool>("Transmogrification.Enable", false));
+        sSmartstone->SetQueueAnnouncerEnabled(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.QueueAnnouncer.Enable", true));
+        sSmartstone->SetAnnouncerDisablePvpOnCreate(sConfigMgr->GetOption<bool>("ModChromiecraftSmartstone.QueueAnnouncer.DisablePvpOnCreate", true));
 
         if (!reload)
             sSmartstone->LoadSmartstoneData();
@@ -1363,6 +1453,20 @@ class mod_chromiecraft_smartstone_playerscript : public PlayerScript
 {
 public:
     mod_chromiecraft_smartstone_playerscript() : PlayerScript("mod_chromiecraft_smartstone_playerscript") { }
+
+    void OnPlayerCreate(Player* player) override
+    {
+        if (!sSmartstone->IsSmartstoneEnabled() || !sSmartstone->IsAnnouncerDisablePvpOnCreate())
+            return;
+
+        // Runs in the post-save async callback (the character row is already
+        // written and this transient Player is discarded right after), so the
+        // in-memory UpdatePlayerSetting path would be lost — write the row by
+        // GUID instead. ANNOUNCER_FLAG_DISABLE_PVP_ALL covers bg + arena queue
+        // and PvP start; server broadcasts are left on.
+        PlayerSettingsStore::UpdateSetting(player->GetGUID().GetCounter(), AzerothcorePSSource,
+            SETTING_ANNOUNCER_FLAGS, ANNOUNCER_FLAG_DISABLE_PVP_ALL);
+    }
 
     void OnPlayerLogin(Player* player) override
     {

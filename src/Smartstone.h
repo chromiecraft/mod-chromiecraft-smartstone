@@ -24,6 +24,11 @@ enum Misc
     // from DB menu items; the category only shows when unconsumed tokens exist.
     CATEGORY_TOKENS = 12,
 
+    // Announcements submenu under Character (smartstone_categories.Id 13);
+    // per-type toggles for the core queue/PvP/broadcast announcer flags,
+    // rendered in C++ rather than from DB services.
+    CATEGORY_ANNOUNCEMENTS = 13,
+
     // Module-integration subcategories under Character. Gated in the menu
     // builder against the matching cached server-side config.
     CATEGORY_XP_RATES               = 9,
@@ -157,6 +162,11 @@ enum UtilActions
     SMARTSTONE_ACTION_TOGGLE_TRANSMOG              = 26,
     SMARTSTONE_ACTION_RESET_SPIRIT_OF_REDEMPTION   = 27,
     SMARTSTONE_ACTION_RESET_SHADOWFORM             = 28,
+    // Per-type core announcer opt-outs (flip the ac_default announcer flags).
+    SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_BG           = 29,
+    SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_ARENA        = 30,
+    SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_PVP_START    = 31,
+    SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_AUTOBROADCAST = 32,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -412,6 +422,12 @@ private:
     // Cached from mod-transmog's Transmogrification.Enable; gates the
     // transmog on/off entry in the Display Options menu.
     bool TransmogToggleEnabled{ false };
+    // Master switch for the Announcements menu category (per-type toggles for
+    // the core queue / PvP / autobroadcast announcer flags).
+    bool QueueAnnouncerEnabled{ true };
+    // When true, new characters are created with PvP announcements
+    // (bg + arena queue, PvP start) disabled by default.
+    bool AnnouncerDisablePvpOnCreate{ true };
     Seconds BarberDuration = 1min;
 public:
     static Smartstone* instance();
@@ -496,6 +512,12 @@ public:
 
     void SetTransmogToggleEnabled(bool enabled) { TransmogToggleEnabled = enabled; }
     [[nodiscard]] bool IsTransmogToggleEnabled() const { return TransmogToggleEnabled; }
+
+    void SetQueueAnnouncerEnabled(bool enabled) { QueueAnnouncerEnabled = enabled; }
+    [[nodiscard]] bool IsQueueAnnouncerEnabled() const { return QueueAnnouncerEnabled; }
+
+    void SetAnnouncerDisablePvpOnCreate(bool enabled) { AnnouncerDisablePvpOnCreate = enabled; }
+    [[nodiscard]] bool IsAnnouncerDisablePvpOnCreate() const { return AnnouncerDisablePvpOnCreate; }
 
     void SetCostumeCooldown(Player* player, uint32 costumeId);
     [[nodiscard]] bool HasCostumeCooldown(Player* player, uint32 costumeId) const;

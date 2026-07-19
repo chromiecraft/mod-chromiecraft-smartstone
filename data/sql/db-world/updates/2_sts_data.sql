@@ -2,7 +2,7 @@
 -- Smartstone Update Script
 --
 
-DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10, 11, 12);
+DELETE FROM `smartstone_categories` WHERE `Id` IN (1, 2, 3, 4, 5, 9, 10, 11, 12, 13);
 INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `SubscriptionLevel`, `NPCTextId`, `Enabled`) VALUES
 (1,0, '|TInterface/icons/Ability_Hunter_Invigeration:30:30:-18:0|t Pets', 0, 92002, 1),
 (2,0, '|TInterface/icons/Ability_Hunter_KillCommand:30:30:-18:0|t Combat Pets', 0, 92003, 1),
@@ -12,7 +12,8 @@ INSERT INTO `smartstone_categories` (`Id`, `ParentCategory`, `Title`, `Subscript
 (9,4, '|TInterface/icons/Spell_Nature_TimeStop:30:30:-18:0|t Experience rates', 0, 92019, 1),
 (10,4,'|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Scroll of Resurrection', 0, 92021, 1),
 (11,4,'|TInterface/icons/INV_Misc_Spyglass_03:30:30:-18:0|t Display Options', 0, 92020, 1),
-(12,4,'|TInterface/icons/INV_Scroll_03:30:30:-18:0|t Tokens', 0, 92022, 1);
+(12,4,'|TInterface/icons/INV_Scroll_03:30:30:-18:0|t Tokens', 0, 92022, 1),
+(13,4,'|TInterface/icons/INV_Misc_Bell_01:30:30:-18:0|t Announcements', 0, 92023, 1);
 
 DELETE FROM `smartstone_services` WHERE `ServiceId` IN (1, 2, 3, 4, 5, 6, 7);
 INSERT INTO `smartstone_services` (`ServiceId`, `Category`, `Title`, `SubscriptionLevel`, `Enabled`) VALUES
@@ -45,7 +46,7 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (80000, 0, 0, 'Looking for a change, ay? I got just what you need! Come, take a seat.', 12, 0, 'Smartstone - Barber - Spawn'),
 (80000, 1, 0, 'Time is up, pal! Off we go!', 12, 0, 'Smartstone - Barber - Despawn');
 
-DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007, 92008, 92009, 92010, 92011, 92012, 92013, 92014, 92015, 92016, 92017, 92018, 92019, 92020, 92021, 92022);
+DELETE FROM `npc_text` WHERE `ID` IN (92000, 92001, 92002, 92003, 92004, 92005, 92006, 92007, 92008, 92009, 92010, 92011, 92012, 92013, 92014, 92015, 92016, 92017, 92018, 92019, 92020, 92021, 92022, 92023);
 INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92000, 'In the heart of Azeroth\'s magic, there exists a legendary artifact known as the Smartstone. This ancient gem, brimming with mystical energy and boundless wisdom, serves as a guide and companion to the brave and the curious. With a shimmer of its enchanted facets, the Smartstone can reveal hidden treasures, dispense sage advice, or provide crucial insights into the arcane and mundane alike.'),
 (92001, 'Hey there, pal! Welcome to the finest chop shop in Azeroth! Need a trim, a shave, or a whole new look? We’ve got styles to make your enemies quake in fear—or at least wonder where you got such a snazzy do! Sit down, relax, and let’s get you looking spectacular!'),
@@ -69,7 +70,8 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 (92019, 'Choose how quickly you wish to advance, and return here at any time to change your mind.\n\nPrefer a finer-grained pace? You can set any custom rate up to the server-allowed maximum with the |cff4CFF00.weekendxp rate|r command.\n '),
 (92020, 'Here lie the threads of self — the cut of your hair, the pace of your becoming, the small marks of your calling. Tend to them as you wish; the stone holds no judgement on what shape you take, only the means to take it.\n '),
 (92021, 'An old kindness, kept for champions who return to Azeroth after long absence. To those whose silence has lengthened beyond the seasons, the stone grants the comfort of full rest — rested experience, gathered as if the long pause had been spent in inn or hall.\n\nReturning after a long absence triggers this bonus automatically and grants rested experience for a limited time. You may disable and re-enable it at any time, and use the option below to see your current status.\n '),
-(92022, 'Some services come as a token — a right you hold until you choose to spend it. Here rest the tokens granted to your account. Claim one and its work is done: the change takes hold when next you stand at the character selection screen.\n ');
+(92022, 'Some services come as a token — a right you hold until you choose to spend it. Here rest the tokens granted to your account. Claim one and its work is done: the change takes hold when next you stand at the character selection screen.\n '),
+(92023, 'Not every herald''s call is meant for every ear. Here you may hush the criers — the queues that gather, the skirmishes that ignite, the notices that ring across the realm — or bid them speak again.\n ');
 
 --
 -- Localized npc_text. Locales match the set used by module_string_locale
@@ -77,7 +79,7 @@ INSERT INTO `npc_text` (`ID`, `text0_0`) VALUES
 -- back to the enUS row above. Translations are best-effort; native-speaker
 -- review recommended for the florid class-perk register (92008-92018).
 --
-DELETE FROM `npc_text_locale` WHERE `ID` BETWEEN 92000 AND 92021;
+DELETE FROM `npc_text_locale` WHERE `ID` BETWEEN 92000 AND 92023;
 INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 
 -- deDE
@@ -270,7 +272,17 @@ INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`) VALUES
 (92018, 'zhTW', '為那些行走荒野者:足跟之泥土,髮間之綠葉,曾披過萬千形貌者的從容。這並非更強大的形態,而是每一位在你之前回應荒野召喚的變形者的氣度。'),
 (92019, 'zhTW', '選擇你希望前進的速度,日後可隨時回到此處更改決定。\n\n想要更細緻的調節?你可以使用 |cff4CFF00.weekendxp rate|r 指令將倍率自訂為伺服器允許的任意最大值以內的數值。\n '),
 (92020, 'zhTW', '此處匯聚自我的絲縷——你髮的修飾,你成長的步調,你召命的細小印記。隨心打理它們;此石不評判你所採取的形態,只賦予採取它的方法。\n '),
-(92021, 'zhTW', '一份古老的善意,留予在長久離去之後重返艾澤拉斯的英傑。對那些沉寂已逾季節更迭之人,此石賜予充裕休憩之慰——以充裕經驗值的形式,彷彿那段漫長的停歇曾在旅館與殿堂中度過。\n\n在長期離去後回歸會自動觸發此獎勵,並在有限時間內授予充裕經驗值。您可隨時停用並重新啟用,使用下方選項查看您目前的狀態。\n ');
+(92021, 'zhTW', '一份古老的善意,留予在長久離去之後重返艾澤拉斯的英傑。對那些沉寂已逾季節更迭之人,此石賜予充裕休憩之慰——以充裕經驗值的形式,彷彿那段漫長的停歇曾在旅館與殿堂中度過。\n\n在長期離去後回歸會自動觸發此獎勵,並在有限時間內授予充裕經驗值。您可隨時停用並重新啟用,使用下方選項查看您目前的狀態。\n '),
+
+-- 92023 (Announcements category)
+(92023, 'deDE', 'Nicht jeder Ausruf eines Herolds ist für jedes Ohr bestimmt. Hier kannst du die Ausrufer verstummen lassen — die sich sammelnden Warteschlangen, die aufflammenden Scharmützel, die Kundmachungen, die durchs Reich hallen — oder sie erneut sprechen heißen.\n '),
+(92023, 'frFR', 'Tous les appels du héraut ne sont pas destinés à toutes les oreilles. Ici, tu peux faire taire les crieurs — les files qui se rassemblent, les escarmouches qui s''embrasent, les avis qui résonnent à travers le royaume — ou les inviter à parler de nouveau.\n '),
+(92023, 'esES', 'No todo pregón está destinado a todos los oídos. Aquí puedes acallar a los pregoneros — las colas que se reúnen, las escaramuzas que se encienden, los avisos que resuenan por el reino — o pedirles que hablen de nuevo.\n '),
+(92023, 'esMX', 'No todo pregón está destinado a todos los oídos. Aquí puedes acallar a los pregoneros — las colas que se reúnen, las escaramuzas que se encienden, los avisos que resuenan por el reino — o pedirles que hablen de nuevo.\n '),
+(92023, 'ruRU', 'Не всякий зов глашатая предназначен для каждого уха. Здесь ты можешь заставить крикунов умолкнуть — собирающиеся очереди, вспыхивающие стычки, объявления, что разносятся по королевству, — или вновь велеть им говорить.\n '),
+(92023, 'koKR', '모든 전령의 외침이 모두의 귀를 위한 것은 아니다. 이곳에서 그대는 외치는 자들을 잠재울 수 있다 — 모여드는 대기열, 불붙는 충돌, 왕국에 울려 퍼지는 알림을 — 혹은 다시 말하게 할 수도 있다.\n '),
+(92023, 'zhCN', '并非每一次传令都为每一双耳朵而响。在此，你可让报讯者噤声——聚集的队列、燃起的冲突、响彻王国的通告——或让它们重新开口。\n '),
+(92023, 'zhTW', '並非每一次傳令都為每一雙耳朵而響。在此，你可讓報訊者噤聲——聚集的隊列、燃起的衝突、響徹王國的通告——或讓它們重新開口。\n ');
 
 DELETE FROM `gossip_menu` WHERE `MenuID` IN (92000, 92001, 92004);
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
