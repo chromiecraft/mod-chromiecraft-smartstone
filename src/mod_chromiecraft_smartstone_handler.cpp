@@ -8,8 +8,11 @@
 #include "Creature.h"
 #include "GameTime.h"
 #include "Map.h"
+#include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "SpellMgr.h"
+#include "StringConvert.h"
 #include "Player.h"
 
 Smartstone* Smartstone::instance()
@@ -870,41 +873,113 @@ uint32 Smartstone::GetTokenNameStringId(uint8 type)
         case TOKEN_FACTION_CHANGE: return LANG_MOD_TOKEN_NAME_FACTION;
         case TOKEN_RACE_CHANGE:    return LANG_MOD_TOKEN_NAME_RACE;
         case TOKEN_CUSTOMIZE:      return LANG_MOD_TOKEN_NAME_CUSTOMIZE;
+        case TOKEN_ITEM_RESTORE:   return LANG_MOD_TOKEN_NAME_ITEM_RESTORE;
+        case TOKEN_SPELL_RESTORE:  return LANG_MOD_TOKEN_NAME_SPELL_RESTORE;
         default:                     return 0;
     }
 }
 
-std::vector<SmartstoneToken> Smartstone::GetAccountTokens(uint32 accountId) const
+std::optional<std::pair<uint32, uint32>> Smartstone::ParseItemPayload(std::string_view data)
 {
+    size_t sep = data.find(':');
+
+    // substr(0, npos) yields the whole string, so the count-less form
+    // "entry" parses through the same path.
+    uint32 entry = Acore::StringTo<uint32>(data.substr(0, sep)).value_or(0);
+    uint32 count = 1;
+    if (sep != std::string_view::npos)
+        count = Acore::StringTo<uint32>(data.substr(sep + 1)).value_or(0);
+
+    if (!entry || !count)
+        return std::nullopt;
+
+    return std::make_pair(entry, count);
+}
+
+std::string Smartstone::GetTokenDisplayName(uint8 type, std::string const& data, LocaleConstant locale)
+{
+    std::string name;
+    if (uint32 stringId = GetTokenNameStringId(type))
+        if (std::string const* str = sObjectMgr->GetModuleString(ModName, stringId, locale))
+            name = *str;
+
+    if (name.empty())
+        name = "Token";
+
+    switch (type)
+    {
+        case TOKEN_ITEM_RESTORE:
+        {
+            auto payload = ParseItemPayload(data);
+            ItemTemplate const* proto = payload ? sObjectMgr->GetItemTemplate(payload->first) : nullptr;
+            if (!proto)
+                break;
+
+            std::string itemName = proto->Name1;
+            if (ItemLocale const* itemLocale = sObjectMgr->GetItemLocale(proto->ItemId))
+                ObjectMgr::GetLocaleString(itemLocale->Name, locale, itemName);
+
+            name += Acore::StringFormat(": {}", itemName);
+            if (payload->second > 1)
+                name += Acore::StringFormat(" x{}", payload->second);
+            break;
+        }
+        case TOKEN_SPELL_RESTORE:
+        {
+            uint32 spellId = Acore::StringTo<uint32>(data).value_or(0);
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+                name += Acore::StringFormat(": {}", spellInfo->SpellName[locale]);
+            break;
+        }
+        default:
+            break;
+    }
+
+    return name;
+}
+
+std::vector<SmartstoneToken> Smartstone::GetAccountTokens(uint32 accountId, bool includeRestore) const
+{
+    std::string restoreFilter = includeRestore ? "" : Acore::StringFormat(
+        " AND TokenType NOT IN ({}, {})", uint32(TOKEN_ITEM_RESTORE), uint32(TOKEN_SPELL_RESTORE));
+
     std::vector<SmartstoneToken> tokens;
     QueryResult result = LoginDatabase.Query(
-        "SELECT Id, TokenType FROM smartstone_account_tokens WHERE AccountId = {} AND ConsumedByGUID = 0 ORDER BY Id",
-        accountId);
+        "SELECT Id, TokenType, Data FROM smartstone_account_tokens WHERE AccountId = {} AND ConsumedByGUID = 0{} ORDER BY Id",
+        accountId, restoreFilter);
     if (!result)
         return tokens;
 
     do
     {
         Field* fields = result->Fetch();
-        tokens.push_back(SmartstoneToken{ fields[0].Get<uint32>(), fields[1].Get<uint8>() });
+        tokens.push_back(SmartstoneToken{ fields[0].Get<uint32>(), fields[1].Get<uint8>(), fields[2].Get<std::string>() });
     } while (result->NextRow());
 
     return tokens;
 }
 
-bool Smartstone::HasAccountTokens(uint32 accountId) const
+bool Smartstone::HasAccountTokens(uint32 accountId, bool includeRestore) const
 {
+    std::string restoreFilter = includeRestore ? "" : Acore::StringFormat(
+        " AND TokenType NOT IN ({}, {})", uint32(TOKEN_ITEM_RESTORE), uint32(TOKEN_SPELL_RESTORE));
+
     return LoginDatabase.Query(
-        "SELECT 1 FROM smartstone_account_tokens WHERE AccountId = {} AND ConsumedByGUID = 0 LIMIT 1",
-        accountId) != nullptr;
+        "SELECT 1 FROM smartstone_account_tokens WHERE AccountId = {} AND ConsumedByGUID = 0{} LIMIT 1",
+        accountId, restoreFilter) != nullptr;
 }
 
-uint32 Smartstone::GrantToken(uint32 accountId, uint8 type, uint32 grantedByAccount)
+uint32 Smartstone::GrantToken(uint32 accountId, uint8 type, uint32 grantedByAccount, std::string_view data)
 {
+    // Data is module-generated or command-validated digits, but escape it
+    // anyway so the query stays safe if a new caller slips something through.
+    std::string escapedData(data);
+    LoginDatabase.EscapeString(escapedData);
+
     // Synchronous insert so the id read-back below sees the new row.
     LoginDatabase.DirectExecute(
-        "INSERT INTO smartstone_account_tokens (AccountId, TokenType, GrantedBy, GrantedTime) VALUES ({}, {}, {}, UNIX_TIMESTAMP())",
-        accountId, type, grantedByAccount);
+        "INSERT INTO smartstone_account_tokens (AccountId, TokenType, Data, GrantedBy, GrantedTime) VALUES ({}, {}, '{}', {}, UNIX_TIMESTAMP())",
+        accountId, type, escapedData, grantedByAccount);
 
     // Auto-increment guarantees the row we just inserted has the highest id
     // for this account + type, so MAX(Id) among unconsumed rows is it.
@@ -917,23 +992,69 @@ uint32 Smartstone::GrantToken(uint32 accountId, uint8 type, uint32 grantedByAcco
     return tokenId;
 }
 
-bool Smartstone::ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer)
+TokenClaimResult Smartstone::ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer)
 {
     if (!consumer)
-        return false;
+        return TokenClaimResult::Invalid;
 
     QueryResult result = LoginDatabase.Query(
-        "SELECT TokenType FROM smartstone_account_tokens WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
+        "SELECT TokenType, Data FROM smartstone_account_tokens WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
         tokenId, accountId);
     if (!result)
-        return false;
+        return TokenClaimResult::Invalid;
 
     uint8 type = result->Fetch()[0].Get<uint8>();
-    uint16 flag = GetTokenAtLoginFlag(type);
-    if (!flag)
-        return false;
-
+    std::string data = result->Fetch()[1].Get<std::string>();
     uint32 guid = consumer->GetGUID().GetCounter();
+
+    // All validation runs before the consume UPDATE, so a failed claim
+    // never burns the token.
+    uint16 flag = 0;
+    uint32 itemEntry = 0;
+    uint32 itemCount = 0;
+    uint32 spellId = 0;
+    switch (type)
+    {
+        case TOKEN_ITEM_RESTORE:
+        {
+            if (!HasChallengeMarker(consumer))
+                return TokenClaimResult::ChallengeOnly;
+
+            auto payload = ParseItemPayload(data);
+            if (!payload || !sObjectMgr->GetItemTemplate(payload->first))
+                return TokenClaimResult::Invalid;
+
+            itemEntry = payload->first;
+            itemCount = payload->second;
+
+            ItemPosCountVec dest;
+            if (consumer->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemEntry, itemCount) != EQUIP_ERR_OK)
+                return TokenClaimResult::NoBagSpace;
+            break;
+        }
+        case TOKEN_SPELL_RESTORE:
+        {
+            if (!HasChallengeMarker(consumer))
+                return TokenClaimResult::ChallengeOnly;
+
+            spellId = Acore::StringTo<uint32>(data).value_or(0);
+            if (!spellId || !sSpellMgr->GetSpellInfo(spellId))
+                return TokenClaimResult::Invalid;
+
+            // Reject instead of consuming: burning a token on a spell the
+            // character re-learned some other way would just waste it.
+            if (consumer->HasSpell(spellId))
+                return TokenClaimResult::SpellKnown;
+            break;
+        }
+        default:
+        {
+            flag = GetTokenAtLoginFlag(type);
+            if (!flag)
+                return TokenClaimResult::Invalid;
+            break;
+        }
+    }
 
     // Claim synchronously (DirectExecute) so a follow-up click on the same
     // menu sees the row already consumed rather than re-reading it as free.
@@ -943,21 +1064,44 @@ bool Smartstone::ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer
         "WHERE Id = {} AND AccountId = {} AND ConsumedByGUID = 0",
         guid, tokenId, accountId);
 
-    // Persist the at-login flag immediately, and mirror it on the in-memory
-    // Player: the periodic/logout character save writes at_login from the
-    // in-memory value, so skipping this would let a later save clobber the DB.
-    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
-    stmt->SetData(0, flag);
-    stmt->SetData(1, guid);
-    trans->Append(stmt);
-    CharacterDatabase.CommitTransaction(trans);
+    switch (type)
+    {
+        case TOKEN_ITEM_RESTORE:
+            consumer->AddItem(itemEntry, itemCount);
+            // Re-credit the claiming character so the restored units stay
+            // convertible on their own death — without this the reclaim
+            // chain would break after one generation for
+            // RequireStoreOrigin entries.
+            LogStoreItems(guid, itemEntry, itemCount, STORE_ITEM_SOURCE_TOKEN_CLAIM);
+            LOG_INFO("smartstone", "Token {} (item restore) claimed by character {} on account {}; granted item {} x{}.",
+                tokenId, guid, accountId, itemEntry, itemCount);
+            break;
+        case TOKEN_SPELL_RESTORE:
+            consumer->learnSpell(spellId);
+            LOG_INFO("smartstone", "Token {} (spell restore) claimed by character {} on account {}; taught spell {}.",
+                tokenId, guid, accountId, spellId);
+            break;
+        default:
+        {
+            // Persist the at-login flag immediately, and mirror it on the in-memory
+            // Player: the periodic/logout character save writes at_login from the
+            // in-memory value, so skipping this would let a later save clobber the DB.
+            CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+            CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
+            stmt->SetData(0, flag);
+            stmt->SetData(1, guid);
+            trans->Append(stmt);
+            CharacterDatabase.CommitTransaction(trans);
 
-    consumer->SetAtLoginFlag(static_cast<AtLoginFlags>(flag));
+            consumer->SetAtLoginFlag(static_cast<AtLoginFlags>(flag));
 
-    LOG_INFO("smartstone", "Token {} (type {}) claimed by character {} on account {}; at-login flag {} set.",
-        tokenId, type, guid, accountId, flag);
-    return true;
+            LOG_INFO("smartstone", "Token {} (type {}) claimed by character {} on account {}; at-login flag {} set.",
+                tokenId, type, guid, accountId, flag);
+            break;
+        }
+    }
+
+    return TokenClaimResult::Success;
 }
 
 void Smartstone::LoadVehicles()
@@ -1076,5 +1220,70 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadMounts();
         sSmartstone->LoadLegacyCostumes();
         sSmartstone->LoadPerks();
+        sSmartstone->LoadReclaimables();
     }
+}
+
+void Smartstone::LoadReclaimables()
+{
+    ReclaimableItems.clear();
+    ReclaimableSpells.clear();
+
+    // Entries are not validated against item/spell templates here: the
+    // initial load can run before those stores are populated. Grant and
+    // claim paths validate instead.
+    QueryResult result = WorldDatabase.Query("SELECT Type, Entry, RequireStoreOrigin FROM smartstone_challenge_reclaimable");
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint8 type = fields[0].Get<uint8>();
+        uint32 entry = fields[1].Get<uint32>();
+        bool requireOrigin = fields[2].Get<uint8>() != 0;
+
+        if (type == 0)
+            ReclaimableItems[entry] = requireOrigin;
+        else if (type == 1)
+            ReclaimableSpells.insert(entry); // RequireStoreOrigin has no meaning for spells
+        else
+            LOG_ERROR("smartstone", "LoadReclaimables: entry {} has unknown type {}, skipped.", entry, type);
+    } while (result->NextRow());
+
+    LOG_INFO("smartstone", "Loaded {} reclaimable item(s) and {} reclaimable spell(s).",
+        ReclaimableItems.size(), ReclaimableSpells.size());
+}
+
+void Smartstone::LogStoreItems(uint32 charGuid, uint32 itemEntry, uint32 count, uint8 source)
+{
+    if (!charGuid || !itemEntry || !count)
+        return;
+
+    // One row per item unit so every unit keeps its own receive timestamp.
+    std::string values;
+    for (uint32 i = 0; i < count; ++i)
+        values += Acore::StringFormat("{}({}, {}, UNIX_TIMESTAMP(), {})",
+            values.empty() ? "" : ", ", charGuid, itemEntry, source);
+
+    CharacterDatabase.Execute(
+        "INSERT INTO smartstone_store_item_log (Guid, ItemEntry, ReceivedTime, Source) VALUES {}", values);
+}
+
+uint32 Smartstone::GetStoreItemCredit(uint32 charGuid, uint32 itemEntry) const
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT COUNT(*) FROM smartstone_store_item_log WHERE Guid = {} AND ItemEntry = {}",
+        charGuid, itemEntry);
+    return result ? static_cast<uint32>(result->Fetch()[0].Get<uint64>()) : 0;
+}
+
+void Smartstone::ConsumeStoreItemCredit(uint32 charGuid, uint32 itemEntry)
+{
+    // Called when the character's units of this entry were converted at
+    // death; the character is gone, so the whole credit is spent. A token
+    // claim re-credits the claiming character.
+    CharacterDatabase.Execute(
+        "DELETE FROM smartstone_store_item_log WHERE Guid = {} AND ItemEntry = {}",
+        charGuid, itemEntry);
 }

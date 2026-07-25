@@ -106,7 +106,7 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-cc-smartstone', 88, '''{}'' token applied. The change will take effect at the character selection screen.'),
 ('mod-cc-smartstone', 89, 'You have no tokens to claim.'),
 ('mod-cc-smartstone', 90, 'That token is no longer available.'),
-('mod-cc-smartstone', 91, 'Invalid token type. Use 1 (Name Change), 2 (Faction Change), 3 (Race Change), or 4 (Appearance Change).'),
+('mod-cc-smartstone', 91, 'Invalid token type. Use 1 (Name Change), 2 (Faction Change), 3 (Race Change), 4 (Appearance Change), 5 (Item Restoration), or 6 (Spell Restoration).'),
 ('mod-cc-smartstone', 92, 'Tokens for account {}:'),
 ('mod-cc-smartstone', 93, '  [{}] {}'),
 ('mod-cc-smartstone', 94, 'Account {} has no unconsumed tokens.'),
@@ -115,7 +115,15 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 -- Login reminder (97). Whole line blue; the command is highlighted white.
 ('mod-cc-smartstone', 97, '|cff00BFFFYou have a ''{}'' token available. Open your Smartstone (Character > Tokens), or type |cffFFFFFF.smartstone token claim {}|r|cff00BFFF to claim it.|r'),
 -- Claimed entry for `token list all` (98): id, name, character, date.
-('mod-cc-smartstone', 98, '  [{}] {} (claimed by {} on {})');
+('mod-cc-smartstone', 98, '  [{}] {} (claimed by {} on {})'),
+-- Challenge-restore tokens (99-105)
+('mod-cc-smartstone', 99, 'Item Restoration'),
+('mod-cc-smartstone', 100, 'Spell Restoration'),
+('mod-cc-smartstone', 101, 'Only challenge mode characters can claim this token.'),
+('mod-cc-smartstone', 102, 'You do not have enough bag space to claim this token.'),
+('mod-cc-smartstone', 103, 'You already know that spell.'),
+('mod-cc-smartstone', 104, 'Restore tokens require a payload: <itemEntry[:count]> for type 5, <spellId> for type 6. Other types take none.'),
+('mod-cc-smartstone', 105, '''{}'' claimed.');
 
 INSERT INTO `module_string_locale` (`module`, `id`, `locale`, `string`) VALUES
 

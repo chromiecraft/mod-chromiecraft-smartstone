@@ -24,6 +24,8 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "SpellMgr.h"
+#include "StringConvert.h"
 #include "Timer.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
@@ -1175,14 +1177,11 @@ public:
         return true;
     }
 
-    // Localized display name for a token type in the given locale, or a
-    // plain fallback if the module string is missing.
-    static std::string GetTokenName(uint8 tokenType, LocaleConstant locale)
+    // Localized display name for a token in the given locale, resolving
+    // restore payloads to item/spell names.
+    static std::string GetTokenName(uint8 tokenType, std::string const& data, LocaleConstant locale)
     {
-        if (uint32 stringId = Smartstone::GetTokenNameStringId(tokenType))
-            if (std::string const* name = sObjectMgr->GetModuleString(ModName, stringId, locale))
-                return *name;
-        return std::to_string(tokenType);
+        return Smartstone::GetTokenDisplayName(tokenType, data, locale);
     }
 
     static bool HandleSmartstoneTokenClaimCommand(ChatHandler* handler, uint32 tokenId)
@@ -1202,34 +1201,49 @@ public:
             return false;
         }
 
-        // No combat / BG / instance gate: claiming only sets an at-login flag
-        // that applies at the character screen, so it is safe anywhere.
+        // No combat / BG / instance gate: at-login tokens only apply at the
+        // character screen, and item/spell restores are inventory/spellbook
+        // writes that are safe anywhere.
         uint32 accountId = player->GetSession()->GetAccountId();
 
-        // Resolve the type before consuming so the ack can name it.
+        // Resolve type + payload before consuming so the ack can name it.
         uint8 tokenType = TOKEN_NONE;
+        std::string tokenData;
         for (auto const& token : sSmartstone->GetAccountTokens(accountId))
             if (token.Id == tokenId)
             {
                 tokenType = token.Type;
+                tokenData = token.Data;
                 break;
             }
 
-        if (!sSmartstone->ConsumeToken(tokenId, accountId, player))
+        TokenClaimResult claimResult = sSmartstone->ConsumeToken(tokenId, accountId, player);
+        if (claimResult != TokenClaimResult::Success)
         {
-            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_INVALID);
+            uint32 stringId = LANG_MOD_TOKEN_INVALID;
+            switch (claimResult)
+            {
+                case TokenClaimResult::ChallengeOnly: stringId = LANG_MOD_TOKEN_CHALLENGE_ONLY; break;
+                case TokenClaimResult::NoBagSpace:    stringId = LANG_MOD_TOKEN_NO_BAG_SPACE;   break;
+                case TokenClaimResult::SpellKnown:    stringId = LANG_MOD_TOKEN_SPELL_KNOWN;    break;
+                default: break;
+            }
+
+            handler->PSendModuleSysMessage(ModName, stringId);
             handler->SetSentErrorMessage(true);
-            LOG_ERROR("smartstone", "HandleSmartstoneTokenClaimCommand: token {} not claimable for account {} (character {}).",
-                tokenId, accountId, player->GetGUID().ToString());
+            LOG_ERROR("smartstone", "HandleSmartstoneTokenClaimCommand: token {} not claimable for account {} (character {}, result {}).",
+                tokenId, accountId, player->GetGUID().ToString(), uint32(claimResult));
             return false;
         }
 
         LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
-        handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_APPLIED, GetTokenName(tokenType, locale));
+        handler->PSendModuleSysMessage(ModName,
+            Smartstone::IsRestoreTokenType(tokenType) ? LANG_MOD_TOKEN_RESTORE_APPLIED : LANG_MOD_TOKEN_APPLIED,
+            GetTokenName(tokenType, tokenData, locale));
         return true;
     }
 
-    static bool HandleSmartstoneTokenGrantCommand(ChatHandler* handler, AccountIdentifier account, uint8 tokenType)
+    static bool HandleSmartstoneTokenGrantCommand(ChatHandler* handler, AccountIdentifier account, uint8 tokenType, Optional<std::string> data)
     {
         if (!sSmartstone->IsSmartstoneEnabled())
         {
@@ -1246,26 +1260,65 @@ public:
             return false;
         }
 
+        // Restore tokens require a payload ("itemEntry[:count]" / "spellId"),
+        // the character-service types take none.
+        std::string payload;
+        if (Smartstone::IsRestoreTokenType(tokenType) != data.has_value())
+        {
+            handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_BAD_PAYLOAD);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (tokenType == TOKEN_ITEM_RESTORE)
+        {
+            auto parsed = Smartstone::ParseItemPayload(*data);
+            if (!parsed || !sObjectMgr->GetItemTemplate(parsed->first))
+            {
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_BAD_PAYLOAD);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+            // Re-serialize so the stored payload is always normalized "entry:count".
+            payload = Acore::StringFormat("{}:{}", parsed->first, parsed->second);
+        }
+        else if (tokenType == TOKEN_SPELL_RESTORE)
+        {
+            uint32 spellId = Acore::StringTo<uint32>(*data).value_or(0);
+            if (!spellId || !sSpellMgr->GetSpellInfo(spellId))
+            {
+                handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_BAD_PAYLOAD);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+            payload = std::to_string(spellId);
+        }
+
         uint32 accountId = account.GetID();
 
         uint32 grantedBy = 0;
         if (Player* gm = handler->GetPlayer())
             grantedBy = gm->GetSession()->GetAccountId();
 
-        uint32 tokenId = sSmartstone->GrantToken(accountId, tokenType, grantedBy);
+        uint32 tokenId = sSmartstone->GrantToken(accountId, tokenType, grantedBy, payload);
 
         LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
         handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_GRANTED,
-            GetTokenName(tokenType, handlerLocale), account.GetName());
+            GetTokenName(tokenType, payload, handlerLocale), account.GetName());
 
         // Best-effort notify: an account has at most one online session, so
         // ping it in its own locale with the same reminder shown on login (path
         // + claim command). Offline recipients get it on next login instead.
+        // Restore tokens stay quiet for non-challenge characters, matching
+        // the login reminder filter.
         if (WorldSession* session = sWorldSessionMgr->FindSession(accountId))
         {
-            LocaleConstant sessionLocale = session->GetSessionDbLocaleIndex();
-            ChatHandler(session).PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LOGIN_NOTICE,
-                GetTokenName(tokenType, sessionLocale), tokenId);
+            if (!Smartstone::IsRestoreTokenType(tokenType) || Smartstone::HasChallengeMarker(session->GetPlayer()))
+            {
+                LocaleConstant sessionLocale = session->GetSessionDbLocaleIndex();
+                ChatHandler(session).PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LOGIN_NOTICE,
+                    GetTokenName(tokenType, payload, sessionLocale), tokenId);
+            }
         }
 
         return true;
@@ -1299,12 +1352,12 @@ public:
             handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_HEADER, account.GetName());
             for (auto const& token : tokens)
                 handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LIST_ENTRY,
-                    token.Id, GetTokenName(token.Type, handlerLocale));
+                    token.Id, GetTokenName(token.Type, token.Data, handlerLocale));
             return true;
         }
 
         QueryResult result = LoginDatabase.Query(
-            "SELECT Id, TokenType, ConsumedByGUID, ConsumedTime FROM smartstone_account_tokens WHERE AccountId = {} ORDER BY Id",
+            "SELECT Id, TokenType, ConsumedByGUID, ConsumedTime, Data FROM smartstone_account_tokens WHERE AccountId = {} ORDER BY Id",
             accountId);
         if (!result)
         {
@@ -1320,7 +1373,7 @@ public:
             uint8 type = fields[1].Get<uint8>();
             uint32 consumedBy = fields[2].Get<uint32>();
             uint32 consumedTime = fields[3].Get<uint32>();
-            std::string name = GetTokenName(type, handlerLocale);
+            std::string name = GetTokenName(type, fields[4].Get<std::string>(), handlerLocale);
 
             if (!consumedBy)
             {
@@ -1345,7 +1398,7 @@ public:
         // Delete only an unconsumed row so we never erase audit history for a
         // token a player already used.
         QueryResult result = LoginDatabase.Query(
-            "SELECT AccountId, TokenType FROM smartstone_account_tokens WHERE Id = {} AND ConsumedByGUID = 0",
+            "SELECT AccountId, TokenType, Data FROM smartstone_account_tokens WHERE Id = {} AND ConsumedByGUID = 0",
             tokenId);
         if (!result)
         {
@@ -1358,6 +1411,7 @@ public:
         Field* fields = result->Fetch();
         uint32 accountId = fields[0].Get<uint32>();
         uint8 tokenType = fields[1].Get<uint8>();
+        std::string tokenData = fields[2].Get<std::string>();
 
         LoginDatabase.Execute("DELETE FROM smartstone_account_tokens WHERE Id = {} AND ConsumedByGUID = 0", tokenId);
 
@@ -1371,7 +1425,7 @@ public:
 
         LocaleConstant handlerLocale = LocaleConstant(handler->GetSessionDbLocaleIndex());
         handler->PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_REVOKED,
-            tokenId, GetTokenName(tokenType, handlerLocale), accountName);
+            tokenId, GetTokenName(tokenType, tokenData, handlerLocale), accountName);
         return true;
     }
 
