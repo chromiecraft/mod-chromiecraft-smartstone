@@ -7,6 +7,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 #include <limits>    // per std::numeric_limits
+#include <unordered_set>
 
 class Creature;
 
@@ -179,6 +180,10 @@ enum SmartstoneTokenType : uint8
     TOKEN_FACTION_CHANGE = 2, // AT_LOGIN_CHANGE_FACTION
     TOKEN_RACE_CHANGE    = 3, // AT_LOGIN_CHANGE_RACE
     TOKEN_CUSTOMIZE      = 4, // AT_LOGIN_CUSTOMIZE
+    // Challenge-restore tokens: claimable only by challenge characters
+    // (marker aura). Payload lives in the Data column.
+    TOKEN_ITEM_RESTORE   = 5, // Data = "itemEntry:count"
+    TOKEN_SPELL_RESTORE  = 6, // Data = "spellId"
     MAX_TOKEN_TYPE
 };
 
@@ -188,6 +193,25 @@ struct SmartstoneToken
 {
     uint32 Id;
     uint8 Type; // SmartstoneTokenType
+    std::string Data; // payload for restore types, empty otherwise
+};
+
+// Outcome of a token claim attempt. The claim command maps each value to a
+// player-facing message; everything but Success leaves the token unconsumed.
+enum class TokenClaimResult : uint8
+{
+    Success,
+    Invalid,       // missing / foreign / consumed row, or unusable payload
+    ChallengeOnly, // restore token claimed by a non-challenge character
+    NoBagSpace,
+    SpellKnown,
+};
+
+// smartstone_store_item_log.Source values — never renumber persisted entries.
+enum SmartstoneStoreItemSource : uint8
+{
+    STORE_ITEM_SOURCE_MAIL        = 0, // GM/store mail delivery
+    STORE_ITEM_SOURCE_TOKEN_CLAIM = 1, // re-credited by an item-restore token claim
 };
 
 enum Service
@@ -659,21 +683,59 @@ public:
         }
     }
 
+    [[nodiscard]] static bool IsRestoreTokenType(uint8 type)
+    {
+        return type == TOKEN_ITEM_RESTORE || type == TOKEN_SPELL_RESTORE;
+    }
+
+    // Marker-aura check without IsChallengeCharacter's level-70 carve-out:
+    // that cap only exists for the XP-rate regime, while restore-token
+    // access must survive reaching the level cap.
+    [[nodiscard]] static bool HasChallengeMarker(Player const* player)
+    {
+        return player && player->HasAnyAuras(2000100, 2000101, 2000102);
+    }
+
+    // Parse an "itemEntry[:count]" token payload into (entry, count).
+    // Count defaults to 1; nullopt on malformed input or zero values.
+    [[nodiscard]] static std::optional<std::pair<uint32, uint32>> ParseItemPayload(std::string_view data);
+
     // Module-string id for a token type's display name (see LANG_MOD_TOKEN_NAME_*).
     [[nodiscard]] static uint32 GetTokenNameStringId(uint8 type);
+
+    // Display name for a token: localized type name, with the resolved
+    // item/spell name (and count) appended for restore payloads.
+    [[nodiscard]] static std::string GetTokenDisplayName(uint8 type, std::string const& data, LocaleConstant locale);
 
     // Token persistence lives in the auth DB (account-scoped, cross-realm),
     // mirroring smartstone_account_settings. Rows are queried live on gossip
     // open / claim, never cached in a hot path.
-    [[nodiscard]] std::vector<SmartstoneToken> GetAccountTokens(uint32 accountId) const;
-    [[nodiscard]] bool HasAccountTokens(uint32 accountId) const;
+    // `includeRestore = false` filters out challenge-restore tokens; pass
+    // HasChallengeMarker(player) on player-facing paths so non-challenge
+    // characters never see (or get nagged about) tokens they cannot claim.
+    [[nodiscard]] std::vector<SmartstoneToken> GetAccountTokens(uint32 accountId, bool includeRestore = true) const;
+    [[nodiscard]] bool HasAccountTokens(uint32 accountId, bool includeRestore = true) const;
     // Inserts a token and returns its new row id (for addressing it in the
     // claim reminder). 0 if the id could not be read back.
-    uint32 GrantToken(uint32 accountId, uint8 type, uint32 grantedByAccount);
+    uint32 GrantToken(uint32 accountId, uint8 type, uint32 grantedByAccount, std::string_view data = {});
     // Atomically consume token `tokenId` for `accountId` and apply its
-    // service to `consumer`. Returns false if the row is missing, belongs to a
-    // different account, or was already consumed (guards double-click).
-    bool ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer);
+    // service to `consumer`. Every non-Success outcome (missing row, foreign
+    // account, already consumed, failed validation) leaves the row untouched.
+    TokenClaimResult ConsumeToken(uint32 tokenId, uint32 accountId, Player* consumer);
+
+    // Challenge-reclaim whitelists (smartstone_challenge_reclaimable).
+    // Entries are validated against templates at grant/claim time, not here.
+    // Item map value = RequireStoreOrigin: when true, conversion at death is
+    // capped by the character's smartstone_store_item_log credit.
+    void LoadReclaimables();
+    std::unordered_map<uint32, bool> ReclaimableItems;
+    std::unordered_set<uint32> ReclaimableSpells;
+
+    // Store-origin bookkeeping (smartstone_store_item_log, characters DB).
+    // One row per item unit; see the table's SQL for semantics.
+    void LogStoreItems(uint32 charGuid, uint32 itemEntry, uint32 count, uint8 source);
+    [[nodiscard]] uint32 GetStoreItemCredit(uint32 charGuid, uint32 itemEntry) const;
+    void ConsumeStoreItemCredit(uint32 charGuid, uint32 itemEntry);
 
     // Druid form display overrides (per-character).
     void SetDruidFormDisplay(Player* player, uint8 slot, uint32 displayId)
@@ -1089,6 +1151,14 @@ enum SmartstoneStringId : uint32
     LANG_MOD_TOKEN_REVOKE_NOT_FOUND  = 96,
     LANG_MOD_TOKEN_LOGIN_NOTICE      = 97, // per-token blue login reminder
     LANG_MOD_TOKEN_LIST_ENTRY_CLAIMED = 98, // [{id}] {name} (claimed by {char} on {date})
+    // Challenge-restore tokens (99-105)
+    LANG_MOD_TOKEN_NAME_ITEM_RESTORE  = 99,
+    LANG_MOD_TOKEN_NAME_SPELL_RESTORE = 100,
+    LANG_MOD_TOKEN_CHALLENGE_ONLY     = 101, // claim rejected: challenge characters only
+    LANG_MOD_TOKEN_NO_BAG_SPACE       = 102,
+    LANG_MOD_TOKEN_SPELL_KNOWN        = 103,
+    LANG_MOD_TOKEN_BAD_PAYLOAD        = 104, // grant command: missing/invalid Data argument
+    LANG_MOD_TOKEN_RESTORE_APPLIED    = 105, // restore claim ack (no char-select step)
 };
 
 #define sSmartstone Smartstone::instance()
