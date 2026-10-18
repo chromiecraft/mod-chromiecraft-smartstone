@@ -1589,10 +1589,10 @@ private:
         {
             ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_XP_RATE_RESET_NOTICE);
 
-            LOG_INFO("smartstone", "ChallengeXpReset: Reset weekend-xp rate from {}x to 1x for player {} (guid {}, account {}, level {}).",
+            LOG_INFO("smartstone", "ChallengeXpReset: Reset weekend-xp rate from {}x to 1x for player {} ({}, account {}, level {}).",
                 DecodeWeekendXpRate(currentRate),
                 player->GetName(),
-                player->GetGUID().GetCounter(),
+                player->GetGUID().ToString(),
                 player->GetSession()->GetAccountId(),
                 player->GetLevel());
         }
