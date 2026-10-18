@@ -102,7 +102,8 @@ enum ShamanGuardianSlot
 // The ghoul slot also covers the Master of Ghouls ghoul, which is a real Pet.
 enum DeathKnightGuardianSlot
 {
-    DK_GUARDIAN_GHOUL = 0,
+    DK_GUARDIAN_GHOUL             = 0,
+    DK_GUARDIAN_ARMY_OF_THE_DEAD  = 1,
     MAX_DK_GUARDIAN_SLOTS
 };
 
@@ -182,6 +183,7 @@ enum UtilActions
     SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_AUTOBROADCAST = 32,
     SMARTSTONE_ACTION_RESET_GHOUL                  = 33,
     SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL        = 34,
+    SMARTSTONE_ACTION_RESET_ARMY_OF_THE_DEAD       = 35,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -369,6 +371,7 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_PRIEST_SHADOWFORM           = 17,
     PERK_EFFECT_DK_GHOUL                    = 18,
     PERK_EFFECT_MAGE_WATER_ELEMENTAL        = 19,
+    PERK_EFFECT_DK_ARMY_OF_THE_DEAD         = 20,
 };
 
 struct SmartstonePerkData
@@ -389,7 +392,6 @@ struct SmartstoneCostumeSoundData
     uint32 Sound;
     uint8 Mode; // 1 = self only, 2 = surround
 };
-
 struct SmartstoneMenuState
 {
     uint16 currentPage;
@@ -508,6 +510,9 @@ public:
     // set. BG / arena always keep the native model.
     void RefreshMinionPerkDisplay(Creature* minion) const;
     void RefreshControlledMinionPerkDisplays(Unit* owner) const;
+
+    // True when `shownDisplay` is the stored skin or one of its rolled variants.
+    [[nodiscard]] bool IsMinionPerkModel(uint32 skinDisplay, uint32 shownDisplay) const;
 
     // Re-send nearby overridden units to `observer` so a toggle applies at once.
     void RefreshSmartstoneVisibilityFor(Player* observer) const;

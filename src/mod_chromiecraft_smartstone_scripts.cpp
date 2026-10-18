@@ -384,6 +384,12 @@ public:
                         sSmartstone->RefreshControlledMinionPerkDisplays(player);
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_ARMY_OF_THE_DEAD:
+                    {
+                        sSmartstone->SetDeathKnightGuardianDisplay(player, DK_GUARDIAN_ARMY_OF_THE_DEAD, 0);
+                        sSmartstone->RefreshControlledMinionPerkDisplays(player);
+                        break;
+                    }
                     case SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL:
                     {
                         sSmartstone->SetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL, 0);
@@ -777,6 +783,9 @@ public:
                     case PERK_EFFECT_DK_GHOUL:
                         sSmartstone->SetDeathKnightGuardianDisplay(player, DK_GUARDIAN_GHOUL, perk.Value);
                         break;
+                    case PERK_EFFECT_DK_ARMY_OF_THE_DEAD:
+                        sSmartstone->SetDeathKnightGuardianDisplay(player, DK_GUARDIAN_ARMY_OF_THE_DEAD, perk.Value);
+                        break;
                     case PERK_EFFECT_MAGE_WATER_ELEMENTAL:
                         sSmartstone->SetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL, perk.Value);
                         break;
@@ -1146,6 +1155,11 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Ghoul appearance",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_GHOUL), "", 0);
+
+            if (sSmartstone->GetDeathKnightGuardianDisplay(player, DK_GUARDIAN_ARMY_OF_THE_DEAD))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Army of the Dead appearance",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_ARMY_OF_THE_DEAD), "", 0);
 
             if (sSmartstone->GetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL))
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
@@ -1630,7 +1644,7 @@ struct npc_smartstone_vehicle : public VehicleAI
 // Server state is untouched, so other observers still see the override.
 // DISPLAYID is core-tracked; SCALE_X is opted in (players only) so resized
 // overrides don't leak their size. Minion native scale isn't recoverable, so
-// minions get display-id-only.
+// minions get display id plus weapon slots (skin variants can add weapons).
 class unit_smartstone_costume_script : public UnitScript
 {
 public:
@@ -1641,7 +1655,14 @@ public:
 
     bool ShouldTrackValuesUpdatePosByIndex(Unit const* unit, uint8 /*updateType*/, uint16 index) override
     {
-        return sSmartstone->IsDisplayOptOutEnabled() && unit->IsPlayer() && index == OBJECT_FIELD_SCALE_X;
+        if (!sSmartstone->IsDisplayOptOutEnabled())
+            return false;
+
+        if (unit->IsPlayer())
+            return index == OBJECT_FIELD_SCALE_X;
+
+        // Minion skin variants can carry weapons, sent with the display id.
+        return index >= UNIT_VIRTUAL_ITEM_SLOT_ID && index < UNIT_VIRTUAL_ITEM_SLOT_ID + MAX_EQUIPMENT_ITEMS;
     }
 
     void OnPatchValuesUpdate(Unit const* unit, ByteBuffer& valuesUpdateBuf, BuildValuesCachePosPointers& posPointers, Player* target) override
@@ -1704,6 +1725,16 @@ public:
                 && target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_MINIONS).value)
             {
                 patchDisplay(nativeDisplay);
+
+                // Show the minion's own gear (template equipment id 1) instead of a variant's weapons.
+                int8 equipmentId = 1;
+                EquipmentInfo const* gear = sObjectMgr->GetEquipmentInfo(creature->GetEntry(), equipmentId);
+                for (uint8 slot = 0; slot < MAX_EQUIPMENT_ITEMS; ++slot)
+                {
+                    auto pos = posPointers.other.find(UNIT_VIRTUAL_ITEM_SLOT_ID + slot);
+                    if (pos != posPointers.other.end())
+                        valuesUpdateBuf.put(pos->second, uint32(gear ? gear->ItemEntry[slot] : 0));
+                }
             }
         }
     }

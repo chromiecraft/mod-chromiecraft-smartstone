@@ -146,6 +146,7 @@ class spell_smartstone_form_display_override : public AuraScript
 
 // 51533 - Feral Spirit (Spirit Wolves)
 // 46585 - Raise Dead (guardian ghoul; the Master of Ghouls pet goes through the PetScript)
+// 42651 - Army of the Dead (one ghoul per channel tick)
 // 70907 - Summon Water Elemental (temporary)
 // 70908 - Summon Water Elemental (Glyph of Eternal Water)
 // Re-skins the guardians the cast summoned. Fires once per cast, which is
@@ -173,8 +174,38 @@ class spell_smartstone_guardian_display : public SpellScript
     }
 };
 
+// 42650 - Army of the Dead
+// Plays the chosen skin's smartstone_costume_sound row (keyed by displayId)
+// when the channel starts, so the caster hears e.g. murlocs instead of ghouls.
+class spell_smartstone_army_of_the_dead_sound : public SpellScript
+{
+    PrepareSpellScript(spell_smartstone_army_of_the_dead_sound);
+
+    bool Load() override
+    {
+        Unit* caster = GetCaster();
+        return caster && caster->IsPlayer();
+    }
+
+    void HandleAfterCast()
+    {
+        Player* player = GetCaster()->ToPlayer();
+        if (player->InBattleground() || player->InArena())
+            return;
+
+        if (uint32 displayId = sSmartstone->GetDeathKnightGuardianDisplay(player, DK_GUARDIAN_ARMY_OF_THE_DEAD))
+            sSmartstone->PlayCostumeSound(player, displayId);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_smartstone_army_of_the_dead_sound::HandleAfterCast);
+    }
+};
+
 void AddSC_smartstone_spells()
 {
     RegisterSpellScript(spell_smartstone_form_display_override);
     RegisterSpellScript(spell_smartstone_guardian_display);
+    RegisterSpellScript(spell_smartstone_army_of_the_dead_sound);
 }

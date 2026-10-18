@@ -12,6 +12,11 @@
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Player.h"
+#include "Containers.h"
+#include "Random.h"
+#include <algorithm>
+#include <array>
+#include <vector>
 
 Smartstone* Smartstone::instance()
 {
@@ -608,9 +613,39 @@ enum SmartstonePerkMinionEntry : uint32
 {
     NPC_FERAL_SPIRIT_WOLF       = 29264,
     NPC_DK_GHOUL                = 26125, // Raise Dead, as guardian or Master of Ghouls pet
+    NPC_DK_ARMY_GHOUL           = 24207,
     NPC_WATER_ELEMENTAL         = 510,
     NPC_WATER_ELEMENTAL_GLYPHED = 37994, // Glyph of Eternal Water
 };
+
+// Army of the Dead skins whose summons each roll their own look and weapons,
+// keyed by the perk's displayId (smartstone_perks.Value).
+// Every look is equally likely, so the armed / unarmed list sizes set the mix.
+struct ArmySkin
+{
+    uint32 PerkDisplay;
+    std::vector<uint32> ArmedDisplays;   // roll one of Weapons
+    std::vector<uint32> UnarmedDisplays; // models that can't hold weapons
+    std::vector<std::pair<uint32, uint32>> Weapons; // main hand, off hand
+};
+
+static std::array<ArmySkin, 4> const ArmySkins = { {
+    // Dead: gray / white murlocs with Vile Fin style rusty gear.
+    { 346, { 346, 531, 540, 3619, 3940 }, { }, { { 2023, 0 }, { 1895, 0 }, { 1900, 2053 }, { 3368, 0 } } },
+    // Living: green / blue Elwynn murlocs with their own weapons.
+    { 441, { 441, 527, 1994, 617, 983, 1305 }, { }, { { 1895, 0 }, { 2184, 0 }, { 1897, 0 }, { 2695, 0 }, { 2023, 0 } } },
+    // Tiny: Murky and the other baby murlocs.
+    { 15369, { }, { 15369, 15394, 15395, 15396, 15397, 15398 }, { } },
+    // Depths: naga myrmidons with tridents / spears / swords, plus sea turtles (2:1).
+    { 4762, { 4762, 4036, 6748, 22876 }, { 1244, 27690 }, { { 5746, 0 }, { 12063, 0 }, { 5745, 0 }, { 2023, 0 }, { 1899, 1896 } } },
+} };
+
+static ArmySkin const* FindArmySkin(uint32 perkDisplay)
+{
+    auto it = std::find_if(ArmySkins.begin(), ArmySkins.end(),
+        [perkDisplay](ArmySkin const& skin) { return skin.PerkDisplay == perkDisplay; });
+    return it != ArmySkins.end() ? &*it : nullptr;
+}
 
 // Pets keep a direct owner pointer, which still resolves while the pet is
 // being added to the world; the GUID lookup needs the owner on the same map.
@@ -677,6 +712,7 @@ uint32 Smartstone::GetMinionPerkDisplay(Creature const* minion, uint8& effect) c
         {
             case NPC_FERAL_SPIRIT_WOLF:       effect = PERK_EFFECT_SHAMAN_FERAL_SPIRIT;  break;
             case NPC_DK_GHOUL:                effect = PERK_EFFECT_DK_GHOUL;             break;
+            case NPC_DK_ARMY_GHOUL:           effect = PERK_EFFECT_DK_ARMY_OF_THE_DEAD;  break;
             case NPC_WATER_ELEMENTAL:
             case NPC_WATER_ELEMENTAL_GLYPHED: effect = PERK_EFFECT_MAGE_WATER_ELEMENTAL; break;
             default:                          return 0;
@@ -691,6 +727,7 @@ uint32 Smartstone::GetMinionPerkDisplay(Creature const* minion, uint8& effect) c
     {
         case PERK_EFFECT_SHAMAN_FERAL_SPIRIT:  return GetShamanGuardianDisplay(owner, SHAMAN_GUARDIAN_FERAL_SPIRIT);
         case PERK_EFFECT_DK_GHOUL:             return GetDeathKnightGuardianDisplay(owner, DK_GUARDIAN_GHOUL);
+        case PERK_EFFECT_DK_ARMY_OF_THE_DEAD:  return GetDeathKnightGuardianDisplay(owner, DK_GUARDIAN_ARMY_OF_THE_DEAD);
         case PERK_EFFECT_MAGE_WATER_ELEMENTAL: return GetMageGuardianDisplay(owner, MAGE_GUARDIAN_WATER_ELEMENTAL);
         default:                               return GetWarlockPetDisplay(owner, static_cast<uint8>(warlockSlot));
     }
@@ -707,10 +744,59 @@ void Smartstone::RefreshMinionPerkDisplay(Creature* minion) const
         if (owner->InBattleground() || owner->InArena())
             displayId = 0;
 
-    if (displayId)
+    if (!displayId)
+    {
+        if (minion->GetDisplayId() != minion->GetNativeDisplayId())
+        {
+            minion->SetDisplayId(minion->GetNativeDisplayId(), minion->GetNativeObjectScale());
+            // Summons have no spawn data, so their gear is template equipment id 1.
+            minion->LoadEquipment(0, true);
+            minion->LoadEquipment();
+        }
+        return;
+    }
+
+    ArmySkin const* armySkin = FindArmySkin(displayId);
+    if (!armySkin)
+    {
         minion->SetDisplayId(displayId, GetEffectivePerkScale(effect, displayId));
-    else if (minion->GetDisplayId() != minion->GetNativeDisplayId())
-        minion->SetDisplayId(minion->GetNativeDisplayId(), minion->GetNativeObjectScale());
+        return;
+    }
+
+    // Refreshes run for every controlled minion on each summon tick; keep an
+    // already rolled look instead of re-rolling the whole army.
+    if (IsMinionPerkModel(displayId, minion->GetDisplayId()))
+        return;
+
+    std::size_t const armedCount = armySkin->ArmedDisplays.size();
+    std::size_t const roll = urand(0, armedCount + armySkin->UnarmedDisplays.size() - 1);
+    bool const armed = roll < armedCount;
+
+    uint32 const look = armed ? armySkin->ArmedDisplays[roll] : armySkin->UnarmedDisplays[roll - armedCount];
+    minion->SetDisplayId(look, GetEffectivePerkScale(effect, displayId));
+
+    std::pair<uint32, uint32> weapons = { 0, 0 };
+    if (armed && !armySkin->Weapons.empty())
+        weapons = Acore::Containers::SelectRandomContainerElement(armySkin->Weapons);
+
+    minion->SetVirtualItem(0, weapons.first);
+    minion->SetVirtualItem(1, weapons.second);
+}
+
+bool Smartstone::IsMinionPerkModel(uint32 skinDisplay, uint32 shownDisplay) const
+{
+    if (shownDisplay == skinDisplay)
+        return true;
+
+    ArmySkin const* armySkin = FindArmySkin(skinDisplay);
+    if (!armySkin)
+        return false;
+
+    auto contains = [shownDisplay](std::vector<uint32> const& displays)
+    {
+        return std::find(displays.begin(), displays.end(), shownDisplay) != displays.end();
+    };
+    return contains(armySkin->ArmedDisplays) || contains(armySkin->UnarmedDisplays);
 }
 
 void Smartstone::RefreshControlledMinionPerkDisplays(Unit* owner) const
@@ -727,7 +813,7 @@ bool Smartstone::GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativ
     if (!overrideDisplay)
         return false;
 
-    if (creature->GetDisplayId() != overrideDisplay)
+    if (!IsMinionPerkModel(overrideDisplay, creature->GetDisplayId()))
         return false;
 
     nativeDisplay = creature->GetNativeDisplayId();
