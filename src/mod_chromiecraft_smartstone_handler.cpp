@@ -8,6 +8,7 @@
 #include "Creature.h"
 #include "GameTime.h"
 #include "Map.h"
+#include "Pet.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "Player.h"
@@ -603,8 +604,23 @@ void Smartstone::ApplyCostume(Player* player, uint32 costumeId)
     }
 }
 
-// Spirit Wolves summoned by Feral Spirit (see mod_smartstone_spells.cpp).
-static constexpr uint32 FERAL_SPIRIT_WOLF_ENTRY = 29264;
+enum SmartstonePerkMinionEntry : uint32
+{
+    NPC_FERAL_SPIRIT_WOLF       = 29264,
+    NPC_DK_GHOUL                = 26125, // Raise Dead, as guardian or Master of Ghouls pet
+    NPC_WATER_ELEMENTAL         = 510,
+    NPC_WATER_ELEMENTAL_GLYPHED = 37994, // Glyph of Eternal Water
+};
+
+// Pets keep a direct owner pointer, which still resolves while the pet is
+// being added to the world; the GUID lookup needs the owner on the same map.
+static Player* GetMinionOwner(Creature const* minion)
+{
+    if (minion->IsPet())
+        return static_cast<Pet const*>(minion)->GetOwner();
+
+    return minion->GetCharmerOrOwnerPlayerOrPlayerItself();
+}
 
 // Form -> (slot, namespace, spell), mirroring spell_smartstone_form_display_override.
 bool Smartstone::GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const
@@ -645,24 +661,69 @@ bool Smartstone::GetActiveFormPerkSubstitute(Player* player, uint32& canonicalMo
     return canonicalModel != 0;
 }
 
+uint32 Smartstone::GetMinionPerkDisplay(Creature const* minion, uint8& effect) const
+{
+    if (!minion)
+        return 0;
+
+    // Entry gate first so unrelated creatures skip the owner lookup.
+    uint32 const entry = minion->GetEntry();
+    int32 const warlockSlot = Smartstone::GetWarlockPetSlotForEntry(entry);
+    if (warlockSlot >= 0)
+        effect = PERK_EFFECT_WARLOCK_PET_IMP + static_cast<uint8>(warlockSlot);
+    else
+    {
+        switch (entry)
+        {
+            case NPC_FERAL_SPIRIT_WOLF:       effect = PERK_EFFECT_SHAMAN_FERAL_SPIRIT;  break;
+            case NPC_DK_GHOUL:                effect = PERK_EFFECT_DK_GHOUL;             break;
+            case NPC_WATER_ELEMENTAL:
+            case NPC_WATER_ELEMENTAL_GLYPHED: effect = PERK_EFFECT_MAGE_WATER_ELEMENTAL; break;
+            default:                          return 0;
+        }
+    }
+
+    Player* owner = GetMinionOwner(minion);
+    if (!owner)
+        return 0;
+
+    switch (effect)
+    {
+        case PERK_EFFECT_SHAMAN_FERAL_SPIRIT:  return GetShamanGuardianDisplay(owner, SHAMAN_GUARDIAN_FERAL_SPIRIT);
+        case PERK_EFFECT_DK_GHOUL:             return GetDeathKnightGuardianDisplay(owner, DK_GUARDIAN_GHOUL);
+        case PERK_EFFECT_MAGE_WATER_ELEMENTAL: return GetMageGuardianDisplay(owner, MAGE_GUARDIAN_WATER_ELEMENTAL);
+        default:                               return GetWarlockPetDisplay(owner, static_cast<uint8>(warlockSlot));
+    }
+}
+
+void Smartstone::RefreshMinionPerkDisplay(Creature* minion) const
+{
+    uint8 effect = PERK_EFFECT_NONE;
+    uint32 displayId = GetMinionPerkDisplay(minion, effect);
+    if (!effect)
+        return;
+
+    if (Player* owner = GetMinionOwner(minion))
+        if (owner->InBattleground() || owner->InArena())
+            displayId = 0;
+
+    if (displayId)
+        minion->SetDisplayId(displayId, GetEffectivePerkScale(effect, displayId));
+    else if (minion->GetDisplayId() != minion->GetNativeDisplayId())
+        minion->SetDisplayId(minion->GetNativeDisplayId(), minion->GetNativeObjectScale());
+}
+
+void Smartstone::RefreshControlledMinionPerkDisplays(Unit* owner) const
+{
+    for (Unit* controlled : owner->m_Controlled)
+        if (Creature* minion = controlled ? controlled->ToCreature() : nullptr)
+            RefreshMinionPerkDisplay(minion);
+}
+
 bool Smartstone::GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const
 {
-    if (!creature)
-        return false;
-
-    // Entry gate first — most creatures are neither pets nor spirit wolves.
-    uint32 entry = creature->GetEntry();
-    int32 wpSlot = Smartstone::GetWarlockPetSlotForEntry(entry);
-    if (wpSlot < 0 && entry != FERAL_SPIRIT_WOLF_ENTRY)
-        return false;
-
-    Player* owner = creature->GetCharmerOrOwnerPlayerOrPlayerItself();
-    if (!owner)
-        return false;
-
-    uint32 overrideDisplay = (wpSlot >= 0)
-        ? GetWarlockPetDisplay(owner, static_cast<uint8>(wpSlot))
-        : GetShamanGuardianDisplay(owner, SHAMAN_GUARDIAN_FERAL_SPIRIT);
+    uint8 effect = PERK_EFFECT_NONE;
+    uint32 overrideDisplay = GetMinionPerkDisplay(creature, effect);
     if (!overrideDisplay)
         return false;
 

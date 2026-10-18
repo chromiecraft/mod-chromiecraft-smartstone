@@ -38,7 +38,7 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone toggle',          0, 'Syntax: .smartstone toggle [costumes|forms|minions]\nView preferences for hiding other players'' Smartstone display overrides.'),
 ('smartstone toggle costumes', 0, 'Syntax: .smartstone toggle costumes\nToggles whether you see other players'' Smartstone costumes.'),
 ('smartstone toggle forms',    0, 'Syntax: .smartstone toggle forms\nToggles whether you see other players'' Smartstone druid / shaman form skins.'),
-('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone warlock-pet / feral-spirit skins.'),
+('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone pet and guardian skins (warlock pets, Feral Spirit, ghoul, water elemental).'),
 ('smartstone token',         0, 'Syntax: .smartstone token [claim|grant|list|revoke]\nManage one-shot character-service tokens (rename, faction, race, appearance).'),
 ('smartstone token claim',   0, 'Syntax: .smartstone token claim $id\nClaims one of your account''s tokens on the current character.\nThe service applies at the character selection screen. Find IDs in your Smartstone (Character > Tokens) or the login reminder.'),
 ('smartstone token grant',   1, 'Syntax: .smartstone token grant $account $type\nGrants a token to an account.\n$type: 1=Name Change, 2=Faction Change, 3=Race Change, 4=Appearance Change.'),
