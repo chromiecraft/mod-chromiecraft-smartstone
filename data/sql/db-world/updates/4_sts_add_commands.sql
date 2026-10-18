@@ -37,7 +37,7 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('smartstone use pet',         0, 'Syntax: .smartstone use pet $id\nSummons the companion or combat pet with the given ID if you have access to it.\nUse .smartstone lookup pets to find available IDs.'),
 ('smartstone toggle',          0, 'Syntax: .smartstone toggle [costumes|forms|minions]\nView preferences for hiding other players'' Smartstone display overrides.'),
 ('smartstone toggle costumes', 0, 'Syntax: .smartstone toggle costumes\nToggles whether you see other players'' Smartstone costumes.'),
-('smartstone toggle forms',    0, 'Syntax: .smartstone toggle forms\nToggles whether you see other players'' Smartstone druid / shaman form skins.'),
+('smartstone toggle forms',    0, 'Syntax: .smartstone toggle forms\nToggles whether you see other players'' Smartstone form skins and mage Polymorph skins.'),
 ('smartstone toggle minions',  0, 'Syntax: .smartstone toggle minions\nToggles whether you see other players'' Smartstone pet and guardian skins (warlock pets, Feral Spirit, ghoul, water elemental).'),
 ('smartstone token',         0, 'Syntax: .smartstone token [claim|grant|list|revoke]\nManage one-shot character-service tokens (rename, faction, race, appearance).'),
 ('smartstone token claim',   0, 'Syntax: .smartstone token claim $id\nClaims one of your account''s tokens on the current character.\nThe service applies at the character selection screen. Find IDs in your Smartstone (Character > Tokens) or the login reminder.'),

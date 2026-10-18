@@ -78,6 +78,11 @@ enum DruidFormSlot
     MAX_DRUID_FORM_SLOTS
 };
 
+// Druid form slot value for "keep the druid's own model" (Astral Form), which
+// also wears SPELL_ASTRAL_FORM_VISUAL while in Moonkin Form.
+constexpr uint32 FORM_DISPLAY_OWN_MODEL   = 0xFFFFFFFF;
+constexpr uint32 SPELL_ASTRAL_FORM_VISUAL = 22650; // Ghost Visual, hidden cosmetic aura
+
 enum ShamanFormSlot
 {
     SHAMAN_FORM_GHOST_WOLF = 0,
@@ -111,6 +116,14 @@ enum MageGuardianSlot
 {
     MAGE_GUARDIAN_WATER_ELEMENTAL = 0,
     MAX_MAGE_GUARDIAN_SLOTS
+};
+
+// Skins for what a mage's spell turns its target into.
+enum MageSpellSlot
+{
+    MAGE_SPELL_POLYMORPH      = 0, // displayId; sheep Polymorph ranks only
+    MAGE_SPELL_WILD_POLYMORPH = 1, // 1 = roll a random Polymorph skin per cast
+    MAX_MAGE_SPELL_SLOTS
 };
 
 enum WarlockPetSlot
@@ -184,6 +197,7 @@ enum UtilActions
     SMARTSTONE_ACTION_RESET_GHOUL                  = 33,
     SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL        = 34,
     SMARTSTONE_ACTION_RESET_ARMY_OF_THE_DEAD       = 35,
+    SMARTSTONE_ACTION_RESET_POLYMORPH              = 36,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -372,6 +386,8 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_DK_GHOUL                    = 18,
     PERK_EFFECT_MAGE_WATER_ELEMENTAL        = 19,
     PERK_EFFECT_DK_ARMY_OF_THE_DEAD         = 20,
+    PERK_EFFECT_MAGE_POLYMORPH              = 21,
+    PERK_EFFECT_MAGE_WILD_POLYMORPH         = 22, // unlocked by owning every PERK_EFFECT_MAGE_POLYMORPH perk
 };
 
 struct SmartstonePerkData
@@ -501,6 +517,14 @@ public:
     // native minion display id).
     [[nodiscard]] bool GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const;
     [[nodiscard]] bool GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const;
+    [[nodiscard]] bool GetActivePolymorphPerkSubstitute(Unit* unit, uint32& sheepModel) const;
+
+    // The skin a mage's Polymorph should show (a random one with Wild
+    // Polymorph), or 0 for the sheep.
+    [[nodiscard]] uint32 GetPolymorphSkin(Player* mage) const;
+
+    // Perk unlock check, including Wild Polymorph's own rule.
+    [[nodiscard]] bool IsPerkUnlocked(Player* player, uint32 perkId) const;
 
     // Owner's stored skin for a perk minion (warlock pet, spirit wolf, ghoul,
     // water elemental), or 0. Sets `effect` for the scale lookup.
@@ -778,6 +802,22 @@ public:
         return player->GetPlayerSetting(ModName + "#mage_guardian", slot).value;
     }
 
+    void SetMageSpellDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#mage_spell", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetMageSpellDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#mage_spell", slot).value;
+    }
+
+    // Sheep Polymorph ranks the Polymorph skin replaces; other variants
+    // (pig, turtle, cat, ...) are deliberate picks and keep their model.
+    [[nodiscard]] static bool IsSheepPolymorph(uint32 spellId)
+    {
+        return spellId == 118 || spellId == 12824 || spellId == 12825 || spellId == 12826;
+    }
+
     // Composite key for PerkScaleOverrides. Scale depends on the render
     // context, not just the model: the same creature displayId worn as a
     // player shapeshift vs. summoned as a guardian needs different scales.
@@ -831,6 +871,8 @@ public:
         if (!player)
             return;
 
+        UpdateAstralFormVisual(player);
+
         ShapeshiftForm form = player->GetShapeshiftForm();
         uint8 currentSlot;
         uint32 spellId;
@@ -859,10 +901,33 @@ public:
     // are currently shapeshifted. Used on login / map change, where the
     // engine reapplies the form aura after our AuraScript would normally
     // fire — causing the default model to overwrite our override.
+    // Display a stored druid form value resolves to on this player.
+    [[nodiscard]] static uint32 ResolveFormDisplay(Player* player, uint32 stored)
+    {
+        return stored == FORM_DISPLAY_OWN_MODEL ? player->GetNativeDisplayId() : stored;
+    }
+
+    // Astral Form's ghost glow is worn only while in Moonkin Form with that skin
+    // (and never in BG / arena). The aura is saved with the character, so this
+    // also clears a stale one after relogs, teleports and skin changes.
+    void UpdateAstralFormVisual(Player* player) const
+    {
+        bool const wanted = player->GetShapeshiftForm() == FORM_MOONKIN
+            && !player->InBattleground() && !player->InArena()
+            && GetDruidFormDisplay(player, DRUID_FORM_MOONKIN) == FORM_DISPLAY_OWN_MODEL;
+
+        if (!wanted)
+            player->RemoveAurasDueToSpell(SPELL_ASTRAL_FORM_VISUAL);
+        else if (!player->HasAura(SPELL_ASTRAL_FORM_VISUAL))
+            player->AddAura(SPELL_ASTRAL_FORM_VISUAL, player);
+    }
+
     void ReapplyActiveDruidFormDisplay(Player* player)
     {
         if (!player)
             return;
+
+        UpdateAstralFormVisual(player);
 
         ShapeshiftForm form = player->GetShapeshiftForm();
         uint8 slot;
@@ -892,7 +957,7 @@ public:
         }
 
         if (uint32 displayId = GetDruidFormDisplay(player, slot))
-            player->SetDisplayId(displayId, GetEffectivePerkScale(effect, displayId));
+            player->SetDisplayId(ResolveFormDisplay(player, displayId), GetEffectivePerkScale(effect, displayId));
     }
 
     // Shaman counterpart of RestoreDefaultFormDisplay. Currently only one
@@ -982,6 +1047,7 @@ public:
     std::unordered_map<uint32, std::vector<SmartstoneService>> Services;
     std::unordered_map<uint32, std::vector<SmartstonePerkData>> Perks;
     std::unordered_map<uint64, float> PerkScaleOverrides; // PerkScaleKey(effect, displayId) -> scale
+    std::vector<std::pair<uint32, uint32>> PolymorphSkins; // (perk Id, displayId) of every Polymorph skin perk
     std::unordered_map<ObjectGuid, std::vector<SmartstoneMenuState>> MenuStateHolder;
     std::map<uint32, std::list<SmartstoneServiceExpireInfo>> ServiceExpireInfo;
 
