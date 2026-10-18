@@ -45,18 +45,32 @@ The command usage in-game or via the worldserver:
 
 ## Tokens
 
-Tokens are one-shot, account-wide grants of a **character service**: a name change, faction change, race change, or appearance (customize) change. A moderator grants a token to an account; any character on that account can then claim it. Claiming sets the matching at-login flag, so the actual change happens at the character selection screen the next time the player logs out to it.
+Tokens are one-shot, account-wide grants. Types 1-4 cover a **character service**: a name change, faction change, race change, or appearance (customize) change. A moderator grants a token to an account; any character on that account can then claim it. Claiming sets the matching at-login flag, so the actual change happens at the character selection screen the next time the player logs out to it.
+
+Types 5-6 are **challenge restore** tokens: they grant an item stack or teach a spell on claim. They carry their payload in the `Data` column (`itemEntry:count` for items, `spellId` for spells) and can only be seen and claimed by challenge mode characters (marker auras 2000100-2000102, any level).
 
 Tokens are stored in `acore_auth` (`smartstone_account_tokens`), so a granted token is available on every realm and to every character on the account until claimed. Claimed tokens are kept (not deleted) as an audit record.
 
 ### Token types
 
-| Type | Service           | At-login effect          |
+| Type | Service           | Effect on claim          |
 | ---- | ----------------- | ------------------------ |
 | 1    | Name Change       | `AT_LOGIN_RENAME`        |
 | 2    | Faction Change    | `AT_LOGIN_CHANGE_FACTION`|
 | 3    | Race Change       | `AT_LOGIN_CHANGE_RACE`   |
 | 4    | Appearance Change | `AT_LOGIN_CUSTOMIZE`     |
+| 5    | Item Restoration  | Adds the item(s) from `Data` to the inventory |
+| 6    | Spell Restoration | Teaches the spell from `Data`                 |
+
+### Challenge reclaim
+
+When a challenge mode character below level 70 suffers a fatal death (killed by a creature or a player, the same two events the challenge script deletes on), the module converts its whitelisted possessions on the spot: it scans the live character's inventory (equipped, bags, bank) and spellbook against the `smartstone_challenge_reclaimable` whitelist (`acore_world`), grants one restore token per match to the account, and destroys the items / removes the spells before the character is saved and unlinked. A replacement challenge character can then claim the tokens from **Character > Tokens**, and a GM-restored character comes back without the converted possessions, so nothing can be duplicated.
+
+As a fallback, ordinary deletions of a challenge character (e.g. from the character selection screen) grant the same tokens by scanning the characters DB at deletion time. On soft deletions (`CharDelete.Method = 1`) the matched rows are stripped for the same no-duplication guarantee; this path requires the core's `OnPlayerUnlinkFromDB` hook ([azerothcore#26794](https://github.com/azerothcore/azerothcore-wotlk/pull/26794)).
+
+#### Store-origin gating
+
+Whitelist entries with `RequireStoreOrigin = 1` only convert units the character actually received from the store. Every item delivered by GM mail (`.send items`, which is also the CMS shop's delivery path) is logged into `smartstone_store_item_log`, one row per item unit with a timestamp; the same PR also needs the core's `MailDraft::GetItems` accessor. On death, conversion is capped at the logged credit: a character who bought 3 Gigantique Bags but owns 4 gets a token for 3, and the fourth dies with the character. Claiming an item-restore token re-credits the claiming character, so restored items stay convertible across successive deaths. Entries with `RequireStoreOrigin = 0` convert everything owned, regardless of origin.
 
 ### Commands
 
@@ -65,6 +79,12 @@ Moderator commands (also usable from the worldserver console). The account can b
 ```bash
 # Grant a Faction Change (type 2) token to an account
 .smartstone token grant Nyeriah 2
+
+# Grant an Item Restoration (type 5) token: 3x item 19019
+.smartstone token grant Nyeriah 5 19019:3
+
+# Grant a Spell Restoration (type 6) token for spell 33388
+.smartstone token grant Nyeriah 6 33388
 
 # List an account's unclaimed tokens and their ids
 .smartstone token list Nyeriah
@@ -160,8 +180,31 @@ One row per granted token. Populated by `.smartstone token grant`; rows are mark
 | -------------- | ---------------------------------------------------------- |
 | Id             | Auto-increment; the id used to claim/revoke the token    |
 | AccountId      | Owning account                                             |
-| TokenType    | 1-4 (see [Tokens](#tokens))                            |
-| GrantedBy      | Granting account id (0 = console)                          |
+| TokenType    | 1-6 (see [Tokens](#tokens))                            |
+| Data           | Restore payload: `itemEntry:count` (type 5) or `spellId` (type 6); empty for types 1-4 |
+| GrantedBy      | Granting account id (0 = console/automatic)                |
 | GrantedTime    | Unix timestamp of the grant                                |
 | ConsumedByGUID | Character GUID that claimed it (0 = unclaimed)             |
 | ConsumedTime   | Unix timestamp of the claim (0 = unclaimed)                |
+
+### smartstone_challenge_reclaimable (acore_world)
+
+Whitelist of what converts into restore tokens when a challenge character is deleted.
+
+| Column             | Meaning                                  |
+| ------------------ | ---------------------------------------- |
+| Type               | 0 = item entry, 1 = spell id             |
+| Entry              | The item entry / spell id                |
+| RequireStoreOrigin | Items only: 1 = cap conversion at the character's `smartstone_store_item_log` credit; 0 = convert everything owned |
+| Comment            | Free-form note for maintainers           |
+
+### smartstone_store_item_log (acore_characters)
+
+One row per item unit received from GM/store mail or restored by an item-restore token claim. Maintained automatically; rows for an entry are consumed when a death converts that entry.
+
+| Column       | Meaning                                          |
+| ------------ | ------------------------------------------------ |
+| Guid         | Character low GUID                               |
+| ItemEntry    | The item entry                                   |
+| ReceivedTime | Unix timestamp of the delivery/restore           |
+| Source       | 0 = GM/store mail, 1 = restore token claim       |

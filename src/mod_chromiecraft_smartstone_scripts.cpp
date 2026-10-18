@@ -12,8 +12,10 @@
 #include "Smartstone.h"
 #include "Pet.h"
 #include "Player.h"
+#include "Mail.h"
 #include "Vehicle.h"
 
+#include <algorithm>
 #include <cstring>
 
 namespace
@@ -810,7 +812,7 @@ public:
                 // re-entering the now-empty category, which would show the
                 // misleading "no tokens to claim" notice right after a
                 // successful claim.
-                if (sSmartstone->HasAccountTokens(player->GetSession()->GetAccountId()))
+                if (sSmartstone->HasAccountTokens(player->GetSession()->GetAccountId(), Smartstone::HasChallengeMarker(player)))
                     ShowCategoryItems(CATEGORY_TOKENS, player, item, subscriptionLevel);
                 else
                     ShowMainMenu(player, item, subscriptionLevel);
@@ -993,7 +995,7 @@ public:
             player->PlayerTalkClass->ClearMenus();
 
             uint32 accountId = player->GetSession()->GetAccountId();
-            std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(accountId);
+            std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(accountId, Smartstone::HasChallengeMarker(player));
 
             if (tokens.empty())
             {
@@ -1009,9 +1011,8 @@ public:
 
             for (auto const& token : tokens)
             {
-                std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetTokenNameStringId(token.Type), locale);
                 std::string label = "|TInterface/icons/INV_Scroll_03:30:30:-18:0|t ";
-                label += name ? *name : "Token";
+                label += Smartstone::GetTokenDisplayName(token.Type, token.Data, locale);
                 menu.AddMenuItem(idx++, GOSSIP_ICON_CHAT, label, 0,
                     sSmartstone->GetActionTypeId(ACTION_TYPE_TOKEN, token.Id), "", 0);
             }
@@ -1234,9 +1235,10 @@ public:
                         available = false;
 
                     // Only surface the Tokens category when the account has
-                    // something to claim. Light indexed query, gossip-open only.
+                    // something this character can claim (restore tokens are
+                    // challenge-only). Light indexed query, gossip-open only.
                     if (menuItem.ItemId == CATEGORY_TOKENS
-                        && !sSmartstone->HasAccountTokens(player->GetSession()->GetAccountId()))
+                        && !sSmartstone->HasAccountTokens(player->GetSession()->GetAccountId(), Smartstone::HasChallengeMarker(player)))
                         available = false;
 
                     // Challenge characters are on a fixed XP regime — mirrors the
@@ -1484,18 +1486,19 @@ public:
 
             // Remind the player of any unclaimed account tokens, delayed so
             // the notice lands after the login / MOTD spam rather than under it.
+            // Restore tokens are only announced to challenge characters — the
+            // same filter the menu applies.
             player->m_Events.AddEventAtOffset([player] {
-                std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(player->GetSession()->GetAccountId());
+                std::vector<SmartstoneToken> tokens = sSmartstone->GetAccountTokens(
+                    player->GetSession()->GetAccountId(), Smartstone::HasChallengeMarker(player));
                 if (tokens.empty())
                     return;
 
                 ChatHandler handler(player->GetSession());
                 LocaleConstant locale = player->GetSession()->GetSessionDbLocaleIndex();
                 for (auto const& token : tokens)
-                {
-                    std::string const* name = sObjectMgr->GetModuleString(ModName, sSmartstone->GetTokenNameStringId(token.Type), locale);
-                    handler.PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LOGIN_NOTICE, name ? *name : "", token.Id);
-                }
+                    handler.PSendModuleSysMessage(ModName, LANG_MOD_TOKEN_LOGIN_NOTICE,
+                        Smartstone::GetTokenDisplayName(token.Type, token.Data, locale), token.Id);
             }, 3s);
         }
     }
@@ -1596,6 +1599,291 @@ private:
                 player->GetSession()->GetAccountId(),
                 player->GetLevel());
         }
+    }
+};
+
+// Converts whitelisted items/spells (smartstone_challenge_reclaimable) of a
+// dying/deleted challenge character into account-scoped restore tokens, so a
+// replacement challenge character can reclaim them (Character > Tokens).
+//
+// Primary path: the two fatal-death hooks, mirroring the challenge script's
+// PLAYER_EVENT_ON_KILLED_BY_CREATURE / PLAYER_EVENT_ON_KILL_PLAYER. The
+// script never calls Player::DeleteFromDB (it bans the character and later
+// unlinks it with raw SQL), so the deletion hooks below are only a fallback
+// for ordinary char-select deletions.
+class mod_chromiecraft_smartstone_challenge_reclaim_playerscript : public PlayerScript
+{
+public:
+    mod_chromiecraft_smartstone_challenge_reclaim_playerscript() : PlayerScript("mod_chromiecraft_smartstone_challenge_reclaim_playerscript", {
+        PLAYERHOOK_ON_PLAYER_KILLED_BY_CREATURE,
+        PLAYERHOOK_ON_PVP_KILL,
+        PLAYERHOOK_ON_DELETE_FROM_DB,
+        PLAYERHOOK_ON_UNLINK_FROM_DB
+    }) { }
+
+    void OnPlayerKilledByCreature(Creature* /*killer*/, Player* killed) override
+    {
+        GrantReclaimTokensOnDeath(killed);
+    }
+
+    void OnPlayerPVPKill(Player* /*killer*/, Player* killed) override
+    {
+        GrantReclaimTokensOnDeath(killed);
+    }
+
+    // Permanent deletion. The hook fires before the surrounding delete
+    // transaction commits, so the character's rows are still readable; they
+    // all die when it commits, so nothing needs stripping.
+    void OnPlayerDeleteFromDB(CharacterDatabaseTransaction /*trans*/, uint32 lowGuid) override
+    {
+        GrantReclaimTokens(lowGuid, /*stripRows=*/ false);
+    }
+
+    // Soft deletion (unlink). Rows survive so the character can be restored;
+    // the converted item/spell rows are stripped so a restore cannot
+    // duplicate what the tokens grant.
+    void OnPlayerUnlinkFromDB(uint32 lowGuid) override
+    {
+        GrantReclaimTokens(lowGuid, /*stripRows=*/ true);
+    }
+
+private:
+    // Convert on the live victim at the fatal hit. The challenge flow then
+    // bans/kicks and unlinks; the disconnect save persists the destroyed
+    // items / removed spells, so a later `.challenge restore` brings the
+    // character back without them and the tokens cannot duplicate anything.
+    //
+    // Duels never kill, and environmental deaths fire neither hook — the
+    // challenge script does not delete for those either, so the triggers
+    // stay aligned. If a death somehow turns out non-fatal, the character
+    // still has the marker aura and can immediately reclaim its own tokens.
+    static void GrantReclaimTokensOnDeath(Player* victim)
+    {
+        if (!victim || !sSmartstone->IsSmartstoneEnabled())
+            return;
+
+        if (sSmartstone->ReclaimableItems.empty() && sSmartstone->ReclaimableSpells.empty())
+            return;
+
+        // Any marker aura + below 70: on ChromieCraft every enlisted
+        // character below the cap is subject to permadeath; past it they
+        // keep playing (and IsChallengeCharacter returns false).
+        if (!Smartstone::IsChallengeCharacter(victim))
+            return;
+
+        uint32 accountId = victim->GetSession()->GetAccountId();
+        std::string grantedItems;
+        std::string grantedSpells;
+        uint32 granted = 0;
+
+        for (auto const& [entry, requireOrigin] : sSmartstone->ReclaimableItems)
+        {
+            uint32 count = victim->GetItemCount(entry, true);
+            if (!count || !sObjectMgr->GetItemTemplate(entry))
+                continue;
+
+            // Store-origin entries convert at most the character's logged
+            // credit; farmable extra copies die with the character.
+            if (requireOrigin)
+            {
+                count = std::min(count, sSmartstone->GetStoreItemCredit(victim->GetGUID().GetCounter(), entry));
+                if (!count)
+                    continue;
+
+                sSmartstone->ConsumeStoreItemCredit(victim->GetGUID().GetCounter(), entry);
+            }
+
+            sSmartstone->GrantToken(accountId, TOKEN_ITEM_RESTORE, 0, Acore::StringFormat("{}:{}", entry, count));
+            victim->DestroyItemCount(entry, count, true, false);
+            grantedItems += Acore::StringFormat("{}{}", grantedItems.empty() ? "" : ", ", entry);
+            ++granted;
+        }
+
+        for (uint32 spellId : sSmartstone->ReclaimableSpells)
+        {
+            if (!victim->HasSpell(spellId))
+                continue;
+
+            sSmartstone->GrantToken(accountId, TOKEN_SPELL_RESTORE, 0, std::to_string(spellId));
+            victim->removeSpell(spellId, SPEC_MASK_ALL, false);
+            grantedSpells += Acore::StringFormat("{}{}", grantedSpells.empty() ? "" : ", ", spellId);
+            ++granted;
+        }
+
+        if (!granted)
+            return;
+
+        LOG_INFO("smartstone", "ChallengeReclaim: granted {} restore token(s) to account {} on death of character {} (guid {}, items: [{}], spells: [{}]).",
+            granted, accountId, victim->GetName(), victim->GetGUID().GetCounter(), grantedItems, grantedSpells);
+    }
+
+    static void GrantReclaimTokens(uint32 lowGuid, bool stripRows)
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+            return;
+
+        if (sSmartstone->ReclaimableItems.empty() && sSmartstone->ReclaimableSpells.empty())
+            return;
+
+        QueryResult charResult = CharacterDatabase.Query(
+            "SELECT account, level FROM characters WHERE guid = {}", lowGuid);
+        if (!charResult)
+            return;
+
+        uint32 accountId = charResult->Fetch()[0].Get<uint32>();
+        uint8 level = charResult->Fetch()[1].Get<uint8>();
+
+        // No reclaim safety net at the level cap, mirroring the challenge
+        // XP carve-out.
+        if (!accountId || level >= 70)
+            return;
+
+        // The challenge marker auras are death-persistent, so they are still
+        // saved in character_aura when a dead character gets deleted.
+        if (!CharacterDatabase.Query(
+            "SELECT 1 FROM character_aura WHERE guid = {} AND spell IN (2000100, 2000101, 2000102) LIMIT 1", lowGuid))
+            return;
+
+        std::string grantedItems;
+        std::string grantedSpells;
+        std::string stripItemGuids;
+        uint32 granted = 0;
+
+        if (!sSmartstone->ReclaimableItems.empty())
+        {
+            // character_inventory covers equipped, bags and bank. Mail is
+            // deliberately excluded: mailed items survive deletion through
+            // the core's mail-return handling. Individual rows (no SUM) so
+            // conversion can be capped to whole item rows — the stripped
+            // rows then always equal the token amount exactly.
+            std::unordered_map<uint32, std::vector<std::pair<uint32, uint32>>> ownedRows;
+            if (QueryResult items = CharacterDatabase.Query(
+                "SELECT ci.item, ii.itemEntry, ii.count FROM character_inventory ci "
+                "JOIN item_instance ii ON ii.guid = ci.item WHERE ci.guid = {} ORDER BY ii.itemEntry, ci.item", lowGuid))
+            {
+                do
+                {
+                    Field* fields = items->Fetch();
+                    uint32 itemGuid = fields[0].Get<uint32>();
+                    uint32 entry = fields[1].Get<uint32>();
+                    uint32 count = fields[2].Get<uint32>();
+
+                    if (sSmartstone->ReclaimableItems.count(entry) && sObjectMgr->GetItemTemplate(entry))
+                        ownedRows[entry].emplace_back(itemGuid, count);
+                } while (items->NextRow());
+            }
+
+            for (auto const& [entry, rows] : ownedRows)
+            {
+                bool requireOrigin = sSmartstone->ReclaimableItems.at(entry);
+
+                uint32 cap = std::numeric_limits<uint32>::max();
+                if (requireOrigin)
+                {
+                    // Store-origin entries convert at most the character's
+                    // logged credit; farmable extra copies stay behind.
+                    cap = sSmartstone->GetStoreItemCredit(lowGuid, entry);
+                    if (!cap)
+                        continue;
+                }
+
+                uint32 convert = 0;
+                for (auto const& [itemGuid, count] : rows)
+                {
+                    if (convert + count > cap)
+                        continue;
+
+                    convert += count;
+                    stripItemGuids += Acore::StringFormat("{}{}", stripItemGuids.empty() ? "" : ", ", itemGuid);
+                }
+
+                if (!convert)
+                    continue;
+
+                if (requireOrigin)
+                    sSmartstone->ConsumeStoreItemCredit(lowGuid, entry);
+
+                sSmartstone->GrantToken(accountId, TOKEN_ITEM_RESTORE, 0, Acore::StringFormat("{}:{}", entry, convert));
+                grantedItems += Acore::StringFormat("{}{}", grantedItems.empty() ? "" : ", ", entry);
+                ++granted;
+            }
+        }
+
+        if (!sSmartstone->ReclaimableSpells.empty())
+        {
+            if (QueryResult spells = CharacterDatabase.Query(
+                "SELECT spell FROM character_spell WHERE guid = {}", lowGuid))
+            {
+                do
+                {
+                    uint32 spellId = spells->Fetch()[0].Get<uint32>();
+                    if (!sSmartstone->ReclaimableSpells.count(spellId))
+                        continue;
+
+                    sSmartstone->GrantToken(accountId, TOKEN_SPELL_RESTORE, 0, std::to_string(spellId));
+                    grantedSpells += Acore::StringFormat("{}{}", grantedSpells.empty() ? "" : ", ", spellId);
+                    ++granted;
+                } while (spells->NextRow());
+            }
+        }
+
+        if (!granted)
+            return;
+
+        if (stripRows)
+        {
+            // Synchronous deletes: the unlink statement is queued right after
+            // this hook returns, and the rows must be gone before any restore
+            // can possibly run.
+            if (!stripItemGuids.empty())
+                CharacterDatabase.DirectExecute(
+                    "DELETE ci, ii FROM character_inventory ci JOIN item_instance ii ON ii.guid = ci.item "
+                    "WHERE ci.guid = {} AND ci.item IN ({})", lowGuid, stripItemGuids);
+
+            if (!grantedSpells.empty())
+                CharacterDatabase.DirectExecute(
+                    "DELETE FROM character_spell WHERE guid = {} AND spell IN ({})", lowGuid, grantedSpells);
+        }
+
+        LOG_INFO("smartstone", "ChallengeReclaim: granted {} restore token(s) to account {} for deleted character {} (items: [{}], spells: [{}], stripped: {}).",
+            granted, accountId, lowGuid, grantedItems, grantedSpells, stripRows);
+    }
+};
+
+// Logs items delivered by GM/store mail into smartstone_store_item_log (one
+// row per item unit), the credit that caps challenge-reclaim conversion for
+// RequireStoreOrigin whitelist entries. All GM-mail items are logged, not
+// just currently whitelisted entries, so whitelist additions apply to past
+// deliveries too.
+class mod_chromiecraft_smartstone_mailscript : public MailScript
+{
+public:
+    mod_chromiecraft_smartstone_mailscript() : MailScript("mod_chromiecraft_smartstone_mailscript") { }
+
+    void OnBeforeMailDraftSendMailTo(MailDraft* mailDraft, MailReceiver const& receiver, MailSender const& sender,
+        MailCheckMask& checked, uint32& /*deliver_delay*/, uint32& /*custom_expiration*/,
+        bool& /*deleteMailItemsFromDB*/, bool& /*sendMail*/) override
+    {
+        if (!sSmartstone->IsSmartstoneEnabled())
+            return;
+
+        // `.send items` (also the CMS shop's SOAP path) sends MAIL_NORMAL
+        // with GM stationery. The COPIED/RETURNED masks filter the core's
+        // internal GM-stationery mails (equip-problem returns, refund
+        // copies), which carry items the player already owned.
+        if (sender.GetMailMessageType() != MAIL_NORMAL || sender.GetStationery() != MAIL_STATIONERY_GM)
+            return;
+
+        if (checked & (MAIL_CHECK_MASK_COPIED | MAIL_CHECK_MASK_RETURNED))
+            return;
+
+        uint32 receiverGuid = receiver.GetPlayerGUIDLow();
+        if (!receiverGuid)
+            return;
+
+        for (auto const& [itemGuid, item] : mailDraft->GetItems())
+            if (item)
+                sSmartstone->LogStoreItems(receiverGuid, item->GetEntry(), item->GetCount(), STORE_ITEM_SOURCE_MAIL);
     }
 };
 
@@ -1704,6 +1992,8 @@ void Addmod_cc_smartstoneScripts()
     new mod_chromiecraft_smartstone_worldscript();
     new mod_chromiecraft_smartstone_playerscript();
     new mod_chromiecraft_smartstone_challenge_xp_playerscript();
+    new mod_chromiecraft_smartstone_challenge_reclaim_playerscript();
+    new mod_chromiecraft_smartstone_mailscript();
     new unit_smartstone_costume_script();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }
