@@ -8,6 +8,7 @@ DELETE FROM `spell_script_names`
     'spell_smartstone_form_display_override',
     'spell_smartstone_guardian_display',
     'spell_smartstone_army_of_the_dead_sound',
+    'spell_smartstone_polymorph_display',
     'spell_sha_feral_spirit_display',      -- previous Feral Spirit-only name
     'spell_pri_spirit_of_redemption_display', -- short-lived split, now folded back in
     'spell_dru_form_display_override',     -- previous druid-only name
@@ -32,5 +33,9 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (46585, 'spell_smartstone_guardian_display'),       -- Death Knight: Raise Dead (guardian ghoul)
 (42651, 'spell_smartstone_guardian_display'),       -- Death Knight: Army of the Dead (ghoul summon tick)
 (42650, 'spell_smartstone_army_of_the_dead_sound'), -- Death Knight: Army of the Dead (skin sound on cast)
+(  118, 'spell_smartstone_polymorph_display'),      -- Mage: Polymorph (sheep, rank 1)
+(12824, 'spell_smartstone_polymorph_display'),      -- Mage: Polymorph (sheep, rank 2)
+(12825, 'spell_smartstone_polymorph_display'),      -- Mage: Polymorph (sheep, rank 3)
+(12826, 'spell_smartstone_polymorph_display'),      -- Mage: Polymorph (sheep, rank 4)
 (70907, 'spell_smartstone_guardian_display'),       -- Mage: Summon Water Elemental (temporary)
 (70908, 'spell_smartstone_guardian_display');       -- Mage: Summon Water Elemental (Glyph of Eternal Water)

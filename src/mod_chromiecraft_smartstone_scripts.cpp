@@ -390,6 +390,13 @@ public:
                         sSmartstone->RefreshControlledMinionPerkDisplays(player);
                         break;
                     }
+                    case SMARTSTONE_ACTION_RESET_POLYMORPH:
+                    {
+                        // Targets already polymorphed keep the skin until Polymorph ends.
+                        sSmartstone->SetMageSpellDisplay(player, MAGE_SPELL_POLYMORPH, 0);
+                        sSmartstone->SetMageSpellDisplay(player, MAGE_SPELL_WILD_POLYMORPH, 0);
+                        break;
+                    }
                     case SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL:
                     {
                         sSmartstone->SetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL, 0);
@@ -724,7 +731,7 @@ public:
                 }
 
                 // Gate by unlock (account-setting) unless GM/debug.
-                if (!sSmartstone->IsServiceAvailable(player, "#perk", perk.Id))
+                if (!sSmartstone->IsPerkUnlocked(player, perk.Id))
                 {
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_NO_ACCESS, perk.Title);
                     break;
@@ -788,6 +795,13 @@ public:
                         break;
                     case PERK_EFFECT_MAGE_WATER_ELEMENTAL:
                         sSmartstone->SetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL, perk.Value);
+                        break;
+                    case PERK_EFFECT_MAGE_POLYMORPH:
+                        sSmartstone->SetMageSpellDisplay(player, MAGE_SPELL_POLYMORPH, perk.Value);
+                        sSmartstone->SetMageSpellDisplay(player, MAGE_SPELL_WILD_POLYMORPH, 0);
+                        break;
+                    case PERK_EFFECT_MAGE_WILD_POLYMORPH:
+                        sSmartstone->SetMageSpellDisplay(player, MAGE_SPELL_WILD_POLYMORPH, 1);
                         break;
                     default:
                         handled = false;
@@ -1166,6 +1180,12 @@ public:
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Water Elemental appearance",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL), "", 0);
 
+            if (sSmartstone->GetMageSpellDisplay(player, MAGE_SPELL_POLYMORPH)
+                || sSmartstone->GetMageSpellDisplay(player, MAGE_SPELL_WILD_POLYMORPH))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Polymorph appearance",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_POLYMORPH), "", 0);
+
             if (sSmartstone->GetPriestFormDisplay(player, PRIEST_FORM_SPIRIT_OF_REDEMPTION))
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Spirit of Redemption display",
@@ -1306,7 +1326,7 @@ public:
                     // a class subcategory, but check the player's class too.
                     uint32 perkCat = Smartstone::GetClassPerkCategoryForClass(player->getClass());
                     if (ParentCategoryId == perkCat
-                        && sSmartstone->IsServiceAvailable(player, "#perk", menuItem.ItemId))
+                        && sSmartstone->IsPerkUnlocked(player, menuItem.ItemId))
                         available = true;
                 }
 
@@ -1702,12 +1722,13 @@ public:
                 return; // costumed players aren't also showing a form perk
             }
 
-            // Form perk: check the opt-out first, so GetModelForForm only runs
-            // for observers who hide forms.
+            // Form perk or Polymorph skin: check the opt-out first, so the
+            // model lookups only run for observers who hide forms.
             if (target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_FORMS).value)
             {
                 uint32 canonicalModel = 0;
-                if (sSmartstone->GetActiveFormPerkSubstitute(wearer, canonicalModel))
+                if (sSmartstone->GetActiveFormPerkSubstitute(wearer, canonicalModel)
+                    || sSmartstone->GetActivePolymorphPerkSubstitute(wearer, canonicalModel))
                 {
                     patchDisplay(canonicalModel);
                     patchScaleToDefault();
@@ -1720,6 +1741,15 @@ public:
         if (Creature const* creatureConst = unit->ToCreature())
         {
             Creature* creature = const_cast<Creature*>(creatureConst);
+
+            uint32 sheepModel = 0;
+            if (target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_FORMS).value
+                && sSmartstone->GetActivePolymorphPerkSubstitute(creature, sheepModel))
+            {
+                patchDisplay(sheepModel);
+                return;
+            }
+
             uint32 nativeDisplay = 0;
             if (sSmartstone->GetActiveMinionPerkSubstitute(creature, nativeDisplay)
                 && target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_MINIONS).value)

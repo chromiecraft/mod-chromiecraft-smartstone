@@ -30,12 +30,14 @@
  *   model is left in place.
  */
 
+#include "Random.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
 #include "Unit.h"
+#include <array>
 
 class spell_smartstone_form_display_override : public AuraScript
 {
@@ -88,6 +90,9 @@ class spell_smartstone_form_display_override : public AuraScript
         if (info.slot < 0)
             return;
 
+        if (info.ns == NS_DRUID && info.slot == DRUID_FORM_MOONKIN)
+            sSmartstone->UpdateAstralFormVisual(player);
+
         // Suppress overrides inside BG / arena — opponents shouldn't be
         // misled by custom skins.
         if (player->InBattleground() || player->InArena())
@@ -107,23 +112,30 @@ class spell_smartstone_form_display_override : public AuraScript
         // creature models render far larger than the player); it's stored
         // per-(effect, displayId) in smartstone_perks.Scale. Falls back to
         // 1.0 when no override is configured.
-        target->SetDisplayId(displayId, sSmartstone->GetEffectivePerkScale(info.effect, displayId));
+        float const scale = sSmartstone->GetEffectivePerkScale(info.effect, displayId);
+        if (info.ns == NS_DRUID)
+            displayId = Smartstone::ResolveFormDisplay(player, displayId);
+
+        target->SetDisplayId(displayId, scale);
     }
 
     void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
+        Unit* target = GetTarget();
+        Player* player = target ? target->ToPlayer() : nullptr;
+        if (!player)
+            return;
+
+        if (GetSpellInfo()->Id == 24858)
+        {
+            player->RemoveAurasDueToSpell(SPELL_ASTRAL_FORM_VISUAL);
+            return;
+        }
+
         // Only shadowform needs an explicit native-restore on remove —
         // every other form already drops back to the player's body via
         // the engine's normal removal flow.
         if (GetSpellInfo()->Id != 15473)
-            return;
-
-        Unit* target = GetTarget();
-        if (!target)
-            return;
-
-        Player* player = target->ToPlayer();
-        if (!player)
             return;
 
         // No-op when no override was applied.
@@ -203,9 +215,54 @@ class spell_smartstone_army_of_the_dead_sound : public SpellScript
     }
 };
 
+// 118, 12824, 12825, 12826 - Polymorph (sheep)
+// Swaps the sheep for the caster's Polymorph skin. Also hooked on
+// SEND_FOR_CLIENT, since RestoreDisplayId re-runs the transform in that mode
+// (e.g. when a shapeshift ends mid-Polymorph) and would bring the sheep back.
+class spell_smartstone_polymorph_display : public AuraScript
+{
+    PrepareAuraScript(spell_smartstone_polymorph_display);
+
+    // SpellVisualKit ids: Arcane Explosion cast, and the red / blue / green /
+    // red-white-blue / yellow rose firework casts.
+    static constexpr uint32 VISUAL_ARCANE_EXPLOSION = 988;
+    static constexpr std::array<uint32, 5> FireworkVisuals = { 516, 2085, 2086, 2087, 2088 };
+
+    void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes mode)
+    {
+        Player* mage = GetCaster() ? GetCaster()->ToPlayer() : nullptr;
+        Unit* target = GetTarget();
+        if (!mage || !target)
+            return;
+
+        if (mage->InBattleground() || mage->InArena())
+            return;
+
+        uint32 const displayId = sSmartstone->GetPolymorphSkin(mage);
+        if (!displayId)
+            return;
+
+        target->SetDisplayId(displayId, sSmartstone->GetEffectivePerkScale(PERK_EFFECT_MAGE_POLYMORPH, displayId));
+
+        // Wild Polymorph flourish, only on the real apply (not on model re-sends).
+        if ((mode & AURA_EFFECT_HANDLE_REAL) && sSmartstone->GetMageSpellDisplay(mage, MAGE_SPELL_WILD_POLYMORPH))
+        {
+            target->SendPlaySpellVisual(VISUAL_ARCANE_EXPLOSION);
+            target->SendPlaySpellVisual(FireworkVisuals[urand(0, FireworkVisuals.size() - 1)]);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_smartstone_polymorph_display::HandleApply,
+            EFFECT_1, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_SEND_FOR_CLIENT_MASK);
+    }
+};
+
 void AddSC_smartstone_spells()
 {
     RegisterSpellScript(spell_smartstone_form_display_override);
     RegisterSpellScript(spell_smartstone_guardian_display);
     RegisterSpellScript(spell_smartstone_army_of_the_dead_sound);
+    RegisterSpellScript(spell_smartstone_polymorph_display);
 }

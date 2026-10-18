@@ -8,9 +8,12 @@
 #include "Creature.h"
 #include "GameTime.h"
 #include "Map.h"
+#include "ObjectMgr.h"
 #include "Pet.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "SpellAuras.h"
+#include "SpellInfo.h"
 #include "Player.h"
 #include "Containers.h"
 #include "Random.h"
@@ -135,6 +138,7 @@ void Smartstone::LoadPerks()
 
     Perks.clear();
     PerkScaleOverrides.clear();
+    PolymorphSkins.clear();
 
     if (result)
     {
@@ -157,6 +161,9 @@ void Smartstone::LoadPerks()
             // so one model can carry different scales per render context.
             if (perkData.Value && perkData.Scale > 0.0f)
                 PerkScaleOverrides[PerkScaleKey(perkData.Effect, perkData.Value)] = perkData.Scale;
+
+            if (perkData.Effect == PERK_EFFECT_MAGE_POLYMORPH && perkData.Value)
+                PolymorphSkins.emplace_back(perkData.Id, perkData.Value);
 
             MenuItems[perkData.Category].push_back(MenuItem{
                 perkData.Id,
@@ -684,7 +691,7 @@ bool Smartstone::GetActiveFormPerkSubstitute(Player* player, uint32& canonicalMo
 
     uint32 overrideDisplay = isShaman
         ? GetShamanFormDisplay(player, slot)
-        : GetDruidFormDisplay(player, slot);
+        : ResolveFormDisplay(player, GetDruidFormDisplay(player, slot));
     if (!overrideDisplay)
         return false;
 
@@ -806,6 +813,57 @@ void Smartstone::RefreshControlledMinionPerkDisplays(Unit* owner) const
             RefreshMinionPerkDisplay(minion);
 }
 
+uint32 Smartstone::GetPolymorphSkin(Player* mage) const
+{
+    if (!GetMageSpellDisplay(mage, MAGE_SPELL_WILD_POLYMORPH))
+        return GetMageSpellDisplay(mage, MAGE_SPELL_POLYMORPH);
+
+    if (PolymorphSkins.empty())
+        return 0;
+
+    return Acore::Containers::SelectRandomContainerElement(PolymorphSkins).second;
+}
+
+bool Smartstone::IsPerkUnlocked(Player* player, uint32 perkId) const
+{
+    if (GetPerkData(perkId).Effect != PERK_EFFECT_MAGE_WILD_POLYMORPH)
+        return IsServiceAvailable(player, "#perk", perkId);
+
+    // Wild Polymorph has no unlock of its own: owning every Polymorph skin enables it.
+    return !PolymorphSkins.empty()
+        && std::all_of(PolymorphSkins.begin(), PolymorphSkins.end(),
+            [this, player](std::pair<uint32, uint32> const& skin) { return IsServiceAvailable(player, "#perk", skin.first); });
+}
+
+bool Smartstone::GetActivePolymorphPerkSubstitute(Unit* unit, uint32& sheepModel) const
+{
+    uint32 const spellId = unit->getTransForm();
+    if (!IsSheepPolymorph(spellId))
+        return false;
+
+    Aura const* aura = unit->GetAura(spellId);
+    Unit* caster = aura ? aura->GetCaster() : nullptr;
+    Player* mage = caster ? caster->ToPlayer() : nullptr;
+    if (!mage)
+        return false;
+
+    uint32 const shown = unit->GetDisplayId();
+    bool skinned = false;
+    if (GetMageSpellDisplay(mage, MAGE_SPELL_WILD_POLYMORPH))
+        skinned = std::any_of(PolymorphSkins.begin(), PolymorphSkins.end(),
+            [shown](std::pair<uint32, uint32> const& skin) { return skin.second == shown; });
+    else if (uint32 const skin = GetMageSpellDisplay(mage, MAGE_SPELL_POLYMORPH))
+        skinned = shown == skin;
+
+    if (!skinned)
+        return false;
+
+    CreatureTemplate const* sheep = sObjectMgr->GetCreatureTemplate(aura->GetSpellInfo()->Effects[EFFECT_1].MiscValue);
+    CreatureModel const* model = sheep ? sheep->GetFirstValidModel() : nullptr;
+    sheepModel = model ? model->CreatureDisplayID : 0;
+    return sheepModel != 0;
+}
+
 bool Smartstone::GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const
 {
     uint8 effect = PERK_EFFECT_NONE;
@@ -846,7 +904,7 @@ void Smartstone::RefreshSmartstoneVisibilityFor(Player* observer) const
         if (pInRange)
         {
             uint32 canonical = 0;
-            if (GetCurrentCostume(p) || GetActiveFormPerkSubstitute(p, canonical))
+            if (GetCurrentCostume(p) || GetActiveFormPerkSubstitute(p, canonical) || GetActivePolymorphPerkSubstitute(p, canonical))
                 p->SendUpdateToPlayer(observer);
         }
 
