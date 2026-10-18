@@ -375,9 +375,19 @@ public:
                     case SMARTSTONE_ACTION_RESET_FERAL_SPIRITS:
                     {
                         sSmartstone->SetShamanGuardianDisplay(player, SHAMAN_GUARDIAN_FERAL_SPIRIT, 0);
-                        // Spirit wolves are short-lived guardians; we don't
-                        // bother live-reverting them — the next cast will
-                        // show the default model.
+                        sSmartstone->RefreshControlledMinionPerkDisplays(player);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_GHOUL:
+                    {
+                        sSmartstone->SetDeathKnightGuardianDisplay(player, DK_GUARDIAN_GHOUL, 0);
+                        sSmartstone->RefreshControlledMinionPerkDisplays(player);
+                        break;
+                    }
+                    case SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL:
+                    {
+                        sSmartstone->SetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL, 0);
+                        sSmartstone->RefreshControlledMinionPerkDisplays(player);
                         break;
                     }
                     case SMARTSTONE_ACTION_RESET_SPIRIT_OF_REDEMPTION:
@@ -403,12 +413,7 @@ public:
                         // out to match WarlockPetSlot starting at IMP.
                         uint8 slot = actionId - SMARTSTONE_ACTION_RESET_WARLOCK_PET_IMP;
                         sSmartstone->SetWarlockPetDisplay(player, slot, 0);
-
-                        // Live-revert if the currently-summoned pet matches
-                        // this slot — otherwise the change waits for next summon.
-                        if (Pet* pet = player->GetPet())
-                            if (Smartstone::GetWarlockPetSlotForEntry(pet->GetEntry()) == slot)
-                                pet->SetDisplayId(pet->GetNativeDisplayId());
+                        sSmartstone->RefreshControlledMinionPerkDisplays(player);
                         break;
                     }
                 }
@@ -767,18 +772,14 @@ public:
                         // lines up with WARLOCK_PET_* by construction.
                         uint8 slot = perk.Effect - PERK_EFFECT_WARLOCK_PET_IMP;
                         sSmartstone->SetWarlockPetDisplay(player, slot, perk.Value);
-
-                        // Live-apply if the matching pet is currently summoned
-                        // so the user doesn't have to dismiss + resummon.
-                        if (Pet* pet = player->GetPet())
-                            if (Smartstone::GetWarlockPetSlotForEntry(pet->GetEntry()) == slot)
-                            {
-                                pet->SetDisplayId(perk.Value);
-                                if (perk.Scale > 0.0f)
-                                    pet->SetObjectScale(perk.Scale);
-                            }
                         break;
                     }
+                    case PERK_EFFECT_DK_GHOUL:
+                        sSmartstone->SetDeathKnightGuardianDisplay(player, DK_GUARDIAN_GHOUL, perk.Value);
+                        break;
+                    case PERK_EFFECT_MAGE_WATER_ELEMENTAL:
+                        sSmartstone->SetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL, perk.Value);
+                        break;
                     default:
                         handled = false;
                         break;
@@ -786,11 +787,11 @@ public:
 
                 if (handled)
                 {
-                    // Live-apply form-skin perks if the player is already in
-                    // that form, so they don't have to re-shift to see it.
-                    // Both helpers no-op unless the matching form is active.
+                    // Live-apply to the active form and summoned minions, so the
+                    // player doesn't have to re-shift or resummon to see it.
                     sSmartstone->ReapplyActiveDruidFormDisplay(player);
                     sSmartstone->ReapplyActiveShamanFormDisplay(player);
+                    sSmartstone->RefreshControlledMinionPerkDisplays(player);
                     ChatHandler(player->GetSession()).PSendModuleSysMessage(ModName, LANG_MOD_PERK_APPLIED, perk.Title);
                 }
                 else
@@ -1140,6 +1141,16 @@ public:
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Feral Spirit display",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_FERAL_SPIRITS), "", 0);
+
+            if (sSmartstone->GetDeathKnightGuardianDisplay(player, DK_GUARDIAN_GHOUL))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Ghoul appearance",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_GHOUL), "", 0);
+
+            if (sSmartstone->GetMageGuardianDisplay(player, MAGE_GUARDIAN_WATER_ELEMENTAL))
+                player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
+                    "|TInterface/PaperDollInfoFrame/UI-GearManager-Undo:30:30:-18:0|t Reset Water Elemental appearance",
+                    0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL), "", 0);
 
             if (sSmartstone->GetPriestFormDisplay(player, PRIEST_FORM_SPIRIT_OF_REDEMPTION))
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,

@@ -6,7 +6,8 @@
 DELETE FROM `spell_script_names`
  WHERE `ScriptName` IN (
     'spell_smartstone_form_display_override',
-    'spell_sha_feral_spirit_display',
+    'spell_smartstone_guardian_display',
+    'spell_sha_feral_spirit_display',      -- previous Feral Spirit-only name
     'spell_pri_spirit_of_redemption_display', -- short-lived split, now folded back in
     'spell_dru_form_display_override',     -- previous druid-only name
     'spell_sha_form_display_override',     -- previous shaman-only name
@@ -26,4 +27,7 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 ( 2645, 'spell_smartstone_form_display_override'),  -- Shaman: Ghost Wolf
 (27827, 'spell_smartstone_form_display_override'),  -- Priest: Spirit of Redemption
 (15473, 'spell_smartstone_form_display_override'),  -- Priest: Shadowform
-(51533, 'spell_sha_feral_spirit_display');          -- Shaman: Feral Spirit (Spirit Wolves)
+(51533, 'spell_smartstone_guardian_display'),       -- Shaman: Feral Spirit (Spirit Wolves)
+(46585, 'spell_smartstone_guardian_display'),       -- Death Knight: Raise Dead (guardian ghoul)
+(70907, 'spell_smartstone_guardian_display'),       -- Mage: Summon Water Elemental (temporary)
+(70908, 'spell_smartstone_guardian_display');       -- Mage: Summon Water Elemental (Glyph of Eternal Water)

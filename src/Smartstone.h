@@ -60,7 +60,7 @@ enum Misc
     // Per-observer opt-outs (1 = hide that override category from this player).
     SETTING_HIDE_COSTUMES = 2, // costume morphs
     SETTING_HIDE_FORMS    = 3, // druid / shaman form-display perks
-    SETTING_HIDE_MINIONS  = 4  // warlock pet / feral-spirit display perks
+    SETTING_HIDE_MINIONS  = 4  // pet / guardian display perks
 };
 
 // Per-player slot indices for class display-override namespaces.
@@ -97,6 +97,19 @@ enum ShamanGuardianSlot
 {
     SHAMAN_GUARDIAN_FERAL_SPIRIT = 0,
     MAX_SHAMAN_GUARDIAN_SLOTS
+};
+
+// The ghoul slot also covers the Master of Ghouls ghoul, which is a real Pet.
+enum DeathKnightGuardianSlot
+{
+    DK_GUARDIAN_GHOUL = 0,
+    MAX_DK_GUARDIAN_SLOTS
+};
+
+enum MageGuardianSlot
+{
+    MAGE_GUARDIAN_WATER_ELEMENTAL = 0,
+    MAX_MAGE_GUARDIAN_SLOTS
 };
 
 enum WarlockPetSlot
@@ -167,6 +180,8 @@ enum UtilActions
     SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_ARENA        = 30,
     SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_PVP_START    = 31,
     SMARTSTONE_ACTION_TOGGLE_ANNOUNCE_AUTOBROADCAST = 32,
+    SMARTSTONE_ACTION_RESET_GHOUL                  = 33,
+    SMARTSTONE_ACTION_RESET_WATER_ELEMENTAL        = 34,
     MAX_SMARTSTONE_ACTIONS
 };
 
@@ -352,6 +367,8 @@ enum SmartstonePerkEffect : uint8
     PERK_EFFECT_SHAMAN_FERAL_SPIRIT    = 15,
     PERK_EFFECT_PRIEST_SPIRIT_OF_REDEMPTION = 16,
     PERK_EFFECT_PRIEST_SHADOWFORM           = 17,
+    PERK_EFFECT_DK_GHOUL                    = 18,
+    PERK_EFFECT_MAGE_WATER_ELEMENTAL        = 19,
 };
 
 struct SmartstonePerkData
@@ -482,6 +499,15 @@ public:
     // native minion display id).
     [[nodiscard]] bool GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const;
     [[nodiscard]] bool GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const;
+
+    // Owner's stored skin for a perk minion (warlock pet, spirit wolf, ghoul,
+    // water elemental), or 0. Sets `effect` for the scale lookup.
+    [[nodiscard]] uint32 GetMinionPerkDisplay(Creature const* minion, uint8& effect) const;
+
+    // Apply the owner's minion skin, or restore the native model when none is
+    // set. BG / arena always keep the native model.
+    void RefreshMinionPerkDisplay(Creature* minion) const;
+    void RefreshControlledMinionPerkDisplays(Unit* owner) const;
 
     // Re-send nearby overridden units to `observer` so a toggle applies at once.
     void RefreshSmartstoneVisibilityFor(Player* observer) const;
@@ -727,6 +753,24 @@ public:
     [[nodiscard]] uint32 GetWarlockPetDisplay(Player* player, uint8 slot) const
     {
         return player->GetPlayerSetting(ModName + "#warlock_pet", slot).value;
+    }
+
+    void SetDeathKnightGuardianDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#dk_guardian", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetDeathKnightGuardianDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#dk_guardian", slot).value;
+    }
+
+    void SetMageGuardianDisplay(Player* player, uint8 slot, uint32 displayId)
+    {
+        player->UpdatePlayerSetting(ModName + "#mage_guardian", slot, displayId);
+    }
+    [[nodiscard]] uint32 GetMageGuardianDisplay(Player* player, uint8 slot) const
+    {
+        return player->GetPlayerSetting(ModName + "#mage_guardian", slot).value;
     }
 
     // Composite key for PerkScaleOverrides. Scale depends on the render

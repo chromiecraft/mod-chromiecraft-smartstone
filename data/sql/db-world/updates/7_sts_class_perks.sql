@@ -36,9 +36,9 @@ VALUES
     (1003, 1000, 'Hunter Perks',      0, 92011, 0),
     (1004, 1000, 'Rogue Perks',       0, 92012, 0),
     (1005, 1000, '|TInterface/icons/Spell_Holy_GuardianSpirit:30:30:-18:0|t Priest Perks',      0, 92013, 1),
-    (1006, 1000, 'Death Knight Perks',0, 92014, 0),
+    (1006, 1000, '|TInterface/icons/Spell_Shadow_AnimateDead:30:30:-18:0|t Death Knight Perks', 0, 92014, 1),
     (1007, 1000, '|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Shaman Perks',      0, 92015, 1),
-    (1008, 1000, 'Mage Perks',        0, 92016, 0),
+    (1008, 1000, '|TInterface/icons/Spell_Frost_SummonWaterElemental_2:30:30:-18:0|t Mage Perks', 0, 92016, 1),
     (1009, 1000, '|TInterface/icons/Spell_Shadow_Metamorphosis:30:30:-18:0|t Warlock Perks',     0, 92017, 1),
     (1010, 1000, '|TInterface/icons/Spell_Nature_Regeneration:30:30:-18:0|t Druid Perks', 0, 92018, 1);
 

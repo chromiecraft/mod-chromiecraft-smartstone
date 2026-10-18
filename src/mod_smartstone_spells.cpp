@@ -144,16 +144,15 @@ class spell_smartstone_form_display_override : public AuraScript
     }
 };
 
-// 51533 - Feral Spirit (shaman)
-// Re-skins the two Spirit Wolves (entry 29264) summoned by Feral Spirit
-// when the caster has a non-zero SHAMAN_GUARDIAN_FERAL_SPIRIT override
-// stored. SpellScript hook fires exactly once per cast — cheaper than
-// an AllCreatureScript filtering every creature spawn.
-class spell_sha_feral_spirit_display : public SpellScript
+// 51533 - Feral Spirit (Spirit Wolves)
+// 46585 - Raise Dead (guardian ghoul; the Master of Ghouls pet goes through the PetScript)
+// 70907 - Summon Water Elemental (temporary)
+// 70908 - Summon Water Elemental (Glyph of Eternal Water)
+// Re-skins the guardians the cast summoned. Fires once per cast, which is
+// cheaper than an AllCreatureScript filtering every creature spawn.
+class spell_smartstone_guardian_display : public SpellScript
 {
-    PrepareSpellScript(spell_sha_feral_spirit_display);
-
-    static constexpr uint32 SPIRIT_WOLF_ENTRY = 29264;
+    PrepareSpellScript(spell_smartstone_guardian_display);
 
     bool Load() override
     {
@@ -163,41 +162,19 @@ class spell_sha_feral_spirit_display : public SpellScript
 
     void HandleAfterCast()
     {
-        Player* player = GetCaster()->ToPlayer();
-        if (!player)
-            return;
-
-        if (player->InBattleground() || player->InArena())
-            return;
-
-        uint32 displayId = sSmartstone->GetShamanGuardianDisplay(
-            player, SHAMAN_GUARDIAN_FERAL_SPIRIT);
-        if (!displayId)
-            return;
-
-        // By AfterCast the summon effects have run and the wolves are in
-        // the caster's controlled set. Apply the override to each.
-        for (Unit* controlled : player->m_Controlled)
-        {
-            if (controlled && controlled->GetEntry() == SPIRIT_WOLF_ENTRY)
-            {
-                controlled->SetDisplayId(displayId);
-                // Per-(effect, model) scale from smartstone_perks.Scale;
-                // leave the creature's natural scale when none is set.
-                if (float scale = sSmartstone->GetPerkScale(PERK_EFFECT_SHAMAN_FERAL_SPIRIT, displayId); scale > 0.0f)
-                    controlled->SetObjectScale(scale);
-            }
-        }
+        // By AfterCast the summon effects have run and the guardians are in
+        // the caster's controlled set. Non-perk minions are skipped by entry.
+        sSmartstone->RefreshControlledMinionPerkDisplays(GetCaster());
     }
 
     void Register() override
     {
-        AfterCast += SpellCastFn(spell_sha_feral_spirit_display::HandleAfterCast);
+        AfterCast += SpellCastFn(spell_smartstone_guardian_display::HandleAfterCast);
     }
 };
 
 void AddSC_smartstone_spells()
 {
     RegisterSpellScript(spell_smartstone_form_display_override);
-    RegisterSpellScript(spell_sha_feral_spirit_display);
+    RegisterSpellScript(spell_smartstone_guardian_display);
 }
