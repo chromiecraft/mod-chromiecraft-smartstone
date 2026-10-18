@@ -956,7 +956,7 @@ public:
 
                 sSmartstone->LoadAccountSettings(accountId);
 
-                if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
+                if (sSmartstone->GetAccountSetting(accountId, serviceType, settingId).IsEnabled() == add)
                 {
                     sendDupError(costume.Description);
                     LOG_ERROR("smartstone", "HandleSmartStoneUnlockServiceCommand: The costume {} is already {} for player {}.", id, add ? "unlocked" : "locked", playerName);
@@ -966,7 +966,8 @@ public:
                 sSmartstone->UpdateAccountSetting(accountId, serviceType, settingId, add);
                 sendSuccess(costume.Description);
 
-                if (!target)
+                // Another character of the account may be online and using the cache
+                if (!sWorldSessionMgr->FindSession(accountId))
                     sSmartstone->ClearAccountSettings(accountId);
                 break;
             }
@@ -1057,7 +1058,7 @@ public:
                 sSmartstone->UpdateAccountSetting(accountId, perkSlot, perk.Id, add);
                 sendSuccess(perk.Title);
 
-                if (!target)
+                if (!sWorldSessionMgr->FindSession(accountId))
                     sSmartstone->ClearAccountSettings(accountId);
                 break;
             }
@@ -1118,7 +1119,7 @@ public:
 
                 uint32 settingId = sSmartstone->GetShortId(id, serviceType);
 
-                if (sSmartstone->GetAccountSetting(accountId, serviceType, id).IsEnabled() == add)
+                if (sSmartstone->GetAccountSetting(accountId, serviceType, settingId).IsEnabled() == add)
                 {
                     sendDupError(costume.Description);
                     LOG_ERROR("smartstone", "HandleSmartStoneUnlockAccountCommand: The costume {} is already {} for account {}.", id, add ? "unlocked" : "locked", accountName);
