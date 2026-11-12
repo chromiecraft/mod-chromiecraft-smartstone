@@ -6,14 +6,19 @@
 #include "BattlefieldMgr.h"
 #include "Chat.h"
 #include "Creature.h"
+#include "DBCStores.h"
 #include "GameTime.h"
 #include "Map.h"
+#include "ObjectDefines.h"
 #include "ObjectMgr.h"
+#include "Opcodes.h"
 #include "Pet.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
+#include "WorldPacket.h"
+#include "WorldSession.h"
 #include "Player.h"
 #include "Containers.h"
 #include "Random.h"
@@ -1282,4 +1287,71 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadLegacyCostumes();
         sSmartstone->LoadPerks();
     }
+}
+
+float Smartstone::GetDisplayCollisionHeight(Player* player, uint32 displayId) const
+{
+    // Same formula as Unit::GetCollisionHeight (unmounted branch), but for the
+    // given display instead of the native one.
+    float scaleMod = player->GetObjectScale();
+    float defaultHeight = DEFAULT_COLLISION_HEIGHT * scaleMod;
+
+    CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId);
+    if (!displayInfo)
+        return defaultHeight;
+
+    CreatureModelDataEntry const* modelData = sCreatureModelDataStore.LookupEntry(displayInfo->ModelId);
+    if (!modelData)
+        return defaultHeight;
+
+    float collisionHeight = scaleMod * modelData->CollisionHeight * modelData->Scale * displayInfo->scale;
+    return collisionHeight == 0.0f ? defaultHeight : collisionHeight;
+}
+
+void Smartstone::SendCollisionHeight(Player* player, float height) const
+{
+    WorldPacket data(SMSG_MOVE_SET_COLLISION_HGT, player->GetPackGUID().size() + 4 + 4);
+    data << player->GetPackGUID();
+    data << player->GetSession()->GetOrderCounter(); // movement counter
+    data << height;
+    player->SendDirectMessage(&data);
+    player->GetSession()->IncrementOrderCounter();
+}
+
+void Smartstone::SyncSkollCollisionHeight(Player* player)
+{
+    // Decides from the current state, not from the display that triggered the
+    // sync. No IsSmartstoneEnabled() check: the revert must still run if the
+    // module is disabled on reload.
+    if (!player || !player->IsInWorld())
+        return;
+
+    bool wantWolf = player->GetShapeshiftForm() == FORM_GHOSTWOLF
+        && player->GetDisplayId() == MODEL_GHOST_WOLF_SKOLL;
+
+    if (wantWolf)
+    {
+        // Always resend: after login or a map change the client starts over.
+        uint32 wolfDisplayId = player->GetModelForForm(FORM_GHOSTWOLF, SPELL_GHOST_WOLF);
+        SendCollisionHeight(player, GetDisplayCollisionHeight(player, wolfDisplayId));
+        auto* sent = player->CustomData.GetDefault<SmartstoneSkollCollisionData>(SMARTSTONE_SKOLL_COLLISION_KEY);
+        sent->WolfHeightSent = true;
+        return;
+    }
+
+    auto* data = player->CustomData.Get<SmartstoneSkollCollisionData>(SMARTSTONE_SKOLL_COLLISION_KEY);
+    if (!data || !data->WolfHeightSent)
+        return;
+
+    // Still in Ghost Wolf with another display (reset, other skin, BG/arena):
+    // send that display's height, not the race height. The flag stays set so
+    // leaving the form still restores the race height.
+    if (player->GetShapeshiftForm() == FORM_GHOSTWOLF)
+    {
+        SendCollisionHeight(player, GetDisplayCollisionHeight(player, player->GetDisplayId()));
+        return;
+    }
+
+    SendCollisionHeight(player, player->GetCollisionHeight());
+    data->WolfHeightSent = false;
 }

@@ -1770,6 +1770,35 @@ public:
     }
 };
 
+// Ghost Wolf: Skoll collision fix, see MODEL_GHOST_WOLF_SKOLL in Smartstone.h.
+// The sync is delayed because this hook runs inside SetDisplayId, before the
+// display update reaches the client; a direct packet would arrive first.
+class unit_smartstone_skoll_collision_script : public UnitScript
+{
+public:
+    unit_smartstone_skoll_collision_script() : UnitScript("unit_smartstone_skoll_collision_script", true, {
+        UNITHOOK_ON_DISPLAYID_CHANGE
+    }) { }
+
+    void OnDisplayIdChange(Unit* unit, uint32 displayId) override
+    {
+        Player* player = unit->ToPlayer();
+        if (!player)
+            return;
+
+        if (displayId != MODEL_GHOST_WOLF_SKOLL)
+        {
+            auto const* data = player->CustomData.Get<SmartstoneSkollCollisionData>(SMARTSTONE_SKOLL_COLLISION_KEY);
+            if (!data || !data->WolfHeightSent)
+                return;
+        }
+
+        player->m_Events.AddEventAtOffset([player] {
+            sSmartstone->SyncSkollCollisionHeight(player);
+        }, SKOLL_COLLISION_SYNC_DELAY);
+    }
+};
+
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
@@ -1777,5 +1806,6 @@ void Addmod_cc_smartstoneScripts()
     new mod_chromiecraft_smartstone_playerscript();
     new mod_chromiecraft_smartstone_challenge_xp_playerscript();
     new unit_smartstone_costume_script();
+    new unit_smartstone_skoll_collision_script();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }
