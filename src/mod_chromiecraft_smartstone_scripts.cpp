@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "Vehicle.h"
 
+#include <algorithm>
 #include <cstring>
 
 namespace
@@ -1100,12 +1101,24 @@ public:
             /**
              * Utility buttons
              */
-            if (player->GetCompanionPet())
+            // Show unsummon buttons only in categories with pets of that type.
+            auto const hasServiceType = [&menuItems](ActionType type)
+            {
+                return std::any_of(menuItems.begin(), menuItems.end(),
+                    [type](MenuItem const& entry)
+                    {
+                        return entry.ServiceType == type;
+                    });
+            };
+            bool const hasCompanions = hasServiceType(ACTION_TYPE_COMPANION);
+            bool const hasCombatPets = hasServiceType(ACTION_TYPE_PET);
+
+            if (hasCompanions && player->GetCompanionPet())
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current companion",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_UNSUMMON_COMPANION), "", 0);
 
-            if (player->GetGuardianPet())
+            if (hasCombatPets && player->GetGuardianPet())
                 player->PlayerTalkClass->GetGossipMenu().AddMenuItem(menuItemIndex++, 0,
                     "|TInterface/icons/Spell_Nature_SpiritWolf:30:30:-18:0|t Unsummon current pet",
                     0, sSmartstone->GetActionTypeId(ACTION_TYPE_UTIL, SMARTSTONE_ACTION_UNSUMMON_PET), "", 0);
