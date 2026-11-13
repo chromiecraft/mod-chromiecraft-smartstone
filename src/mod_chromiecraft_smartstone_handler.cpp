@@ -17,6 +17,7 @@
 #include "Smartstone.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "Player.h"
@@ -706,6 +707,57 @@ bool Smartstone::GetActiveFormPerkSubstitute(Player* player, uint32& canonicalMo
 
     canonicalModel = player->GetModelForForm(form, spellId);
     return canonicalModel != 0;
+}
+
+// Mirrors the display part of Unit::IsInDisallowedMountForm, for `displayId`
+// instead of the unit's current display.
+static bool IsMountDisallowedForDisplay(Unit const* unit, uint32 displayId)
+{
+    if (displayId == unit->GetNativeDisplayId())
+        return false;
+
+    CreatureDisplayInfoEntry const* display = sCreatureDisplayInfoStore.LookupEntry(displayId);
+    if (!display)
+        return true;
+
+    CreatureDisplayInfoExtraEntry const* displayExtra =
+        sCreatureDisplayInfoExtraStore.LookupEntry(display->ExtendedDisplayInfoID);
+    if (!displayExtra)
+        return true;
+
+    CreatureModelDataEntry const* model = sCreatureModelDataStore.LookupEntry(display->ModelId);
+    ChrRacesEntry const* race = sChrRacesStore.LookupEntry(displayExtra->DisplayRaceID);
+
+    return model && !model->HasFlag(CREATURE_MODEL_DATA_FLAGS_CAN_MOUNT)
+        && race && !race->HasFlag(CHRRACES_FLAGS_CAN_MOUNT);
+}
+
+bool Smartstone::IsMountBlockedByFormPerk(Player* player) const
+{
+    // The core already refuses on its own (every non-stance form, Ghost Wolf included).
+    if (player->IsInDisallowedMountForm())
+        return false;
+
+    // A transform that allows mounting lets the core allow it with the canonical model too.
+    if (SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(player->getTransForm()))
+        if (transformSpellInfo->HasAttribute(SPELL_ATTR0_ALLOW_WHILE_MOUNTED))
+            return false;
+
+    uint32 canonicalModel = 0;
+    if (!GetActiveFormPerkSubstitute(player, canonicalModel))
+        return false;
+
+    return IsMountDisallowedForDisplay(player, canonicalModel);
+}
+
+bool Smartstone::IsSpellBoundToScript(uint32 spellId, std::string_view scriptName)
+{
+    SpellScriptsBounds bounds = sObjectMgr->GetSpellScriptsBounds(spellId);
+    for (auto itr = bounds.first; itr != bounds.second; ++itr)
+        if (sObjectMgr->GetScriptName(itr->second) == scriptName)
+            return true;
+
+    return false;
 }
 
 uint32 Smartstone::GetMinionPerkDisplay(Creature const* minion, uint8& effect) const

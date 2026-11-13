@@ -6,13 +6,18 @@
 #include "Chat.h"
 #include "CombatAI.h"
 #include "GameTime.h"
+#include "ObjectAccessor.h"
 #include "ObjectMgr.h"
+#include "Opcodes.h"
 #include "PlayerSettings.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "SpellAuras.h"
 #include "Pet.h"
 #include "Player.h"
 #include "Vehicle.h"
+#include "WorldPacket.h"
+#include "WorldSession.h"
 
 #include <cstring>
 
@@ -1581,6 +1586,19 @@ public:
             sSmartstone->ReapplyActiveShamanFormDisplay(player);
         }, 1s);
     }
+
+    // Mirrors the shapeshift removal of Player::ActivateTaxiPathTo without a
+    // flight master and of ContinueTaxiFlight, which have no hook before it:
+    // a druid whose form skin hides a disallowed canonical model loses the
+    // form on the next update of a flight (spell, SmartAI or script taxi).
+    void OnPlayerUpdate(Player* player, uint32 /*p_time*/) override
+    {
+        if (player->GetShapeshiftForm() == FORM_NONE || !player->IsInFlight())
+            return;
+
+        if (sSmartstone->IsMountBlockedByFormPerk(player))
+            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+    }
 };
 
 // Snap challenge characters back to 1x weekend-xp on login and level-up.
@@ -1799,6 +1817,156 @@ public:
     }
 };
 
+// Oculus drakes: spell_oculus_rider_aura drops a disallowed mount form once
+// the rider is on the drake; do the same for a druid whose form skin hides a
+// disallowed canonical model (see Smartstone::IsMountBlockedByFormPerk).
+class unit_smartstone_form_mount_script : public UnitScript
+{
+public:
+    unit_smartstone_form_mount_script() : UnitScript("unit_smartstone_form_mount_script", true, {
+        UNITHOOK_ON_AURA_APPLY
+    }) { }
+
+    static constexpr char const* SCRIPT_OCULUS_RIDER_AURA = "spell_oculus_rider_aura";
+
+    void OnAuraApply(Unit* /*unit*/, Aura* aura) override
+    {
+        // Runs for every aura: the GUID and spell checks skip the caster lookup for all
+        // but the Oculus rider aura cast by a player.
+        if (!aura->GetCasterGUID().IsPlayer())
+            return;
+
+        if (!Smartstone::IsSpellBoundToScript(aura->GetId(), SCRIPT_OCULUS_RIDER_AURA))
+            return;
+
+        Unit* caster = aura->GetCaster();
+        Player* player = caster ? caster->ToPlayer() : nullptr;
+        if (!player || player->GetShapeshiftForm() == FORM_NONE)
+            return;
+
+        if (!player->GetVehicleCreatureBase())
+            return;
+
+        if (sSmartstone->IsMountBlockedByFormPerk(player))
+            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+    }
+};
+
+// Flight master taxi and Trial of the Champion vehicles, for a druid whose
+// form skin hides a disallowed canonical model (see
+// Smartstone::IsMountBlockedByFormPerk). The checks the core runs before its
+// shapeshift test are left to the core, so its own errors come first.
+class server_smartstone_form_mount_script : public ServerScript
+{
+public:
+    server_smartstone_form_mount_script() : ServerScript("server_smartstone_form_mount_script", {
+        SERVERHOOK_CAN_PACKET_RECEIVE
+    }) { }
+
+    bool CanPacketReceive(WorldSession* session, WorldPacket const& packet) override
+    {
+        switch (packet.GetOpcode())
+        {
+            case CMSG_ACTIVATETAXI:
+            case CMSG_ACTIVATETAXIEXPRESS:
+                return CanActivateTaxi(session, packet);
+            case CMSG_SPELLCLICK:
+                HandleSpellClick(session, packet);
+                return true;
+            default:
+                return true;
+        }
+    }
+
+private:
+    static constexpr char const* SCRIPT_TOC5_PLAYER_VEHICLE = "npc_toc5_player_vehicle";
+
+    // Packet layouts: CMSG_ACTIVATETAXI is guid + 2 nodes, CMSG_ACTIVATETAXIEXPRESS
+    // is guid + node count + nodes, CMSG_SPELLCLICK is guid.
+    static constexpr std::size_t PACKET_GUID_SIZE = sizeof(uint64);
+    static constexpr std::size_t TAXI_NODE_SIZE   = sizeof(uint32);
+    static constexpr std::size_t TAXI_NODE_COUNT  = 2;
+
+    static Player* GetShapeshiftedPlayer(WorldSession* session)
+    {
+        Player* player = session->GetPlayer();
+        return player && player->GetShapeshiftForm() != FORM_NONE ? player : nullptr;
+    }
+
+    // Mirrors HandleActivateTaxi(Express)Opcode and the flight master branch of
+    // Player::ActivateTaxiPathTo up to its IsInDisallowedMountForm check.
+    static bool CanActivateTaxi(WorldSession* session, WorldPacket const& packet)
+    {
+        Player* player = GetShapeshiftedPlayer(session);
+        if (!player)
+            return true;
+
+        std::size_t pos = PACKET_GUID_SIZE;
+        std::size_t nodeCount = TAXI_NODE_COUNT;
+        if (packet.GetOpcode() == CMSG_ACTIVATETAXIEXPRESS)
+        {
+            if (packet.size() < pos + sizeof(uint32))
+                return true;
+
+            nodeCount = packet.read<uint32>(pos);
+            pos += sizeof(uint32);
+        }
+
+        // Short packets are left to the core handler.
+        if (packet.size() < pos + nodeCount * TAXI_NODE_SIZE)
+            return true;
+
+        std::vector<uint32> nodes;
+        nodes.reserve(nodeCount);
+        for (std::size_t i = 0; i < nodeCount; ++i, pos += TAXI_NODE_SIZE)
+            nodes.push_back(packet.read<uint32>(pos));
+
+        ObjectGuid const npcGuid(packet.read<uint64>(0));
+        if (!player->GetNPCIfCanInteractWith(npcGuid, UNIT_NPC_FLAG_FLIGHTMASTER))
+            return true;
+
+        if (!player->isTaxiCheater())
+            for (uint32 node : nodes)
+                if (!player->m_taxi.IsTaximaskNodeKnown(node))
+                    return true;
+
+        if (nodes.size() < TAXI_NODE_COUNT)
+            return true;
+
+        if (session->IsLoggingOut() || player->IsInCombat() || player->HasUnitState(UNIT_STATE_STUNNED)
+            || player->HasUnitState(UNIT_STATE_ROOT))
+            return true;
+
+        if (player->HasUnitFlag(UNIT_FLAG_DISABLE_MOVE) || player->IsMounted())
+            return true;
+
+        if (!sSmartstone->IsMountBlockedByFormPerk(player))
+            return true;
+
+        session->SendActivateTaxiReply(ERR_TAXIPLAYERSHAPESHIFTED);
+        return false;
+    }
+
+    // Mirrors the BeforeSpellClick of npc_toc5_player_vehicle, which drops a
+    // disallowed mount form before boarding. The click always goes on to the core.
+    static void HandleSpellClick(WorldSession* session, WorldPacket const& packet)
+    {
+        Player* player = GetShapeshiftedPlayer(session);
+        if (!player || packet.size() < PACKET_GUID_SIZE)
+            return;
+
+        Creature* creature = ObjectAccessor::GetCreatureOrPetOrVehicle(*player, ObjectGuid(packet.read<uint64>(0)));
+        if (!creature || !creature->IsInWorld() || !creature->IsAIEnabled)
+            return;
+
+        if (creature->GetScriptName() != SCRIPT_TOC5_PLAYER_VEHICLE)
+            return;
+
+        if (sSmartstone->IsMountBlockedByFormPerk(player))
+            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+    }
+};
+
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
@@ -1807,5 +1975,7 @@ void Addmod_cc_smartstoneScripts()
     new mod_chromiecraft_smartstone_challenge_xp_playerscript();
     new unit_smartstone_costume_script();
     new unit_smartstone_skoll_collision_script();
+    new unit_smartstone_form_mount_script();
+    new server_smartstone_form_mount_script();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }
