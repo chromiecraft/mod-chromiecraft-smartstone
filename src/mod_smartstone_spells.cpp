@@ -28,11 +28,20 @@
  *
  *   In BG / arena the override is suppressed — the engine's default
  *   model is left in place.
+ *
+ * spell_smartstone_form_mount_rule:
+ *   AllSpellScript that applies the canonical form model's mount rule to a
+ *   druid showing a Moonkin / Tree of Life skin (Astral Form included): mount
+ *   spells fail with SPELL_FAILED_NOT_SHAPESHIFT, and the tournament mount and
+ *   Jokkum summons remove the form, as the core does with the canonical model.
  */
 
+#include "Map.h"
+#include "ObjectMgr.h"
 #include "Random.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
@@ -259,10 +268,84 @@ class spell_smartstone_polymorph_display : public AuraScript
     }
 };
 
+// Mount spells refuse, and the tournament mount / Jokkum summons drop the
+// form, when the shown form skin hides a canonical model the core would
+// refuse (see Smartstone::IsMountBlockedByFormPerk).
+class spell_smartstone_form_mount_rule : public AllSpellScript
+{
+public:
+    spell_smartstone_form_mount_rule() : AllSpellScript("spell_smartstone_form_mount_rule", {
+        ALLSPELLHOOK_ON_SPELL_CHECK_CAST,
+        ALLSPELLHOOK_ON_CAST
+    }) { }
+
+    // Core spell scripts that drop a disallowed mount form.
+    static constexpr char const* SCRIPT_TOURNAMENT_MOUNT = "spell_gen_summon_tournament_mount";
+    static constexpr char const* SCRIPT_JOKKUM_SUMMON    = "spell_q13010_jokkum_summon";
+
+    void OnSpellCheckCast(Spell* spell, bool /*strict*/, SpellCastResult& res) override
+    {
+        if (res != SPELL_CAST_OK)
+            return;
+
+        Player* player = spell->GetCaster() ? spell->GetCaster()->ToPlayer() : nullptr;
+        if (!player || player->GetShapeshiftForm() == FORM_NONE)
+            return;
+
+        // Runs for every spell: the spell filters come before the costlier perk check.
+        SpellInfo const* spellInfo = spell->GetSpellInfo();
+
+        // The core script drops the form before its lance check and lets the cast go on.
+        // This hook runs at the start of Spell::CheckCast, so unlike the core the form also
+        // drops when a generic check (cooldown, GCD, outdoors, combat) fails later.
+        if (Smartstone::IsSpellBoundToScript(spellInfo->Id, SCRIPT_TOURNAMENT_MOUNT))
+        {
+            if (sSmartstone->IsMountBlockedByFormPerk(player))
+                player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+
+            return;
+        }
+
+        if (!spellInfo->HasAura(SPELL_AURA_MOUNTED))
+            return;
+
+        // Leave the errors of the core's SPELL_AURA_MOUNTED branch to the core. The generic
+        // checks before it (cooldown, GCD, outdoors, combat) run after this hook, so their
+        // errors give way to SPELL_FAILED_NOT_SHAPESHIFT; the cast fails either way.
+        if (player->IsInWater() && spellInfo->HasAura(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED))
+            return;
+
+        Map const* map = player->GetMap();
+        bool allowMount = !map->IsDungeon() || map->IsBattlegroundOrArena();
+        if (InstanceTemplate const* instance = sObjectMgr->GetInstanceTemplate(player->GetMapId()))
+            allowMount = instance->AllowMount;
+        if (!allowMount && !spellInfo->AreaGroupId)
+            return;
+
+        if (sSmartstone->IsMountBlockedByFormPerk(player))
+            res = SPELL_FAILED_NOT_SHAPESHIFT;
+    }
+
+    void OnSpellCast(Spell* /*spell*/, Unit* caster, SpellInfo const* spellInfo, bool /*skipCheck*/) override
+    {
+        Player* player = caster ? caster->ToPlayer() : nullptr;
+        if (!player || player->GetShapeshiftForm() == FORM_NONE)
+            return;
+
+        // The core script drops the form before summoning Jokkum; boarding doesn't depend on it.
+        if (!Smartstone::IsSpellBoundToScript(spellInfo->Id, SCRIPT_JOKKUM_SUMMON))
+            return;
+
+        if (sSmartstone->IsMountBlockedByFormPerk(player))
+            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+    }
+};
+
 void AddSC_smartstone_spells()
 {
     RegisterSpellScript(spell_smartstone_form_display_override);
     RegisterSpellScript(spell_smartstone_guardian_display);
     RegisterSpellScript(spell_smartstone_army_of_the_dead_sound);
     RegisterSpellScript(spell_smartstone_polymorph_display);
+    new spell_smartstone_form_mount_rule();
 }

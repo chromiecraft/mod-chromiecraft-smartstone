@@ -7,6 +7,7 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 #include <limits>    // per std::numeric_limits
+#include <string_view>
 
 class Creature;
 
@@ -536,6 +537,14 @@ public:
     [[nodiscard]] bool IsFormPerkHidingWeapons(Player* player) const;
     [[nodiscard]] bool GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const;
     [[nodiscard]] bool GetActivePolymorphPerkSubstitute(Unit* unit, uint32& sheepModel) const;
+
+    // True when the player shows a form skin whose canonical model would make
+    // the core refuse mounting, while the skin's display makes it allow it.
+    // Hooks use it to apply the canonical-model mount rule.
+    [[nodiscard]] bool IsMountBlockedByFormPerk(Player* player) const;
+
+    // True when `spellId` is bound to the core script `scriptName` in spell_script_names.
+    [[nodiscard]] static bool IsSpellBoundToScript(uint32 spellId, std::string_view scriptName);
 
     // The skin a mage's Polymorph should show (a random one with Wild
     // Polymorph), or 0 for the sheep.
