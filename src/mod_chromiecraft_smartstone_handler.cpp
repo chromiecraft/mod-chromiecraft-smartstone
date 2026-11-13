@@ -760,6 +760,20 @@ bool Smartstone::IsSpellBoundToScript(uint32 spellId, std::string_view scriptNam
     return false;
 }
 
+// Reflects the current state (form + live display); Astral Form keeps the character's own model.
+bool Smartstone::IsFormPerkHidingWeapons(Player* player) const
+{
+    uint32 canonicalModel = 0;
+    if (!GetActiveFormPerkSubstitute(player, canonicalModel))
+        return false;
+
+    if (player->GetShapeshiftForm() == FORM_MOONKIN
+        && GetDruidFormDisplay(player, DRUID_FORM_MOONKIN) == FORM_DISPLAY_OWN_MODEL)
+        return false;
+
+    return true;
+}
+
 uint32 Smartstone::GetMinionPerkDisplay(Creature const* minion, uint8& effect) const
 {
     if (!minion)

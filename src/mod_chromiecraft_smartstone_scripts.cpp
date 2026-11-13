@@ -19,6 +19,8 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
+#include <algorithm>
+#include <array>
 #include <cstring>
 
 namespace
@@ -1967,6 +1969,108 @@ private:
     }
 };
 
+// Druid form / Ghost Wolf perk skins are creature models with weapon attach
+// points, so the equipped weapon shows on the paw. Only the packet changes:
+// the wearer gets zeroed weapon visible-item fields (their character panel
+// reads the real items), other players get the disarmed flags (their Inspect
+// reads the visible-item fields, so those stay intact).
+static constexpr std::array<uint16, 4> WeaponVisibleFields =
+{
+    PLAYER_VISIBLE_ITEM_16_ENTRYID,
+    PLAYER_VISIBLE_ITEM_16_ENCHANTMENT,
+    PLAYER_VISIBLE_ITEM_17_ENTRYID,
+    PLAYER_VISIBLE_ITEM_17_ENCHANTMENT
+};
+
+class unit_smartstone_form_weapon_script : public UnitScript
+{
+public:
+    unit_smartstone_form_weapon_script() : UnitScript("unit_smartstone_form_weapon_script", true, {
+        UNITHOOK_SHOULD_TRACK_VALUES_UPDATE_POS_BY_INDEX,
+        UNITHOOK_ON_PATCH_VALUES_UPDATE,
+        UNITHOOK_ON_DISPLAYID_CHANGE
+    }) { }
+
+    // Called while building the shared cache: depends only on unit type and index.
+    bool ShouldTrackValuesUpdatePosByIndex(Unit const* unit, uint8 /*updateType*/, uint16 index) override
+    {
+        if (!unit->IsPlayer())
+            return false;
+
+        if (index == UNIT_FIELD_FLAGS_2)
+            return true;
+
+        return std::find(WeaponVisibleFields.begin(), WeaponVisibleFields.end(), index) != WeaponVisibleFields.end();
+    }
+
+    void OnPatchValuesUpdate(Unit const* unit, ByteBuffer& valuesUpdateBuf, BuildValuesCachePosPointers& posPointers,
+        Player* target) override
+    {
+        if (!unit->IsPlayer() || unit->ToPlayer()->GetShapeshiftForm() == FORM_NONE)
+            return;
+
+        bool const self = target == unit;
+        auto const flags2It = posPointers.other.find(UNIT_FIELD_FLAGS_2);
+        bool const hasFlags2 = flags2It != posPointers.other.end();
+
+        if (self)
+        {
+            bool hasWeaponField = false;
+            for (uint16 field : WeaponVisibleFields)
+            {
+                if (posPointers.other.count(field))
+                {
+                    hasWeaponField = true;
+                    break;
+                }
+            }
+
+            if (!hasWeaponField)
+                return;
+        }
+        else if (posPointers.UnitFieldFlagsPos < 0 && !hasFlags2)
+            return;
+
+        Player* wearer = const_cast<Player*>(unit->ToPlayer());
+        if (!sSmartstone->IsFormPerkHidingWeapons(wearer))
+            return;
+
+        // Observers opted out of form skins see the canonical model, which has no weapon issue.
+        if (sSmartstone->IsDisplayOptOutEnabled()
+            && target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_FORMS).value)
+            return;
+
+        if (self)
+        {
+            for (uint16 field : WeaponVisibleFields)
+                if (auto pos = posPointers.other.find(field); pos != posPointers.other.end())
+                    valuesUpdateBuf.put(pos->second, uint32(0));
+            return;
+        }
+
+        if (posPointers.UnitFieldFlagsPos >= 0)
+            valuesUpdateBuf.put(posPointers.UnitFieldFlagsPos,
+                valuesUpdateBuf.read<uint32>(posPointers.UnitFieldFlagsPos) | uint32(UNIT_FLAG_DISARMED));
+
+        if (hasFlags2)
+            valuesUpdateBuf.put(flags2It->second,
+                valuesUpdateBuf.read<uint32>(flags2It->second) | uint32(UNIT_FLAG2_DISARM_OFFHAND));
+    }
+
+    // Entering or leaving a skin doesn't change these fields server-side, so
+    // force a resend; the patch above decides the value at send time.
+    void OnDisplayIdChange(Unit* unit, uint32 /*displayId*/) override
+    {
+        if (!unit->IsPlayer())
+            return;
+
+        unit->ForceValuesUpdateAtIndex(UNIT_FIELD_FLAGS);
+        unit->ForceValuesUpdateAtIndex(UNIT_FIELD_FLAGS_2);
+        for (uint16 field : WeaponVisibleFields)
+            unit->ForceValuesUpdateAtIndex(field);
+    }
+};
+
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
@@ -1977,5 +2081,6 @@ void Addmod_cc_smartstoneScripts()
     new unit_smartstone_skoll_collision_script();
     new unit_smartstone_form_mount_script();
     new server_smartstone_form_mount_script();
+    new unit_smartstone_form_weapon_script();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }

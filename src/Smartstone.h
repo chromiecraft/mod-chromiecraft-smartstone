@@ -533,6 +533,8 @@ public:
     // value an opted-out observer should see instead (canonical form model /
     // native minion display id).
     [[nodiscard]] bool GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const;
+    // True while a druid form / Ghost Wolf perk skin is the live model (Astral Form keeps the own model, so no).
+    [[nodiscard]] bool IsFormPerkHidingWeapons(Player* player) const;
     [[nodiscard]] bool GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const;
     [[nodiscard]] bool GetActivePolymorphPerkSubstitute(Unit* unit, uint32& sheepModel) const;
 
