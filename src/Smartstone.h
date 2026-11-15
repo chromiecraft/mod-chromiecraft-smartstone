@@ -7,7 +7,6 @@
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
 #include <limits>    // per std::numeric_limits
-#include <string_view>
 
 class Creature;
 
@@ -84,21 +83,7 @@ enum DruidFormSlot
 constexpr uint32 FORM_DISPLAY_OWN_MODEL   = 0xFFFFFFFF;
 constexpr uint32 SPELL_ASTRAL_FORM_VISUAL = 22650; // Ghost Visual, hidden cosmetic aura
 
-// Ghost Wolf: Skoll (display 29673) uses model 3155, which has no collision
-// data, so the client sinks the wolf while swimming and the server starts the
-// breath bar.
-constexpr uint32       SPELL_GHOST_WOLF           = 2645;
-constexpr uint32       MODEL_GHOST_WOLF_SKOLL     = 29673;
-constexpr Milliseconds SKOLL_COLLISION_SYNC_DELAY = 500ms;
-
-// Per-player flag: a Ghost Wolf collision height was sent to the client and
-// the race height must be restored once the player leaves the form.
-struct SmartstoneSkollCollisionData : public DataMap::Base
-{
-    bool WolfHeightSent = false;
-};
-
-constexpr char const* SMARTSTONE_SKOLL_COLLISION_KEY = "SmartstoneSkollCollision";
+constexpr uint32 SPELL_GHOST_WOLF = 2645;
 
 enum ShamanFormSlot
 {
@@ -533,18 +518,8 @@ public:
     // value an opted-out observer should see instead (canonical form model /
     // native minion display id).
     [[nodiscard]] bool GetActiveFormPerkSubstitute(Player* player, uint32& canonicalModel) const;
-    // True while a druid form / Ghost Wolf perk skin is the live model (Astral Form keeps the own model, so no).
-    [[nodiscard]] bool IsFormPerkHidingWeapons(Player* player) const;
     [[nodiscard]] bool GetActiveMinionPerkSubstitute(Creature* creature, uint32& nativeDisplay) const;
     [[nodiscard]] bool GetActivePolymorphPerkSubstitute(Unit* unit, uint32& sheepModel) const;
-
-    // True when the player shows a form skin whose canonical model would make
-    // the core refuse mounting, while the skin's display makes it allow it.
-    // Hooks use it to apply the canonical-model mount rule.
-    [[nodiscard]] bool IsMountBlockedByFormPerk(Player* player) const;
-
-    // True when `spellId` is bound to the core script `scriptName` in spell_script_names.
-    [[nodiscard]] static bool IsSpellBoundToScript(uint32 spellId, std::string_view scriptName);
 
     // The skin a mage's Polymorph should show (a random one with Wild
     // Polymorph), or 0 for the sheep.
@@ -1022,15 +997,6 @@ public:
         if (uint32 displayId = GetShamanFormDisplay(player, SHAMAN_FORM_GHOST_WOLF))
             player->SetDisplayId(displayId, GetEffectivePerkScale(PERK_EFFECT_SHAMAN_GHOST_WOLF, displayId));
     }
-
-    // The Skoll display (MODEL_GHOST_WOLF_SKOLL) uses a model without
-    // collision data, so the client swims too deep and the server starts the
-    // breath bar. While Skoll is shown, the client is sent the standard Ghost
-    // Wolf collision height; other Ghost Wolf displays get their own height,
-    // and the race height is restored once the player leaves the form.
-    [[nodiscard]] float GetDisplayCollisionHeight(Player* player, uint32 displayId) const;
-    void SendCollisionHeight(Player* player, float height) const;
-    void SyncSkollCollisionHeight(Player* player);
 
     [[nodiscard]] std::string GetServiceName(uint8 serviceType) const;
     [[nodiscard]] std::string GetServiceDescription(uint8 serviceType) const;

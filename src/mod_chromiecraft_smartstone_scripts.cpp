@@ -6,21 +6,14 @@
 #include "Chat.h"
 #include "CombatAI.h"
 #include "GameTime.h"
-#include "ObjectAccessor.h"
 #include "ObjectMgr.h"
-#include "Opcodes.h"
 #include "PlayerSettings.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
-#include "SpellAuras.h"
 #include "Pet.h"
 #include "Player.h"
 #include "Vehicle.h"
-#include "WorldPacket.h"
-#include "WorldSession.h"
 
-#include <algorithm>
-#include <array>
 #include <cstring>
 
 namespace
@@ -1588,19 +1581,6 @@ public:
             sSmartstone->ReapplyActiveShamanFormDisplay(player);
         }, 1s);
     }
-
-    // Mirrors the shapeshift removal of Player::ActivateTaxiPathTo without a
-    // flight master and of ContinueTaxiFlight, which have no hook before it:
-    // a druid whose form skin hides a disallowed canonical model loses the
-    // form on the next update of a flight (spell, SmartAI or script taxi).
-    void OnPlayerUpdate(Player* player, uint32 /*p_time*/) override
-    {
-        if (player->GetShapeshiftForm() == FORM_NONE || !player->IsInFlight())
-            return;
-
-        if (sSmartstone->IsMountBlockedByFormPerk(player))
-            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
-    }
 };
 
 // Snap challenge characters back to 1x weekend-xp on login and level-up.
@@ -1790,287 +1770,6 @@ public:
     }
 };
 
-// Ghost Wolf: Skoll collision fix, see MODEL_GHOST_WOLF_SKOLL in Smartstone.h.
-// The sync is delayed because this hook runs inside SetDisplayId, before the
-// display update reaches the client; a direct packet would arrive first.
-class unit_smartstone_skoll_collision_script : public UnitScript
-{
-public:
-    unit_smartstone_skoll_collision_script() : UnitScript("unit_smartstone_skoll_collision_script", true, {
-        UNITHOOK_ON_DISPLAYID_CHANGE
-    }) { }
-
-    void OnDisplayIdChange(Unit* unit, uint32 displayId) override
-    {
-        Player* player = unit->ToPlayer();
-        if (!player)
-            return;
-
-        if (displayId != MODEL_GHOST_WOLF_SKOLL)
-        {
-            auto const* data = player->CustomData.Get<SmartstoneSkollCollisionData>(SMARTSTONE_SKOLL_COLLISION_KEY);
-            if (!data || !data->WolfHeightSent)
-                return;
-        }
-
-        player->m_Events.AddEventAtOffset([player] {
-            sSmartstone->SyncSkollCollisionHeight(player);
-        }, SKOLL_COLLISION_SYNC_DELAY);
-    }
-};
-
-// Oculus drakes: spell_oculus_rider_aura drops a disallowed mount form once
-// the rider is on the drake; do the same for a druid whose form skin hides a
-// disallowed canonical model (see Smartstone::IsMountBlockedByFormPerk).
-class unit_smartstone_form_mount_script : public UnitScript
-{
-public:
-    unit_smartstone_form_mount_script() : UnitScript("unit_smartstone_form_mount_script", true, {
-        UNITHOOK_ON_AURA_APPLY
-    }) { }
-
-    static constexpr char const* SCRIPT_OCULUS_RIDER_AURA = "spell_oculus_rider_aura";
-
-    void OnAuraApply(Unit* /*unit*/, Aura* aura) override
-    {
-        // Runs for every aura: the GUID and spell checks skip the caster lookup for all
-        // but the Oculus rider aura cast by a player.
-        if (!aura->GetCasterGUID().IsPlayer())
-            return;
-
-        if (!Smartstone::IsSpellBoundToScript(aura->GetId(), SCRIPT_OCULUS_RIDER_AURA))
-            return;
-
-        Unit* caster = aura->GetCaster();
-        Player* player = caster ? caster->ToPlayer() : nullptr;
-        if (!player || player->GetShapeshiftForm() == FORM_NONE)
-            return;
-
-        if (!player->GetVehicleCreatureBase())
-            return;
-
-        if (sSmartstone->IsMountBlockedByFormPerk(player))
-            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
-    }
-};
-
-// Flight master taxi and Trial of the Champion vehicles, for a druid whose
-// form skin hides a disallowed canonical model (see
-// Smartstone::IsMountBlockedByFormPerk). The checks the core runs before its
-// shapeshift test are left to the core, so its own errors come first.
-class server_smartstone_form_mount_script : public ServerScript
-{
-public:
-    server_smartstone_form_mount_script() : ServerScript("server_smartstone_form_mount_script", {
-        SERVERHOOK_CAN_PACKET_RECEIVE
-    }) { }
-
-    bool CanPacketReceive(WorldSession* session, WorldPacket const& packet) override
-    {
-        switch (packet.GetOpcode())
-        {
-            case CMSG_ACTIVATETAXI:
-            case CMSG_ACTIVATETAXIEXPRESS:
-                return CanActivateTaxi(session, packet);
-            case CMSG_SPELLCLICK:
-                HandleSpellClick(session, packet);
-                return true;
-            default:
-                return true;
-        }
-    }
-
-private:
-    static constexpr char const* SCRIPT_TOC5_PLAYER_VEHICLE = "npc_toc5_player_vehicle";
-
-    // Packet layouts: CMSG_ACTIVATETAXI is guid + 2 nodes, CMSG_ACTIVATETAXIEXPRESS
-    // is guid + node count + nodes, CMSG_SPELLCLICK is guid.
-    static constexpr std::size_t PACKET_GUID_SIZE = sizeof(uint64);
-    static constexpr std::size_t TAXI_NODE_SIZE   = sizeof(uint32);
-    static constexpr std::size_t TAXI_NODE_COUNT  = 2;
-
-    static Player* GetShapeshiftedPlayer(WorldSession* session)
-    {
-        Player* player = session->GetPlayer();
-        return player && player->GetShapeshiftForm() != FORM_NONE ? player : nullptr;
-    }
-
-    // Mirrors HandleActivateTaxi(Express)Opcode and the flight master branch of
-    // Player::ActivateTaxiPathTo up to its IsInDisallowedMountForm check.
-    static bool CanActivateTaxi(WorldSession* session, WorldPacket const& packet)
-    {
-        Player* player = GetShapeshiftedPlayer(session);
-        if (!player)
-            return true;
-
-        std::size_t pos = PACKET_GUID_SIZE;
-        std::size_t nodeCount = TAXI_NODE_COUNT;
-        if (packet.GetOpcode() == CMSG_ACTIVATETAXIEXPRESS)
-        {
-            if (packet.size() < pos + sizeof(uint32))
-                return true;
-
-            nodeCount = packet.read<uint32>(pos);
-            pos += sizeof(uint32);
-        }
-
-        // Short packets are left to the core handler.
-        if (packet.size() < pos + nodeCount * TAXI_NODE_SIZE)
-            return true;
-
-        std::vector<uint32> nodes;
-        nodes.reserve(nodeCount);
-        for (std::size_t i = 0; i < nodeCount; ++i, pos += TAXI_NODE_SIZE)
-            nodes.push_back(packet.read<uint32>(pos));
-
-        ObjectGuid const npcGuid(packet.read<uint64>(0));
-        if (!player->GetNPCIfCanInteractWith(npcGuid, UNIT_NPC_FLAG_FLIGHTMASTER))
-            return true;
-
-        if (!player->isTaxiCheater())
-            for (uint32 node : nodes)
-                if (!player->m_taxi.IsTaximaskNodeKnown(node))
-                    return true;
-
-        if (nodes.size() < TAXI_NODE_COUNT)
-            return true;
-
-        if (session->IsLoggingOut() || player->IsInCombat() || player->HasUnitState(UNIT_STATE_STUNNED)
-            || player->HasUnitState(UNIT_STATE_ROOT))
-            return true;
-
-        if (player->HasUnitFlag(UNIT_FLAG_DISABLE_MOVE) || player->IsMounted())
-            return true;
-
-        if (!sSmartstone->IsMountBlockedByFormPerk(player))
-            return true;
-
-        session->SendActivateTaxiReply(ERR_TAXIPLAYERSHAPESHIFTED);
-        return false;
-    }
-
-    // Mirrors the BeforeSpellClick of npc_toc5_player_vehicle, which drops a
-    // disallowed mount form before boarding. The click always goes on to the core.
-    static void HandleSpellClick(WorldSession* session, WorldPacket const& packet)
-    {
-        Player* player = GetShapeshiftedPlayer(session);
-        if (!player || packet.size() < PACKET_GUID_SIZE)
-            return;
-
-        Creature* creature = ObjectAccessor::GetCreatureOrPetOrVehicle(*player, ObjectGuid(packet.read<uint64>(0)));
-        if (!creature || !creature->IsInWorld() || !creature->IsAIEnabled)
-            return;
-
-        if (creature->GetScriptName() != SCRIPT_TOC5_PLAYER_VEHICLE)
-            return;
-
-        if (sSmartstone->IsMountBlockedByFormPerk(player))
-            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
-    }
-};
-
-// Druid form / Ghost Wolf perk skins are creature models with weapon attach
-// points, so the equipped weapon shows on the paw. Only the packet changes:
-// the wearer gets zeroed weapon visible-item fields (their character panel
-// reads the real items), other players get the disarmed flags (their Inspect
-// reads the visible-item fields, so those stay intact).
-static constexpr std::array<uint16, 4> WeaponVisibleFields =
-{
-    PLAYER_VISIBLE_ITEM_16_ENTRYID,
-    PLAYER_VISIBLE_ITEM_16_ENCHANTMENT,
-    PLAYER_VISIBLE_ITEM_17_ENTRYID,
-    PLAYER_VISIBLE_ITEM_17_ENCHANTMENT
-};
-
-class unit_smartstone_form_weapon_script : public UnitScript
-{
-public:
-    unit_smartstone_form_weapon_script() : UnitScript("unit_smartstone_form_weapon_script", true, {
-        UNITHOOK_SHOULD_TRACK_VALUES_UPDATE_POS_BY_INDEX,
-        UNITHOOK_ON_PATCH_VALUES_UPDATE,
-        UNITHOOK_ON_DISPLAYID_CHANGE
-    }) { }
-
-    // Called while building the shared cache: depends only on unit type and index.
-    bool ShouldTrackValuesUpdatePosByIndex(Unit const* unit, uint8 /*updateType*/, uint16 index) override
-    {
-        if (!unit->IsPlayer())
-            return false;
-
-        if (index == UNIT_FIELD_FLAGS_2)
-            return true;
-
-        return std::find(WeaponVisibleFields.begin(), WeaponVisibleFields.end(), index) != WeaponVisibleFields.end();
-    }
-
-    void OnPatchValuesUpdate(Unit const* unit, ByteBuffer& valuesUpdateBuf, BuildValuesCachePosPointers& posPointers,
-        Player* target) override
-    {
-        if (!unit->IsPlayer() || unit->ToPlayer()->GetShapeshiftForm() == FORM_NONE)
-            return;
-
-        bool const self = target == unit;
-        auto const flags2It = posPointers.other.find(UNIT_FIELD_FLAGS_2);
-        bool const hasFlags2 = flags2It != posPointers.other.end();
-
-        if (self)
-        {
-            bool hasWeaponField = false;
-            for (uint16 field : WeaponVisibleFields)
-            {
-                if (posPointers.other.count(field))
-                {
-                    hasWeaponField = true;
-                    break;
-                }
-            }
-
-            if (!hasWeaponField)
-                return;
-        }
-        else if (posPointers.UnitFieldFlagsPos < 0 && !hasFlags2)
-            return;
-
-        Player* wearer = const_cast<Player*>(unit->ToPlayer());
-        if (!sSmartstone->IsFormPerkHidingWeapons(wearer))
-            return;
-
-        // Observers opted out of form skins see the canonical model, which has no weapon issue.
-        if (sSmartstone->IsDisplayOptOutEnabled()
-            && target->GetPlayerSetting(CostumeMiscNamespace, SETTING_HIDE_FORMS).value)
-            return;
-
-        if (self)
-        {
-            for (uint16 field : WeaponVisibleFields)
-                if (auto pos = posPointers.other.find(field); pos != posPointers.other.end())
-                    valuesUpdateBuf.put(pos->second, uint32(0));
-            return;
-        }
-
-        if (posPointers.UnitFieldFlagsPos >= 0)
-            valuesUpdateBuf.put(posPointers.UnitFieldFlagsPos,
-                valuesUpdateBuf.read<uint32>(posPointers.UnitFieldFlagsPos) | uint32(UNIT_FLAG_DISARMED));
-
-        if (hasFlags2)
-            valuesUpdateBuf.put(flags2It->second,
-                valuesUpdateBuf.read<uint32>(flags2It->second) | uint32(UNIT_FLAG2_DISARM_OFFHAND));
-    }
-
-    // Entering or leaving a skin doesn't change these fields server-side, so
-    // force a resend; the patch above decides the value at send time.
-    void OnDisplayIdChange(Unit* unit, uint32 /*displayId*/) override
-    {
-        if (!unit->IsPlayer())
-            return;
-
-        unit->ForceValuesUpdateAtIndex(UNIT_FIELD_FLAGS);
-        unit->ForceValuesUpdateAtIndex(UNIT_FIELD_FLAGS_2);
-        for (uint16 field : WeaponVisibleFields)
-            unit->ForceValuesUpdateAtIndex(field);
-    }
-};
-
 void Addmod_cc_smartstoneScripts()
 {
     new item_chromiecraft_smartstone();
@@ -2078,9 +1777,5 @@ void Addmod_cc_smartstoneScripts()
     new mod_chromiecraft_smartstone_playerscript();
     new mod_chromiecraft_smartstone_challenge_xp_playerscript();
     new unit_smartstone_costume_script();
-    new unit_smartstone_skoll_collision_script();
-    new unit_smartstone_form_mount_script();
-    new server_smartstone_form_mount_script();
-    new unit_smartstone_form_weapon_script();
     RegisterCreatureAI(npc_smartstone_vehicle);
 }

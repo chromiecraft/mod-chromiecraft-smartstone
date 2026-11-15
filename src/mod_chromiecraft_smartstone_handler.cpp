@@ -6,20 +6,14 @@
 #include "BattlefieldMgr.h"
 #include "Chat.h"
 #include "Creature.h"
-#include "DBCStores.h"
 #include "GameTime.h"
 #include "Map.h"
-#include "ObjectDefines.h"
 #include "ObjectMgr.h"
-#include "Opcodes.h"
 #include "Pet.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
-#include "SpellMgr.h"
-#include "WorldPacket.h"
-#include "WorldSession.h"
 #include "Player.h"
 #include "Containers.h"
 #include "Random.h"
@@ -709,71 +703,6 @@ bool Smartstone::GetActiveFormPerkSubstitute(Player* player, uint32& canonicalMo
     return canonicalModel != 0;
 }
 
-// Mirrors the display part of Unit::IsInDisallowedMountForm, for `displayId`
-// instead of the unit's current display.
-static bool IsMountDisallowedForDisplay(Unit const* unit, uint32 displayId)
-{
-    if (displayId == unit->GetNativeDisplayId())
-        return false;
-
-    CreatureDisplayInfoEntry const* display = sCreatureDisplayInfoStore.LookupEntry(displayId);
-    if (!display)
-        return true;
-
-    CreatureDisplayInfoExtraEntry const* displayExtra =
-        sCreatureDisplayInfoExtraStore.LookupEntry(display->ExtendedDisplayInfoID);
-    if (!displayExtra)
-        return true;
-
-    CreatureModelDataEntry const* model = sCreatureModelDataStore.LookupEntry(display->ModelId);
-    ChrRacesEntry const* race = sChrRacesStore.LookupEntry(displayExtra->DisplayRaceID);
-
-    return model && !model->HasFlag(CREATURE_MODEL_DATA_FLAGS_CAN_MOUNT)
-        && race && !race->HasFlag(CHRRACES_FLAGS_CAN_MOUNT);
-}
-
-bool Smartstone::IsMountBlockedByFormPerk(Player* player) const
-{
-    // The core already refuses on its own (every non-stance form, Ghost Wolf included).
-    if (player->IsInDisallowedMountForm())
-        return false;
-
-    // A transform that allows mounting lets the core allow it with the canonical model too.
-    if (SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(player->getTransForm()))
-        if (transformSpellInfo->HasAttribute(SPELL_ATTR0_ALLOW_WHILE_MOUNTED))
-            return false;
-
-    uint32 canonicalModel = 0;
-    if (!GetActiveFormPerkSubstitute(player, canonicalModel))
-        return false;
-
-    return IsMountDisallowedForDisplay(player, canonicalModel);
-}
-
-bool Smartstone::IsSpellBoundToScript(uint32 spellId, std::string_view scriptName)
-{
-    SpellScriptsBounds bounds = sObjectMgr->GetSpellScriptsBounds(spellId);
-    for (auto itr = bounds.first; itr != bounds.second; ++itr)
-        if (sObjectMgr->GetScriptName(itr->second) == scriptName)
-            return true;
-
-    return false;
-}
-
-// Reflects the current state (form + live display); Astral Form keeps the character's own model.
-bool Smartstone::IsFormPerkHidingWeapons(Player* player) const
-{
-    uint32 canonicalModel = 0;
-    if (!GetActiveFormPerkSubstitute(player, canonicalModel))
-        return false;
-
-    if (player->GetShapeshiftForm() == FORM_MOONKIN
-        && GetDruidFormDisplay(player, DRUID_FORM_MOONKIN) == FORM_DISPLAY_OWN_MODEL)
-        return false;
-
-    return true;
-}
-
 uint32 Smartstone::GetMinionPerkDisplay(Creature const* minion, uint8& effect) const
 {
     if (!minion)
@@ -1353,71 +1282,4 @@ void Smartstone::LoadSmartstoneData()
         sSmartstone->LoadLegacyCostumes();
         sSmartstone->LoadPerks();
     }
-}
-
-float Smartstone::GetDisplayCollisionHeight(Player* player, uint32 displayId) const
-{
-    // Same formula as Unit::GetCollisionHeight (unmounted branch), but for the
-    // given display instead of the native one.
-    float scaleMod = player->GetObjectScale();
-    float defaultHeight = DEFAULT_COLLISION_HEIGHT * scaleMod;
-
-    CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(displayId);
-    if (!displayInfo)
-        return defaultHeight;
-
-    CreatureModelDataEntry const* modelData = sCreatureModelDataStore.LookupEntry(displayInfo->ModelId);
-    if (!modelData)
-        return defaultHeight;
-
-    float collisionHeight = scaleMod * modelData->CollisionHeight * modelData->Scale * displayInfo->scale;
-    return collisionHeight == 0.0f ? defaultHeight : collisionHeight;
-}
-
-void Smartstone::SendCollisionHeight(Player* player, float height) const
-{
-    WorldPacket data(SMSG_MOVE_SET_COLLISION_HGT, player->GetPackGUID().size() + 4 + 4);
-    data << player->GetPackGUID();
-    data << player->GetSession()->GetOrderCounter(); // movement counter
-    data << height;
-    player->SendDirectMessage(&data);
-    player->GetSession()->IncrementOrderCounter();
-}
-
-void Smartstone::SyncSkollCollisionHeight(Player* player)
-{
-    // Decides from the current state, not from the display that triggered the
-    // sync. No IsSmartstoneEnabled() check: the revert must still run if the
-    // module is disabled on reload.
-    if (!player || !player->IsInWorld())
-        return;
-
-    bool wantWolf = player->GetShapeshiftForm() == FORM_GHOSTWOLF
-        && player->GetDisplayId() == MODEL_GHOST_WOLF_SKOLL;
-
-    if (wantWolf)
-    {
-        // Always resend: after login or a map change the client starts over.
-        uint32 wolfDisplayId = player->GetModelForForm(FORM_GHOSTWOLF, SPELL_GHOST_WOLF);
-        SendCollisionHeight(player, GetDisplayCollisionHeight(player, wolfDisplayId));
-        auto* sent = player->CustomData.GetDefault<SmartstoneSkollCollisionData>(SMARTSTONE_SKOLL_COLLISION_KEY);
-        sent->WolfHeightSent = true;
-        return;
-    }
-
-    auto* data = player->CustomData.Get<SmartstoneSkollCollisionData>(SMARTSTONE_SKOLL_COLLISION_KEY);
-    if (!data || !data->WolfHeightSent)
-        return;
-
-    // Still in Ghost Wolf with another display (reset, other skin, BG/arena):
-    // send that display's height, not the race height. The flag stays set so
-    // leaving the form still restores the race height.
-    if (player->GetShapeshiftForm() == FORM_GHOSTWOLF)
-    {
-        SendCollisionHeight(player, GetDisplayCollisionHeight(player, player->GetDisplayId()));
-        return;
-    }
-
-    SendCollisionHeight(player, player->GetCollisionHeight());
-    data->WolfHeightSent = false;
 }
