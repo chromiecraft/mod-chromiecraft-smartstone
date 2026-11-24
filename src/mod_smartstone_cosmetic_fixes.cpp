@@ -13,9 +13,10 @@
  *   weapon shows on the paw.
  *
  * Form skin mount rule:
- *   The core decides mounting from the shown display. A Moonkin / Tree of
- *   Life skin (Astral Form included) allows it where the normal model does
- *   not, so the normal model's rule is applied while a skin is shown.
+ *   The core and client decide mounting from the shown display. A Moonkin /
+ *   Tree of Life skin (Astral Form included) allows it where the normal model
+ *   does not, so the normal model's rule is applied while a skin is shown:
+ *   mounting drops the form, as the client does with the normal model.
  */
 
 #include "DBCStores.h"
@@ -490,14 +491,16 @@ private:
     }
 };
 
-// Mount spells fail with SPELL_FAILED_NOT_SHAPESHIFT, and the tournament mount
-// and Jokkum summons drop the form, when the shown form skin hides a canonical
-// model the core would refuse.
+// Mount spells, the tournament mount and Jokkum summons drop the form when the
+// shown form skin hides a canonical model the core would refuse. With the
+// canonical model the client cancels the form itself before casting a mount;
+// a mountable skin display keeps it from doing so.
 class spell_smartstone_form_mount_rule : public AllSpellScript
 {
 public:
     spell_smartstone_form_mount_rule() : AllSpellScript("spell_smartstone_form_mount_rule", {
         ALLSPELLHOOK_ON_SPELL_CHECK_CAST,
+        ALLSPELLHOOK_ON_PREPARE,
         ALLSPELLHOOK_ON_CAST
     }) { }
 
@@ -505,7 +508,7 @@ public:
     static constexpr char const* SCRIPT_TOURNAMENT_MOUNT = "spell_gen_summon_tournament_mount";
     static constexpr char const* SCRIPT_JOKKUM_SUMMON    = "spell_q13010_jokkum_summon";
 
-    void OnSpellCheckCast(Spell* spell, bool /*strict*/, SpellCastResult& res) override
+    void OnSpellCheckCast(Spell* spell, bool strict, SpellCastResult& res) override
     {
         if (res != SPELL_CAST_OK)
             return;
@@ -531,6 +534,12 @@ public:
         if (!spellInfo->HasAura(SPELL_AURA_MOUNTED))
             return;
 
+        // The cast-start check lets the mount through and OnSpellPrepare drops the
+        // form once every check passed. Refusing here only guards the cast-finish
+        // check, in case the form is back by then.
+        if (strict)
+            return;
+
         // Leave the errors of the core's SPELL_AURA_MOUNTED branch to the core. The generic
         // checks before it (cooldown, GCD, outdoors, combat) run after this hook, so their
         // errors give way to SPELL_FAILED_NOT_SHAPESHIFT; the cast fails either way.
@@ -546,6 +555,21 @@ public:
 
         if (IsMountBlockedByFormPerk(player))
             res = SPELL_FAILED_NOT_SHAPESHIFT;
+    }
+
+    // Runs only once the cast started, so a mount failing a check keeps the form.
+    // A mount without cast time is already applied by now; the form drops right after.
+    void OnSpellPrepare(Spell* /*spell*/, Unit* caster, SpellInfo const* spellInfo) override
+    {
+        Player* player = caster ? caster->ToPlayer() : nullptr;
+        if (!player || player->GetShapeshiftForm() == FORM_NONE)
+            return;
+
+        if (!spellInfo->HasAura(SPELL_AURA_MOUNTED))
+            return;
+
+        if (IsMountBlockedByFormPerk(player))
+            player->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
     }
 
     void OnSpellCast(Spell* /*spell*/, Unit* caster, SpellInfo const* spellInfo, bool /*skipCheck*/) override
