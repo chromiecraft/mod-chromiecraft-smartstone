@@ -24,6 +24,7 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Smartstone.h"
+#include "SpellHistory.h"
 #include "Timer.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
@@ -644,9 +645,9 @@ public:
         {
             if (player)
             {
-                if (player->HasSpellCooldown(90002))
+                if (player->GetSpellHistory()->HasCooldown(90002))
                 {
-                    uint32 remaining = player->GetSpellCooldownDelay(90002) / 1000;
+                    uint32 remaining = player->GetSpellHistory()->GetRemainingCooldown(90002) / 1000;
                     handler->PSendModuleSysMessage(ModName, LANG_MOD_ALL_COOLDOWN_REMAINING, remaining / 60, remaining % 60);
                     found = true;
                 }
@@ -1438,7 +1439,7 @@ public:
         }
         else
         {
-            cooldownRemaining = player->GetSpellCooldownDelay(90002) / 1000;
+            cooldownRemaining = player->GetSpellHistory()->GetRemainingCooldown(90002) / 1000;
             cooldownActive = cooldownRemaining > 0;
             cooldownTotal = std::chrono::duration_cast<std::chrono::seconds>(30min).count();
         }

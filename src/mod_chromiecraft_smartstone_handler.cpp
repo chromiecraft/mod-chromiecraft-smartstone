@@ -13,6 +13,7 @@
 #include "ScriptMgr.h"
 #include "Smartstone.h"
 #include "SpellAuras.h"
+#include "SpellHistory.h"
 #include "SpellInfo.h"
 #include "Player.h"
 #include "Containers.h"
@@ -943,7 +944,7 @@ void Smartstone::SetCostumeCooldown(Player* player, uint32 costumeId)
     }
     else
     {
-        player->AddSpellCooldown(90002, 0, 30 * MINUTE * IN_MILLISECONDS);
+        player->GetSpellHistory()->AddCooldown(90002, 0, 30min);
     }
 }
 
@@ -958,7 +959,7 @@ bool Smartstone::HasCostumeCooldown(Player* player, uint32 costumeId) const
         return expireTime > GameTime::GetGameTime().count();
     }
 
-    return player->HasSpellCooldown(90002);
+    return player->GetSpellHistory()->HasCooldown(90002);
 }
 
 uint32 Smartstone::GetCostumeCooldownRemaining(Player* player, uint32 costumeId) const
@@ -973,7 +974,7 @@ uint32 Smartstone::GetCostumeCooldownRemaining(Player* player, uint32 costumeId)
         return expireTime > now ? expireTime - now : 0;
     }
 
-    return player->GetSpellCooldownDelay(90002) / 1000;
+    return player->GetSpellHistory()->GetRemainingCooldown(90002) / 1000;
 }
 
 bool Smartstone::IsInCostumeGracePeriod(Player* player, uint32 costumeId) const
@@ -1015,7 +1016,7 @@ bool Smartstone::IsInCostumeGracePeriod(Player* player, uint32 costumeId) const
     }
 
     // Shared-cooldown mode (spell 90002, hardcoded 30min).
-    uint32 cooldownRemaining = player->GetSpellCooldownDelay(90002) / 1000;
+    uint32 cooldownRemaining = player->GetSpellHistory()->GetRemainingCooldown(90002) / 1000;
     if (!cooldownRemaining)
         return false;
 
